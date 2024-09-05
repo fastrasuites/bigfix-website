@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+*{ padding: 0; margin: 0; box-sizing: border-box;   font-family: "Poppins", sans-serif;}
+body {  font-family: "Poppins", sans-serif;}
+
+/* toggle style */
+.toggle-nav {
+  border: none !important;
+  background-color: transparent;
+  color: #fff;
+  height: 100%;
+  text-align: center;
+  margin: 20px auto;
+  box-sizing: border-box;
+}
+.toggle-nav:active{
+  border: none !important;
+  background-color: transparent;
+  color: #fff;
+}
+
+/* top bar */
+.top-bar {
+  background-color: #fff;
+  color: #0a2f5a;
+}
+
+.contact-info {
+  font-size: 17px;
+  color: #0a2f5a;
+  font-weight: 500;
+}
+
+.icon {
+  font-size: 24px;
+  font-weight: 500;
+  color: #0077e5;
+}
+.working-hours {
+  font-size: 16px;
+  color: #0b0b0b;
+  font-weight: 450;
+  letter-spacing: 1px;
+}
+@media (max-width: 768px) {
+  .contact-info, .working-hours {
+  display: block;
+  font-size: 12.5px;
+  color: #0a2f5a;
+  font-weight: 500;
+  text-align: center;
+  }
+}
+/* navigation bar style */
+.main-header{
+  background-color: #0a2f5a;
+}
+.navbar-brand img {
+  max-height: 50px;
+}
+
+.navbar-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  align-items: center; 
+  height: 100%;
+  margin: 0;
+  padding: 12px;
+  gap: 30px;
+}
+
+.navbar-item .nav-link {
+  font-size: 1.2rem;
+  margin: 0; 
+  padding: 10px 0; 
+  color: #fff;
+  text-align: center;
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+.navbar-item .nav-link:hover {
+  color: #f7931e !important;
+}
+@media (max-width: 768px) {
+  .navbar-item .nav-link {
+    margin-top: 20px;
+  }
+  .navbar-brand img {
+    max-height: 50px; width: 30;
+  }
+}
+.book-demo-btn {
+  margin-left: 10px;
+  background-color: #00b4d8 !important;
+  border-color: #00b4d8 !important;
+  font-weight: 600;
+  color: #fff !important;
+  padding: 12px 20px !important;
+  font-size: 20px !important;
+}
+@media (max-width: 768px) {
+  .book-demo-btn {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+    justify-content: center;
+    margin: 20px auto;
+  }
+}
