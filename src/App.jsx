@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from './components/Header'; 
 import MoreAbout from './components/sections/moreAbout/MoreAbout';
+import Services from './components/sections/services/Services';
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <Header />
       {/* Other components */}
       <MoreAbout />
+      <Services />
     </div>
   );
 }
