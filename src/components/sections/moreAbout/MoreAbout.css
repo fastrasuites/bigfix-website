@@ -1,0 +1,51 @@
+.section {
+    display: block;
+    align-items: center;
+    justify-content: center;
+    padding: 8% 15%;
+    background-color: #f5f5f5;
+    color: #1a1a1a;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: 420;
+    color: #f7931e;
+    text-align: center;
+}
+
+.titlePhrase {
+    font-size: 3.5rem;
+    font-weight: 520;
+    color: #0a2f5a;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.desc {
+    font-size: 1.2rem;
+    color: #1a1a1a;
+    text-align: center;
+    font-weight: 300;
+    line-height: 1.5;
+}
+@media (max-width: 480px) {
+    .section {
+        padding: 8%;
+    }
+    .title {
+        font-size: 16px;
+    }
+    .titlePhrase {
+        font-size: 20px;
+    }
+    .titlePhrase br {
+        display: none;
+    }
+    .desc br {
+        display: none;
+    }
+    .desc {
+        font-size: 14px;
+    }
+}
