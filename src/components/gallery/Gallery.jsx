@@ -20,8 +20,16 @@ const Gallery = () => {
       </div>
 
       {/* GALLERY*/}
-      <div className="">
-        <div></div>
+      <div className="row">
+        <div className="col-lg-4 col-md-6 mb-4">
+          <div className="box box-1"></div>
+        </div>
+        <div className="col-lg-4 col-md-6 mb-4">
+          <div className="box box-2"></div>
+        </div>
+        <div className="col-lg-4 col-md-6 mb-4">
+          <div className="box box-3"></div>
+        </div>
       </div>
     </div>
   );

@@ -76,3 +76,26 @@
     padding: 16px 24px 16px 24px;
   }
 }
+
+/* Grid boxes */
+
+.box {
+  height: 364px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+.box-1 {
+  background-image: url("../../assets/img/image1.png");
+}
+.box-2 {
+  background-image: url("../../assets/img/image2.png");
+}
+.box-3 {
+  background-image: url("../../assets/img/image3.png");
+}
