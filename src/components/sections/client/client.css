@@ -1,6 +1,7 @@
 .client {
     padding: 8%;
     background-color: #ffffff;
+    padding-bottom: 0 !important;
   }
   
   .testimonialBlock {

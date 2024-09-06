@@ -1,0 +1,108 @@
+.contact-section {
+    padding: 8% 0;
+    background-color: #4161E5; 
+    background-image: url(../../../assets/img/contactbg.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: #fff;
+    margin-top: -5%;
+  }
+  
+  .text-section h3 {
+    font-size: 3rem;
+    text-align: left;
+    color: #fff;
+    line-height: 1.5;
+  }
+  .description {
+    font-size: 16px;
+    text-align: left;
+    color: #fff;
+    font-weight: 400;
+  }
+  .client-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
+  
+  .form-section {
+    padding: 30px;
+    border-radius: 10px;
+    color: #000;
+  }
+  
+  .contact {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #fff;
+    font-weight: 400;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .form-section .form-control {
+    padding: 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #ccc;
+  }
+  
+  .form-section .submit-btn {
+    padding: 20px;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    background-color: #0A2F5A;
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+  }
+  
+  .form-section .submit-btn:hover {
+    background-color: #0c335f;
+  }
+  
+  .form-section .form-control:focus {
+    border-color: #4161e5;
+    box-shadow: none;
+  }
+  
+  .submit-btn {
+    background-color: #102a42;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  @media (max-width: 768px) {
+    .contact-section {
+      padding: 4%;
+    }
+  
+    .text-section h3 {
+        font-size: 20px;
+    }
+    .contact br {
+        display: none;
+    }
+    .contact {
+        font-size: 18px;
+    }
+    .description {
+        font-size: 15px;
+    }
+    .description  br {
+        display: none;
+    }
+    .form-section .form-control,
+    .form-section .submit-btn {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+  }
+  
