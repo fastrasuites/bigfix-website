@@ -8,6 +8,7 @@ import Gallery from "./components/gallery/Gallery";
 import ContactForm from './components/sections/contact/ContactForm';
 import Footer from './components/Footer';
 import Copywrite from './components/Copywrite';
+import ClientTestimonialSection from "./components/sections/client/clientTestimonialSection";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
       <MoreAbout />
       <Services />
       <ContactForm />
+      <ClientTestimonialSection />
       {/* footer component */}
       <Footer />
       <Copywrite />
