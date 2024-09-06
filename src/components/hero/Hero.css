@@ -1,0 +1,99 @@
+.hero {
+  height: 794px;
+  background-image: url("../../assets/img/hero-bg-img.png");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  position: relative;
+}
+
+.sub-heading {
+  font-family: Nexa;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 15px;
+  text-align: left;
+  color: #e37016;
+  letter-spacing: 0.15em;
+}
+
+.heading {
+  max-width: 800px;
+  font-family: "Montserrat", system-ui;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 57.6px;
+  text-align: left;
+}
+
+.highlight {
+  color: #e37016; /* Customize the highlight color */
+  display: inline-block;
+  animation: fadeInUp 1s ease-in-out;
+}
+
+.description {
+  max-width: 765px;
+  font-family: Nexa;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28.8px;
+  text-align: left;
+  color: #edf0f3;
+  letter-spacing: 1.005px;
+}
+
+.btn-group .btn {
+  margin: 0 10px;
+  padding: 10px 20px;
+}
+
+.btn-hero {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+.goto-aboutus {
+  color: white;
+  text-decoration-color: #f7f7f7;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    height: 780px;
+  }
+
+  .heading {
+    font-size: 1.75rem;
+    line-height: 40px;
+  }
+
+  .description {
+    font-size: 0.875rem;
+  }
+
+  .btn-group .btn {
+    padding: 8px 16px;
+  }
+}
+@media (max-width: 500px) {
+  .hero {
+    height: 794px;
+    background-image: url("../../assets/img/hero-bg-img.png");
+    background-size: cover;
+    background-position: 70% 30%;
+    color: white;
+    position: relative;
+  }
+}
