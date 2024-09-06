@@ -3,7 +3,6 @@ import Header from "./components/Header";
 import MoreAbout from "./components/sections/moreAbout/MoreAbout";
 import Services from "./components/sections/services/Services";
 import Hero from "./components/hero/Hero";
-import Cards from "./components/hero-card/Cards";
 import HeroCard from "./components/hero-card/HeroCard";
 import Gallery from "./components/gallery/Gallery";
 
