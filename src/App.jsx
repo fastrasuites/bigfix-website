@@ -9,6 +9,7 @@ import Footer from "./components/Footer";
 import Copywrite from "./components/Copywrite";
 import ClientTestimonialSection from "./components/sections/client/clientTestimonialSection";
 import WhyUs from "./components/whyUs/WhyUs";
+import LogoCarousel from "./components/logoCarousel/LogoCarousel";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       {/* Other components */}
       <Hero />
       <HeroCard />
+      <LogoCarousel />
       <Gallery />
       <WhyUs />
       <MoreAbout />

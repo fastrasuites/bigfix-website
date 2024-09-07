@@ -1,0 +1,30 @@
+.logo-carousel {
+  overflow: hidden;
+  width: 100%;
+  padding: 30px 0; /* Optional padding */
+}
+
+.logo-carousel-track {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  width: calc(200%); /* Adjust based on the number of logos */
+  animation: scroll 20s linear infinite;
+}
+
+.logo-carousel-item {
+  flex: 0 0 auto;
+}
+
+.logo-carousel-item img {
+  width: 100%;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
