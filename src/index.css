@@ -13,7 +13,7 @@
   font-family: "Nexa, Poppins", sans-serif;
 }
 body {
-  font-family: "Nexa, Poppins", sans-serif;
+  font-family: "Nexa, Poppins", sans-serif !important;
 }
 
 /* toggle style */
@@ -135,10 +135,9 @@ body {
   }
 }
 
-
 /* footer style start here */
 .footer {
-  background-color: #0D132E;
+  background-color: #0d132e;
   color: #fff;
   padding: 50px 0;
   margin-top: -7%;
@@ -155,10 +154,10 @@ body {
   font-weight: 500;
   font-size: 1.5rem;
 }
-.footer .contact-details p, .footer-links {
+.footer .contact-details p,
+.footer-links {
   color: white;
   margin: 10px 0;
- 
 }
 .contact-details p {
   font-size: 16px;
@@ -201,7 +200,6 @@ body {
   margin-right: 15px;
   font-size: 1.5rem;
   text-decoration: none;
- 
 }
 
 .footer .social-icon:hover {
@@ -209,7 +207,7 @@ body {
 }
 .copywrite {
   padding: 5px;
-  background-color: #0A2F5A;
+  background-color: #0a2f5a;
 }
 @media (max-width: 768px) {
   .footer h3 {
