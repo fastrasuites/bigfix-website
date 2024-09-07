@@ -39,7 +39,7 @@ const Hero = () => {
           Unlock your business’s potential with Bigfix.
         </p>
         <div className="btn-group btn-hero">
-          <button className="btn btn-primary">Build my Solution</button>
+          <button className="btn btn-primary rounded">Build my Solution</button>
           <a href="" target="_blank" className="goto-aboutus">
             About Us
           </a>

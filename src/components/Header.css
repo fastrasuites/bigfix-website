@@ -1,0 +1,17 @@
+.subnavlink {
+  color: #1a1a1acc;
+  font-family: Montserrat;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 19.5px;
+  text-align: left;
+}
+@media (min-width: 992px) {
+  .subnavlink-wrapper {
+    right: 40px;
+    left: auto;
+  }
+}
+.top-bar-phone {
+  letter-spacing: 1.2px;
+}

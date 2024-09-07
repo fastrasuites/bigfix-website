@@ -10,10 +10,10 @@
   padding: 0;
   margin: 0;
   box-sizing: border-box;
-  font-family: "Nexa, Poppins", sans-serif;
+  /* font-family: Nexa, Poppins, sans-serif; */
 }
 body {
-  font-family: "Nexa, Poppins", sans-serif !important;
+  font-family: Nexa, Poppins, sans-serif !important;
 }
 
 /* toggle style */
