@@ -53,6 +53,9 @@
   color: #ffffff;
   cursor: pointer;
 }
+.btn-talk-to-us:hover {
+  background-color: #040610;
+}
 
 @media screen and (max-width: 992px) {
   .article-and-btn {
