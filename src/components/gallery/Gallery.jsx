@@ -9,7 +9,7 @@ const Gallery = () => {
         <article>
           <p className="sub-title">FASTRASUITE</p>
           <h2 className="title">
-            Our Customizable & Comprehensive ERP Software Solution
+            Our Customizable and Comprehensive ERP Software Solution
           </h2>
           <p className="desc">
             Our streamlined processes are designed to save you time and

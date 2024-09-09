@@ -1,3 +1,4 @@
+import React, { useRef } from "react";
 import Header from "./components/Header";
 import MoreAbout from "./components/sections/moreAbout/MoreAbout";
 import Services from "./components/sections/services/Services";
@@ -12,18 +13,25 @@ import WhyUs from "./components/whyUs/WhyUs";
 import LogoCarousel from "./components/logoCarousel/LogoCarousel";
 
 function App() {
+  const contactRef = useRef(null);
+
+  const scrollToContact = () => {
+    if (contactRef.current) {
+      contactRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <div className="App">
       <Header />
       {/* Other components */}
-      <Hero />
+      <Hero scrollToContact={scrollToContact} />
       <HeroCard />
       <LogoCarousel />
       <Gallery />
       <WhyUs />
       <MoreAbout />
       <Services />
-      <ContactForm />
+      <ContactForm ref={contactRef} />
       <ClientTestimonialSection />
       {/* footer component */}
       <Footer />

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Hero.css"; // Create a CSS file for custom styles
 import { Link } from "react-router-dom";
 
-const Hero = () => {
+const Hero = ({ scrollToContact }) => {
   const [currentWord, setCurrentWord] = useState("Manufacturing");
 
   useEffect(() => {
@@ -39,7 +39,9 @@ const Hero = () => {
           Unlock your business’s potential with Bigfix.
         </p>
         <div className="btn-group btn-hero">
-          <button className="btn btn-primary rounded">Build my Solution</button>
+          <button className="btn btn-primary rounded" onClick={scrollToContact}>
+            Build my Solution
+          </button>
           <a href="" target="_blank" className="goto-aboutus">
             About Us
           </a>
