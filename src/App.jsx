@@ -14,22 +14,28 @@ import LogoCarousel from "./components/logoCarousel/LogoCarousel";
 
 function App() {
   const contactRef = useRef(null);
+  const aboutRef = useRef(null);
 
   const scrollToContact = () => {
     if (contactRef.current) {
       contactRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+  const scrollToAbout = () => {
+    if (aboutRef.current) {
+      aboutRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <div className="App">
       <Header />
       {/* Other components */}
-      <Hero scrollToContact={scrollToContact} />
+      <Hero scrollToContact={scrollToContact} scrollToAbout={scrollToAbout} />
       <HeroCard />
       <LogoCarousel />
       <Gallery />
       <WhyUs />
-      <MoreAbout />
+      <MoreAbout ref={aboutRef} />
       <Services />
       <ContactForm ref={contactRef} />
       <ClientTestimonialSection />

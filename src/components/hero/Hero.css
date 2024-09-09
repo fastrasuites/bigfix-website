@@ -67,6 +67,9 @@
 .goto-aboutus {
   color: white;
   text-decoration-color: #f7f7f7;
+  background-color: transparent;
+  border: none;
+  text-decoration: underline;
 }
 
 @keyframes fadeInUp {
