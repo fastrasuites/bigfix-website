@@ -1,7 +1,7 @@
 import React from "react";
 import "./gallery.css";
 
-const Gallery = () => {
+const Gallery = ({ scrollToContact }) => {
   return (
     <div className="container article-gallery">
       {/* Fastra suit */}
@@ -16,7 +16,9 @@ const Gallery = () => {
             resources, ensuring that every step is clear, quick, and effective.
           </p>
         </article>
-        <button className="btn-talk-to-us">Talk to us</button>
+        <button className="btn-talk-to-us" onClick={scrollToContact}>
+          Talk to us
+        </button>
       </div>
 
       {/* GALLERY*/}

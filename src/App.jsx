@@ -26,6 +26,7 @@ function App() {
       aboutRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
   return (
     <div className="App">
       <Header />
@@ -33,7 +34,7 @@ function App() {
       <Hero scrollToContact={scrollToContact} scrollToAbout={scrollToAbout} />
       <HeroCard />
       <LogoCarousel />
-      <Gallery />
+      <Gallery scrollToContact={scrollToContact} />
       <WhyUs />
       <MoreAbout ref={aboutRef} />
       <Services />
