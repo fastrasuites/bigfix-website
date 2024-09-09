@@ -4,17 +4,17 @@
   background-size: cover;
   background-position: center;
   color: white;
-  margin-top: -7.8%;
+  margin-top: -8%;
   position: relative;
 }
 @media (max-width: 768px) {
   .hero {
-    margin-top: -35% !important;
+    margin-top: -50% !important;
   }
 }
 @media (max-width: 480px) {
   .hero {
-    margin-top: -35% !important;
+    margin-top: -38% !important;
   }
 }
 @media (max-width: 1024px) {
