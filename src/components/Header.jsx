@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Navbar,
   Nav,
@@ -8,10 +8,19 @@ import {
   Col,
   NavDropdown,
 } from "react-bootstrap";
-import logo from "../assets/img/logo.png";
 import { MdCall } from "react-icons/md";
+import { FaBars, FaTimes } from "react-icons/fa"; 
+import logo from "../assets/img/logo.png";
 import "./Header.css";
+
 const Header = () => {
+  const [navbarOpen, setNavbarOpen] = useState(false);
+
+  // Toggle navbar open/close
+  const handleToggle = () => {
+    setNavbarOpen(!navbarOpen);
+  };
+
   return (
     <>
       {/* Top Bar */}
@@ -22,106 +31,96 @@ const Header = () => {
               <span className="contact-info">
                 <span className="icon">
                   <MdCall />
-                </span>{" "}
+                </span>
                 Need Quick Response? Call Us +234 333 000 0000
               </span>
             </Col>
             <Col md={6} className="text-end">
-              <span className="working-hours">
-                Monday - Friday / 8AM to 5PM
-              </span>
+              <span className="working-hours">Monday - Friday / 8AM to 5PM</span>
             </Col>
           </Row>
         </Container>
       </div>
 
       {/* Main Navbar */}
-      <Navbar variant="dark" expand="lg" className="py-3 main-header">
+      <Navbar expand="lg" className="py-3 main-header">
         <Container>
           <Navbar.Brand href="#home">
             <img
               src={logo}
               alt="Bigfix"
-              width="150"
-              height="50"
-              className="d-inline-block align-top"
+              className="d-inline-block align-top logo"
             />
           </Navbar.Brand>
-          <Navbar.Toggle
-            aria-controls="basic-navbar-nav"
-            className="toggler-nav"
-          />
 
-          <Navbar.Collapse id="basic-navbar-nav">
+          {/* Custom Toggle Button */}
+          <Button className="custom-toggler" onClick={handleToggle}>
+            {navbarOpen ? <FaTimes size={25} /> : <FaBars size={25} />}
+          </Button>
+
+          {/* Navbar collapse */}
+          <Navbar.Collapse
+            id="navbarScroll"
+            className={navbarOpen ? "show" : ""}
+          >
             <Nav className="ms-auto navbar-item">
-              <Nav.Link href="#company">Company</Nav.Link>
-              <NavDropdown title="FastraSuite" id="fastra-suite-dropdown">
-                <NavDropdown.Item href="#action/3.1">
-                  About FastraSuites
+              <Nav.Link href="#action1">Company</Nav.Link>
+
+              {/* Fastrasuite Dropdown */}
+              <NavDropdown title="Fastrasuite" id="navbarScrollingDropdown">
+                <NavDropdown.Item href="#action3">
+                  About Fastrasuite
                 </NavDropdown.Item>
-                <NavDropdown.Item href="#action/3.2">
-                  Take a Tour
-                </NavDropdown.Item>
+                <NavDropdown.Item href="#action4">Take a Tour</NavDropdown.Item>
               </NavDropdown>
-              <NavDropdown
-                title="Services"
-                id="services-dropdown"
-                className="dropstart"
-              >
-                <div className="d-flex flex-column flex-md-row">
-                  <div className="">
-                    <NavDropdown.Item>Cloud</NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.4" className="subnavlink">
-                      Microsoft Azure
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.5" className="subnavlink">
-                      Microsoft 365
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      Microsoft SharePoint
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      AWS
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      Google
-                    </NavDropdown.Item>
-                  </div>
-                  <div className="">
-                    <NavDropdown.Item>Business Application</NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.4" className="subnavlink">
-                      Zoho
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.5" className="subnavlink">
-                      Adobe Creative Cloud
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      Adobe Document Cloud
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      AutoDesk
-                    </NavDropdown.Item>
-                  </div>
-                  <div className="">
-                    <NavDropdown.Item>IT infrastructure</NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.4" className="subnavlink">
-                      Support
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.5" className="subnavlink">
-                      Consultancy
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      Implementation
-                    </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.6" className="subnavlink">
-                      Training
-                    </NavDropdown.Item>
-                  </div>
+
+              {/* Services Dropdown */}
+              <NavDropdown title="Services" id="servicesDropdown">
+                <div className="dropdown-card">
+                  <Row>
+                    <Col>
+                      <h6>Cloud</h6>
+                      <NavDropdown.Item href="#action1">
+                        Microsoft Azure
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action2">
+                        Microsoft 365
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action3">
+                        Microsoft SharePoint
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action4">AWS</NavDropdown.Item>
+                      <NavDropdown.Item href="#action5">Google</NavDropdown.Item>
+                    </Col>
+                    <Col>
+                      <h6>Business Application</h6>
+                      <NavDropdown.Item href="#action6">Zoho</NavDropdown.Item>
+                      <NavDropdown.Item href="#action7">
+                        Adobe Creative Cloud
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action8">
+                        Adobe Document Cloud
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action9">AutoDesk</NavDropdown.Item>
+                    </Col>
+                    <Col>
+                      <h6>IT Infrastructure</h6>
+                      <NavDropdown.Item href="#action10">Support</NavDropdown.Item>
+                      <NavDropdown.Item href="#action11">
+                        Consultancy
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action12">
+                        Implementation
+                      </NavDropdown.Item>
+                      <NavDropdown.Item href="#action13">Training</NavDropdown.Item>
+                    </Col>
+                  </Row>
                 </div>
               </NavDropdown>
+
               <Nav.Link href="#insight">Insight</Nav.Link>
+              <Button className="book-demo-btn">Book a Demo</Button>
             </Nav>
-            <Button className="book-demo-btn">Book a Demo</Button>
           </Navbar.Collapse>
         </Container>
       </Navbar>

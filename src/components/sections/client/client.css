@@ -37,11 +37,11 @@
   }
   @media (max-width: 768px) {
     .client {
-      padding: 4%;
+      padding: 2%;
     }
   
     .testimonial-block {
-      margin: 4% 0;
+      margin: 2% 0;
       padding: 1%;
     }
     .clientTitle {

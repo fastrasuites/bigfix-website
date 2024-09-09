@@ -12,6 +12,16 @@
     margin-top: -35% !important;
   }
 }
+@media (max-width: 480px) {
+  .hero {
+    margin-top: -35% !important;
+  }
+}
+@media (max-width: 1024px) {
+  .hero {
+    margin-top: -13% !important;
+  }
+}
 
 .sub-heading {
   font-family: Nexa;

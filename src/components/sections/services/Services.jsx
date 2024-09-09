@@ -19,12 +19,12 @@ function Services() {
     <section className='services'>
       <h3 className="title">OUR SERVICES</h3>
       <h3 className="titlePhrase header">Transform Your Company Digitally</h3>
-      <p className="desc" style={{paddingBottom: '6%'}}>Posuere sed eu proin elementum nulla. Sed non blandit auctor consequat sit orci <br /> sem. Ultrices adipiscing dictumst purus convallis.</p>
+      <p className="desc" style={{paddingBottom: '6%'}}>Elevate your business with digital solutions that streamline operations, <br /> boost efficiency, and drive innovation. Embrace the future today.</p>
     <Container>
       <Row style={{marginBottom: "30px"}}>
         <Col>
         <div className='service-card'>
-          <img src={service1} alt="service1" />
+          <img src={service1} width="100%"  alt="service1" />
         </div>
         </Col>
         <Col>
@@ -71,7 +71,7 @@ function Services() {
         </Col>
         <Col>
         <div className='service-card'>
-          <img src={service6} alt="service6" />
+          <img src={service6} width="100%"  alt="service6" />
          
         </div>
         </Col>
