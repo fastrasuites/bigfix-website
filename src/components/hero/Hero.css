@@ -9,12 +9,12 @@
 }
 @media (max-width: 768px) {
   .hero {
-    margin-top: -36% !important;
+    margin-top: -38% !important;
   }
 }
 @media (max-width: 480px) {
   .hero {
-    margin-top: -36% !important;
+    margin-top: -38% !important;
   }
 }
 @media (max-width: 1024px) {
