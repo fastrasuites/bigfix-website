@@ -22,54 +22,54 @@ function Services() {
       <p className="desc" style={{paddingBottom: '6%'}}>Elevate your business with digital solutions that streamline operations, <br /> boost efficiency, and drive innovation. Embrace the future today.</p>
     <Container>
       <Row style={{marginBottom: "30px"}}>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
           <img src={service1} width="100%"  alt="service1" />
         </div>
         </Col>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
-          <img src={service2} alt="service2 Implementation" />
+          <img src={service2} width="100%"  alt="service2 Implementation" />
           <div className='action'>
             <p>Implementation</p>
             <GoArrowRight className='icon' />
           </div>
-          <img src={Implementation} className='hover-text' alt="service2 Implementation" />
+          <img src={Implementation} width="100%"  className='hover-text' alt="service2 Implementation" />
         </div>
         </Col>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
-          <img src={service3} alt="service3" />
+          <img src={service3} width="100%"  alt="service3" />
           <div className='action'>
             <p>Consultancy</p>
             <GoArrowRight className='icon' />
           </div>
-          <img src={Consultancy} className='hover-text' alt="service2 Consultancy" />
+          <img src={Consultancy} width="100%"  className='hover-text' alt="service2 Consultancy" />
         </div>
         </Col>
       </Row>
       <Row>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
-          <img src={service4} alt="service4" />
+          <img src={service4} width="100%"  alt="service4" />
           <div className='action'>
             <p>Support</p>
             <GoArrowRight className='icon' />
           </div>
-          <img src={support} className='hover-text' alt="service2 support" />
+          <img src={support} width="100%"  className='hover-text' alt="service2 support" />
         </div>
         </Col>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
-          <img src={service5} alt="service5" />
+          <img src={service5} width="100%"  alt="service5" />
           <div className='action'>
             <p>Traning</p>
             <GoArrowRight className='icon' />
           </div>
-          <img src={Training} className='hover-text' alt="service2 Training" />
+          <img src={Training} width="100%"  className='hover-text' alt="service2 Training" />
         </div>
         </Col>
-        <Col>
+        <Col md={4} sm={12}>
         <div className='service-card'>
           <img src={service6} width="100%"  alt="service6" />
          

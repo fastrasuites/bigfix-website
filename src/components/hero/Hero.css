@@ -13,10 +13,16 @@
   font-weight: 400;
   line-height: 15px;
   text-align: left;
+  margin-top: -10%;
   color: #e37016;
   letter-spacing: 0.15em;
 }
-
+@media (max-width: 768px) {
+.sub-heading {
+  margin-top: -70%;
+  margin-bottom: -20px;
+}
+}
 .heading {
   max-width: 800px;
   font-family: "Montserrat", system-ui;

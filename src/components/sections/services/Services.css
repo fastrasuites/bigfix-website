@@ -5,6 +5,9 @@
 .service-card {
     position: relative;
     overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .service-card .hover-text {
@@ -76,8 +79,8 @@
         color: #1a1a1a;
     }
     .service-card {
-        display: grid;
-        grid-template-columns: 1fr;
+        display: block !important;
+        flex-direction: row;
         width: 100%;
         margin-bottom: 30px;
 

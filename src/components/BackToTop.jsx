@@ -44,12 +44,11 @@ const styles = {
     position: "fixed",
     bottom: "5px",
     right: "20px",
-
-    color: "#fff",
     border: "none",
     borderRadius: "5px",
-    padding: "10px 15px",
+    padding: "10px",
     cursor: "pointer",
+    width: "50px",
     zIndex: 1000,
   },
 };

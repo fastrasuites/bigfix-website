@@ -20,15 +20,15 @@ const BookDemo = () => {
     e.preventDefault();
     console.log(formData);
 
-    const serviceID = "service_rxvlj9w"; //smtp server
-    const templateID = "template_jxdf0o7"; // Replace with your EmailJS template ID
-    const publicKey = "ZTEJBO3qivv4kuLEa";
+    const serviceID = "service_agom3yi"; // SMTP server
+    const templateID = "template_pz2xi5m"; // Replace with your EmailJS template ID
+    const publicKey = "isCnmUHyXvKklNirG";
 
     emailjs
       .send(serviceID, templateID, formData, publicKey)
       .then((response) => {
         console.log(response.text);
-        alert("Form submitted successfully!");
+        alert("Thank Yoy. Your demo request has been submitted successfully. We’ll be in touch soon to schedule your demo!");
       })
       .catch((error) => {
         console.log(error);

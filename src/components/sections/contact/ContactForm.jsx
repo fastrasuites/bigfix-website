@@ -1,46 +1,49 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Container, Row, Col, Form, Button } from "react-bootstrap";
 import emailjs from "emailjs-com";
 import "../contact/ContactForm.css";
 import ContactImage from "../../../assets/img/contactimg.png";
 
-const ContactForm = React.forwardRef((props, ref) => {
-  const form = useRef();
+const ContactForm = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
   const [formStatus, setFormStatus] = useState("");
 
-  // Function to send email via EmailJS
-  const sendEmail = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("Submitting form with data:", formData); // Log form data
+
+    const serviceID = "service_agom3yi"; // SMTP server
+    const templateID = "template_g2rymic"; // Replace with your EmailJS template ID
+    const publicKey = "isCnmUHyXvKklNirG";
 
     emailjs
-      .sendForm(
-        "service_5v9sdio", 
-        "template_wxl6muq", 
-        form.current,
-        "faaKqshB0his5y_bUwrFZ" 
-      )
-      .then(
-        (result) => {
-          console.log(result.text);
-          setFormStatus("Message sent successfully!");
-          form.current.reset(); 
-        },
-        (error) => {
-          console.log(error.text);
-          setFormStatus("Failed to send the message.");
-        }
-      );
+      .send(serviceID, templateID, formData, publicKey)
+      .then((response) => {
+        console.log("EmailJS response:", response.text); // Log successful response
+        alert("Your message has been sent successfully. Thank you for contacting us!");
+        setFormData({ name: "", email: "", message: "" }); // Clear form
+      })
+      .catch((error) => {
+        console.error("EmailJS error:", error); // Log error details
+        setFormStatus("Failed to submit form. Please try again later.");
+      });
   };
 
   return (
-    <section className="contact-section" ref={ref}>
+    <section className="contact-section">
       <Container>
         <Row>
           <Col md={6} className="text-section">
-            <h5
-              className="title"
-              style={{ textAlign: "left", color: "#E5C541" }}
-            >
+            <h5 className="title" style={{ textAlign: "left", color: "#E5C541" }}>
               GET IN TOUCH
             </h5>
             <h3 className="titlePhrase get-in-touch">
@@ -57,11 +60,13 @@ const ContactForm = React.forwardRef((props, ref) => {
             <h3 className="titlePhrase contact">
               Contact Us Now to Get Free Quote <br /> from Our Experts!
             </h3>
-            <Form ref={form} onSubmit={sendEmail}>
+            <Form onSubmit={handleSubmit}>
               <Form.Group controlId="formName" className="mb-3">
                 <Form.Control
                   type="text"
                   name="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   placeholder="Your Name"
                   required
                 />
@@ -70,6 +75,8 @@ const ContactForm = React.forwardRef((props, ref) => {
                 <Form.Control
                   type="email"
                   name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   placeholder="Your Email Address"
                   required
                 />
@@ -79,6 +86,8 @@ const ContactForm = React.forwardRef((props, ref) => {
                   as="textarea"
                   rows={9}
                   name="message"
+                  value={formData.message}
+                  onChange={handleChange}
                   placeholder="Your Message..."
                   required
                 />
@@ -93,9 +102,8 @@ const ContactForm = React.forwardRef((props, ref) => {
       </Container>
     </section>
   );
-});
+};
 
-// Set the display name for the ContactForm component
 ContactForm.displayName = "ContactForm";
 
 export default ContactForm;
