@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Navbar,
   Nav,
@@ -9,9 +9,10 @@ import {
   NavDropdown,
 } from "react-bootstrap";
 import { MdCall } from "react-icons/md";
-import { FaBars, FaTimes } from "react-icons/fa"; 
+import { FaBars, FaTimes } from "react-icons/fa";
 import logo from "../assets/img/logo.png";
 import "./Header.css";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [navbarOpen, setNavbarOpen] = useState(false);
@@ -36,7 +37,9 @@ const Header = () => {
               </span>
             </Col>
             <Col md={6} className="text-end">
-              <span className="working-hours">Monday - Friday / 8AM to 5PM</span>
+              <span className="working-hours">
+                Monday - Friday / 8AM to 5PM
+              </span>
             </Col>
           </Row>
         </Container>
@@ -45,13 +48,15 @@ const Header = () => {
       {/* Main Navbar */}
       <Navbar expand="lg" className="py-3 main-header">
         <Container>
-          <Navbar.Brand href="#home">
-            <img
-              src={logo}
-              alt="Bigfix"
-              className="d-inline-block align-top logo"
-            />
-          </Navbar.Brand>
+          <Link to="/">
+            <Navbar.Brand href="#home">
+              <img
+                src={logo}
+                alt="Bigfix"
+                className="d-inline-block align-top logo"
+              />
+            </Navbar.Brand>
+          </Link>
 
           {/* Custom Toggle Button */}
           <Button className="custom-toggler" onClick={handleToggle}>
@@ -90,7 +95,9 @@ const Header = () => {
                         Microsoft SharePoint
                       </NavDropdown.Item>
                       <NavDropdown.Item href="#action4">AWS</NavDropdown.Item>
-                      <NavDropdown.Item href="#action5">Google</NavDropdown.Item>
+                      <NavDropdown.Item href="#action5">
+                        Google
+                      </NavDropdown.Item>
                     </Col>
                     <Col>
                       <h6>Business Application</h6>
@@ -101,25 +108,33 @@ const Header = () => {
                       <NavDropdown.Item href="#action8">
                         Adobe Document Cloud
                       </NavDropdown.Item>
-                      <NavDropdown.Item href="#action9">AutoDesk</NavDropdown.Item>
+                      <NavDropdown.Item href="#action9">
+                        AutoDesk
+                      </NavDropdown.Item>
                     </Col>
                     <Col>
                       <h6>IT Infrastructure</h6>
-                      <NavDropdown.Item href="#action10">Support</NavDropdown.Item>
+                      <NavDropdown.Item href="#action10">
+                        Support
+                      </NavDropdown.Item>
                       <NavDropdown.Item href="#action11">
                         Consultancy
                       </NavDropdown.Item>
                       <NavDropdown.Item href="#action12">
                         Implementation
                       </NavDropdown.Item>
-                      <NavDropdown.Item href="#action13">Training</NavDropdown.Item>
+                      <NavDropdown.Item href="#action13">
+                        Training
+                      </NavDropdown.Item>
                     </Col>
                   </Row>
                 </div>
               </NavDropdown>
 
               <Nav.Link href="#insight">Insight</Nav.Link>
-              <Button className="book-demo-btn">Book a Demo</Button>
+              <Link to="/book-demo">
+                <Button className="book-demo-btn">Book a Demo</Button>
+              </Link>
             </Nav>
           </Navbar.Collapse>
         </Container>

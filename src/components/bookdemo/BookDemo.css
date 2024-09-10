@@ -1,0 +1,105 @@
+.bookdemo {
+  font-family: Nexa;
+  display: flex;
+  gap: 40px;
+  justify-content: space-between;
+  align-items: center;
+}
+.bookdemo .subheading {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  color: #e37016;
+  max-width: 258px;
+}
+.bookdemo .heading {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 67.2px;
+  text-align: left;
+  color: #0a2f5a;
+  max-width: 579px;
+}
+.bookdemo .desc {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 25.6px;
+  text-align: left;
+  color: #0a2f5a;
+  max-width: 560px;
+}
+.bookdemo img {
+  /* max-width: 560px; */
+  /* max-height: 400px; */
+}
+
+.bookdemo-form {
+  width: 500px;
+  background-color: #f1f4ff;
+  padding-inline: 50px;
+  padding-block: 50px;
+}
+.form-title {
+  font-family: Nexa;
+  font-size: 24px;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 33.6px;
+  text-align: center;
+  color: #0a2f5a;
+  margin-bottom: 40px;
+}
+.bookdemo-form .form-control {
+  padding: 20px 30px 20px 30px;
+  gap: 10px;
+  border-radius: 10px;
+  border: none;
+
+  font-family: Nexa;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22.4px;
+  text-align: left;
+  color: #5c6c7b;
+}
+.bookdemo-form .submit-btn {
+  padding: 25px 40px 25px 40px;
+  gap: 10px;
+  border-radius: 10px;
+  background-color: #0a2f5a;
+  color: white;
+  cursor: pointer;
+  margin-top: 40px;
+}
+.bookdemo-form .submit-btn:hover {
+  background-color: #e37016;
+  color: white;
+}
+
+@media screen and (max-width: 990px) {
+  .bookdemo {
+    flex-direction: column;
+    align-items: unset;
+    flex: 1;
+  }
+  .bookdemo img {
+    max-width: 100%;
+    max-height: 400px;
+    justify-self: center;
+  }
+
+  .bookdemo-form {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 540px) {
+  .bookdemo-form .form-control {
+    padding: 20px 10px 20px 10px;
+  }
+  .bookdemo-form {
+    padding-inline: 10px;
+    padding-block: 50px;
+  }
+}
