@@ -1,5 +1,5 @@
 import { Container } from "react-bootstrap";
-import BackToTopButton from "./BackToTop";
+import BackToTopButton from "./backToTop";
 
 function Copywrite() {
   return (
@@ -20,7 +20,7 @@ function Copywrite() {
               fontWeight: "300",
             }}
           >
-            © Copyright Bigfix Integrated Technologies. All Rights Reserved
+            © Copyright Bigfix Integrated Technologies. All Rights Reserved
           </p>
           <BackToTopButton />
         </Container>
