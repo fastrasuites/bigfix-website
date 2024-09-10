@@ -1,5 +1,5 @@
 import { Container } from "react-bootstrap";
-import BackToTopButton from "./backToTop";
+import BackToTopButton from "./BackToTop";
 
 function Copywrite() {
   return (
