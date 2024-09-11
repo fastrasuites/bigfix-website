@@ -33,7 +33,7 @@ const Header = () => {
                 <span className="icon">
                   <MdCall />
                 </span>
-                &nbsp;Need Quick Response? Call Us +234 333 000 0000
+                &nbsp;Need Quick Response? Call Us +234 8056 235 944
               </span>
             </Col>
             <Col md={6} className="text-end">
