@@ -1,5 +1,6 @@
 .why-us {
   background: #0a2f5a;
+  font-family: "PT Sans", sans-serif;
 }
 .why-us-wrap {
   display: flex;
@@ -19,7 +20,7 @@
   width: 100%;
 }
 .why-us .why-us-subtitle {
-  font-family: Nexa;
+  font-family: "PT Sans", sans-serif;
   font-size: 15px;
   font-weight: 700;
   line-height: 15px;
@@ -27,7 +28,7 @@
   color: #e37016;
 }
 .why-us .why-us-heading {
-  font-family: Nexa;
+  font-family: "PT Sans", sans-serif;
   font-size: 48px;
   font-weight: 800;
   line-height: 52.8px;
@@ -39,7 +40,7 @@
 .why-us .why-us-desc {
   max-width: 560px;
   color: #5c6c7b;
-  font-family: Nexa;
+  font-family: "PT Sans", sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 25.6px;

@@ -1,4 +1,3 @@
-import React from "react";
 import send from "../../assets/img/send.svg";
 import thumbsUp from "../../assets/img/thumbs-up.svg";
 import userCheck from "../../assets/img/user-check.svg";

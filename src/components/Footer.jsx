@@ -1,4 +1,3 @@
-import React from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import facebook from "../assets/icons/facebook.png";
 import twitter from "../assets/icons/twitter.png";

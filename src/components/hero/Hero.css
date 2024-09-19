@@ -8,7 +8,7 @@
 }
 
 .sub-heading {
-  font-family: Nexa;
+  font-family: "PT Sans", sans-serif;
   font-size: 15px;
   font-weight: 400;
   line-height: 15px;
@@ -18,10 +18,10 @@
   letter-spacing: 0.15em;
 }
 @media (max-width: 768px) {
-.sub-heading {
-  margin-top: -70%;
-  margin-bottom: -20px;
-}
+  .sub-heading {
+    margin-top: -70%;
+    margin-bottom: -20px;
+  }
 }
 .heading {
   max-width: 800px;
@@ -40,7 +40,7 @@
 
 .description {
   max-width: 765px;
-  font-family: Nexa;
+  font-family: "PT Sans", sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 28.8px;
@@ -70,6 +70,12 @@
   background-color: transparent;
   border: none;
   text-decoration: underline;
+  transition: background-color 600ms;
+  padding: 10px 16px;
+  border-radius: 5px;
+}
+.goto-aboutus:hover {
+  background-color: #e37016;
 }
 
 @keyframes fadeInUp {

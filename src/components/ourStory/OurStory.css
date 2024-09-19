@@ -1,7 +1,5 @@
 .cards {
   display: flex;
-  margin-top: -150px;
-  font-family: "PT Sans", sans-serif;
 }
 
 .card {
@@ -11,9 +9,10 @@
   gap: 20px;
   padding: 50px;
   font-size: 16px;
+  text-align: center;
 }
 .white-card {
-  background-color: #f1f4ff;
+  background-color: transparent;
 }
 
 .card .card-icon {
@@ -35,7 +34,6 @@
 /* dark card */
 .dark-blue-card {
   background-color: #0d132e !important;
-  font-family: "PT Sans", sans-serif;
 }
 .dark-blue-card .card-title {
   color: #ffffff;
@@ -48,6 +46,5 @@
 @media screen and (max-width: 992px) {
   .cards {
     flex-direction: column;
-    font-family: "PT Sans", sans-serif;
   }
 }

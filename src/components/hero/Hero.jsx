@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Hero.css"; // Create a CSS file for custom styless
+import { Link } from "react-router-dom";
 
 const Hero = ({ scrollToContact, scrollToAbout }) => {
   const [currentWord, setCurrentWord] = useState("Manufacturing");
@@ -41,9 +42,12 @@ const Hero = ({ scrollToContact, scrollToAbout }) => {
           <button className="btn btn-primary rounded" onClick={scrollToContact}>
             Build my Solution
           </button>
-          <button className="goto-aboutus" onClick={scrollToAbout}>
+          {/* <button className="goto-aboutus" onClick={scrollToAbout}>
             About Us
-          </button>
+          </button> */}
+          <Link to="/about-us">
+            <button className="goto-aboutus">About Us</button>
+          </Link>
         </div>
       </div>
     </div>

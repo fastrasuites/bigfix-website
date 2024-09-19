@@ -1,0 +1,72 @@
+.our-company-section {
+  font-family: "PT Sans", sans-serif;
+}
+
+.our-company-section .subheading {
+  color: #e5c541;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: left;
+}
+
+.our-company-section .heading {
+  color: #0a2f5a;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 38.4px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.our-company-section .desc {
+  font-size: 16px;
+  font-weight: 100;
+  line-height: 25.6px;
+  text-align: left;
+}
+.our-company-section ul {
+  list-style-position: inside;
+  padding-inline: 0;
+}
+.our-company-section ul li {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 33.6px;
+  text-align: left;
+}
+.our-company-section ul li::marker {
+  color: #0a2f5a;
+}
+.our-company-section ul li.vision {
+  color: #4161e5;
+}
+.our-company-section ul li.mission {
+  color: #0a2f5a;
+}
+
+.our-company-section figure {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.our-company-section figure .img-phoneperson {
+  width: 100%;
+  max-width: 500px;
+}
+
+@media (max-width: 1199px) and (min-width: 999px) {
+  .our-company-section .heading {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 28.4px;
+  }
+}
+
+@media screen and (max-width: 575px) {
+  .our-company-section .heading {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 28.4px;
+  }
+}

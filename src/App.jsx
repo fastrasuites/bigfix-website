@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; // Correct imports
 import BookDemo from "./components/bookdemo/BookDemo";
-import Home from "./Home";
+import Home from "./pages/Home";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Copywrite from "./components/Copywrite";
+import AboutUs from "./pages/AboutUs";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book-demo" element={<BookDemo />} />
+        <Route path="/about-us" element={<AboutUs />} />
       </Routes>
       <Footer />
       <Copywrite />

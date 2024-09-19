@@ -1,13 +1,13 @@
 import { useRef } from "react";
-import MoreAbout from "./components/sections/moreAbout/MoreAbout";
-import Services from "./components/sections/services/Services";
-import Hero from "./components/hero/Hero";
-import HeroCard from "./components/hero-card/HeroCard";
-import Gallery from "./components/gallery/Gallery";
-import ContactForm from "./components/sections/contact/ContactForm";
-import ClientTestimonialSection from "./components/sections/client/clientTestimonialSection";
-import WhyUs from "./components/whyUs/WhyUs";
-import LogoCarousel from "./components/logoCarousel/LogoCarousel";
+import MoreAbout from "../components/sections/moreAbout/MoreAbout";
+import Services from "../components/sections/services/Services";
+import Hero from "../components/hero/Hero";
+import HeroCard from "../components/hero-card/HeroCard";
+import Gallery from "../components/gallery/Gallery";
+import ContactForm from "../components/sections/contact/ContactForm";
+import ClientTestimonialSection from "../components/sections/client/clientTestimonialSection";
+import WhyUs from "../components/whyUs/WhyUs";
+import LogoCarousel from "../components/logoCarousel/LogoCarousel";
 
 const Home = () => {
   const contactRef = useRef(null);

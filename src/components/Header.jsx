@@ -59,14 +59,17 @@ const Header = () => {
           </Link>
 
           {/* Custom Toggle Button */}
-          <Button className="custom-toggler" onClick={handleToggle}>
+          <Button
+            className="custom-toggler d-lg-none" // Hide the button on large screens
+            onClick={handleToggle}
+          >
             {navbarOpen ? <FaTimes size={25} /> : <FaBars size={25} />}
           </Button>
 
           {/* Navbar collapse */}
           <Navbar.Collapse
             id="navbarScroll"
-            className={navbarOpen ? "show" : ""}
+            className={`collapse navbar-collapse ${navbarOpen ? "show" : ""}`} // Ensure proper collapse behavior
           >
             <Nav className="ms-auto navbar-item">
               <Nav.Link href="#action1">Company</Nav.Link>

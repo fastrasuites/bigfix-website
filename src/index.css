@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 * {
   padding: 0;
   margin: 0;
@@ -9,31 +9,31 @@ body {
   font-family: "PT Sans", sans-serif;
 }
 
-/* toggle style */
+/* toggle style
 .custom-toggler {
-display: none !important;
-background-color: transparent !important;
-border: transparent !important;
-color: #fff;
-}
+  display: none !important;
+  background-color: transparent !important;
+  border: transparent !important;
+  color: #fff;
+} */
 .logo {
   width: 150px;
   height: 50px;
 }
 @media (max-width: 480px) {
+  /* .custom-toggler {
+    display: block !important;
+  } */
+  .logo {
+    width: 120px;
+    height: 40px;
+  }
+}
+/* @media (max-width: 768px) {
   .custom-toggler {
     display: block !important;
-    }
-    .logo {
-      width: 120px;
-      height: 40px;
-    }
-}
-@media (max-width: 768px) {
-  .custom-toggler {
-    display: block !important;
-    }
-}
+  }
+}  */
 .toggle-nav {
   border: none !important;
   background-color: transparent;
@@ -116,7 +116,6 @@ color: #fff;
   margin: 0;
   padding: 12px;
   gap: 30px;
- 
 }
 
 .navbar-item .nav-link {
@@ -159,41 +158,41 @@ color: #fff;
 
 .dropdown-card {
   display: flex;
- justify-content: space-between;
- align-items: center;
-  gap: 30px; 
- width: 700px !important;
-  padding: 20px 30px; 
-  background-color: #fff; 
-  border-radius: 10px; 
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1); 
-  position: absolute; 
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+  width: 700px !important;
+  padding: 20px 30px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+  position: absolute;
   left: 50%;
-  transform: translateX(-53%); 
-  z-index: 999; 
+  transform: translateX(-53%);
+  z-index: 999;
 }
 
 .dropdown-card .nav-item-title {
-  font-weight: 700; 
-  color: #333; 
+  font-weight: 700;
+  color: #333;
   margin-bottom: 20px;
 }
 
 .dropdown-card .nav-item-link {
   font-weight: 400;
-  color: #555; 
+  color: #555;
   margin-bottom: 10px;
 }
 
 .dropdown-card .nav-item-link:hover {
-  color: #f7931e !important; 
+  color: #f7931e !important;
 }
 
 @media (max-width: 768px) {
   .dropdown-card {
     display: grid;
-    grid-template-columns: 1fr; 
-    width: auto !important; 
+    grid-template-columns: 1fr;
+    width: auto !important;
     height: 150px;
     font-size: 15px;
     padding: 5;
@@ -220,8 +219,6 @@ color: #fff;
     margin: 20px auto;
   }
 }
-
-
 
 /* footer style start here */
 .footer {
