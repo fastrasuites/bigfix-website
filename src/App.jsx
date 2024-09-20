@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Copywrite from "./components/Copywrite";
 import AboutUs from "./pages/AboutUs";
+import Career from "./pages/Career";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/career" element={<Career />} />
       </Routes>
       <Footer />
       <Copywrite />

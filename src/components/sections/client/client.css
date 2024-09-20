@@ -3,12 +3,12 @@
     background-color: #ffffff;
     padding-bottom: 0 !important;
   }
-  
+ 
   .testimonialBlock {
     margin: 8% 0;
     padding: 2%;
   }
-  
+
   .testimonialCard {
     display: flex;
     justify-content: space-between;
@@ -66,3 +66,15 @@
     }
   }
   
+  .employee {
+    padding: 8%;
+    background-color: #F1F4FF;
+    padding-bottom: 0 !important;
+    margin-top: -10%;
+    margin-bottom: 5%;
+  }
+  .employeeBlock {
+    margin: 0;
+    padding-bottom: 10% !important;
+    padding: 0;
+  }

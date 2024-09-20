@@ -39,9 +39,9 @@ const Hero = ({ scrollToContact, scrollToAbout }) => {
           Unlock your business’s potential with Bigfix.
         </p>
         <div className="btn-group btn-hero">
-          <button className="btn btn-primary rounded" onClick={scrollToContact}>
+          <a href="#contact-us"><button className="btn btn-primary rounded" onClick={scrollToContact}>
             Build my Solution
-          </button>
+          </button></a>
           {/* <button className="goto-aboutus" onClick={scrollToAbout}>
             About Us
           </button> */}

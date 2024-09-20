@@ -134,6 +134,9 @@ body {
 .navbar-item .nav-link:hover {
   color: #f7931e !important;
 }
+.navbar-item .nav-link:focus {
+  color: #f7931e !important;
+}
 @media (max-width: 768px) {
   .navbar-item .nav-link {
     margin-top: 20px;
@@ -314,5 +317,31 @@ body {
   }
   .footer .social-links {
     margin-top: 10%;
+  }
+}
+
+.explore-button {
+  margin-top: 30px;
+  padding: 15px 25px;
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  margin: 60px auto;
+  display: block;
+}
+
+/* explore Styles */
+@media (max-width: 768px) {
+  .explore-button {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .explore-button {
+    margin-top: 10px;
   }
 }

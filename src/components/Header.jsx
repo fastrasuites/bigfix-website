@@ -72,13 +72,14 @@ const Header = () => {
             className={`collapse navbar-collapse ${navbarOpen ? "show" : ""}`} // Ensure proper collapse behavior
           >
             <Nav className="ms-auto navbar-item">
-              <Nav.Link href="/about-us">Company</Nav.Link>
+              <Link to="/about-us">
+              <Nav.Link href="/about-us">Company</Nav.Link></Link>
 
               {/* Fastrasuite Dropdown */}
               <NavDropdown title="Fastrasuite" id="navbarScrollingDropdown">
-                <NavDropdown.Item href="#action3">
+              <Link to="/about-us"><NavDropdown.Item href="/about-us">
                   About Fastrasuite
-                </NavDropdown.Item>
+                </NavDropdown.Item></Link>
                 <NavDropdown.Item href="#action4">Take a Tour</NavDropdown.Item>
               </NavDropdown>
 
@@ -133,8 +134,8 @@ const Header = () => {
                   </Row>
                 </div>
               </NavDropdown>
-
-              <Nav.Link href="#insight">Insight</Nav.Link>
+              <Link to="/career">
+              <Nav.Link href="#insight">Career</Nav.Link></Link>
               <Link to="/book-demo">
                 <Button className="book-demo-btn">Book a Demo</Button>
               </Link>

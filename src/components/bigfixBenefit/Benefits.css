@@ -1,0 +1,132 @@
+/* benefit card style  */
+.benefits-card {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #000;
+    padding-bottom: 20px;
+  }
+  .benefits-number {
+    font-size: 40px;
+    font-weight: bold;
+    margin-right: 60px;
+    color: #fff;
+  }
+  @media (max-width: 768px) {
+    .benefits-number {
+    font-size: 25px;
+    margin-right: 20px;
+    }
+  }
+  .benefits-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .benefits-description {
+    color: #aaa;
+    font-weight: 100;
+    line-height: 1.5;
+  }
+  
+  /* benefit section styles */
+
+  .benefits-container {
+    display: flex;
+    justify-content: space-between;
+    background-color: #0A2F5A;
+    padding: 60px;
+    color: #fff;
+    margin-bottom: 5%;
+  }
+ 
+  .benefits-textSection {
+    width: 50%;
+    padding: 50px;
+  }
+ 
+  .benefits-text {
+    color: #E37016;
+    font-size: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+  }
+  .benefits-heading {
+    color: #fff;
+    font-size: 50px;
+    font-weight: bold;
+    margin-bottom: 60px;
+  }
+  .benefits-button {
+    margin-top: 30px;
+    padding: 15px 25px;
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+  }
+  .benefits-imageSection {
+    width: 40%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .benefits-image {
+    max-width: 100%;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .benefits-text {
+        font-size: 15px;
+      }
+    .benefits-heading {
+        font-size: 30px;
+      } 
+  }
+  @media (max-width: 768px) {
+    .benefits-container {
+    display: block;
+    padding: 5px;
+    padding-bottom: 15%;
+    }
+    .benefits-textSection {
+        width: 90%;
+        padding: 10px;
+      }
+      .benefits-text {
+        font-size: 20px;
+      }
+      .benefits-heading {
+        font-size: 40px;
+        margin-bottom: 45px;
+      } 
+      .benefits-button {
+        margin-bottom: 30px;
+      }
+  }
+ 
+  @media (max-width: 1024px) {
+    .benefits-container {
+    display: block;
+    padding: 20px;
+    padding-bottom: 15%;
+    }
+    .benefits-textSection {
+        width: 90%;
+        padding: 20px;
+      }
+      .benefits-text {
+        font-size: 20px;
+      }
+      .benefits-heading {
+        font-size: 50px;
+        margin-bottom: 45px;
+      } 
+      .benefits-button {
+        margin-bottom: 30px;
+      }
+  }

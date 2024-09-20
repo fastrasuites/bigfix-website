@@ -69,4 +69,10 @@
     font-weight: 700;
     line-height: 28.4px;
   }
+  @media (max-width: 768px)
+  {
+    .our-company-section .section2 {
+      margin-top: -13%;
+    }
+  }
 }

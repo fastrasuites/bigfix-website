@@ -16,9 +16,11 @@ const Gallery = ({ scrollToContact }) => {
             resources, ensuring that every step is clear, quick, and effective.
           </p>
         </article>
-        <button className="btn-talk-to-us" onClick={scrollToContact}>
-          Talk to us
-        </button>
+        
+         <button className="btn-talk-to-us"  onClick={scrollToContact}> 
+          <a href="/#contact-us" style={{color: "#fff", textDecoration: "none"}}> 
+          Talk to us </a>
+        </button> 
       </div>
 
       {/* GALLERY*/}

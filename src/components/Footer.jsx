@@ -52,16 +52,16 @@ function Footer() {
             <h4>Navigation</h4>
             <ul className="footer-links">
               <li>
-                <a href="#">Company</a>
+                <a href="/about-us">Company</a>
               </li>
               <li>
-                <a href="#">Insight</a>
+                <a href="/career">Career</a>
               </li>
               <li>
                 <a href="#">Services</a>
               </li>
               <li>
-                <a href="#">FastraSuite</a>
+                <a href="3">FastraSuite</a>
               </li>
             </ul>
           </Col>
@@ -86,7 +86,7 @@ function Footer() {
               <a href="#" className="social-icon">
                 <img src={twitter} alt="twitter" />
               </a>
-              <a href="#" className="social-icon">
+              <a href="https://ng.linkedin.com/company/bigfix-integrated-technologies" className="social-icon">
                 <img src={linklden} alt="linklden" />
               </a>
               <a href="#" className="social-icon">
