@@ -30,7 +30,7 @@ const OurCompany = () => {
             </p>
             <li className="mission">Our Mission</li>
             <p className="desc">
-              We&apos;re on a mission to exceed our customers’ expectations
+              We&apos;re on a mission to exceed our customers&apos; expectations
               with innovative and bespoke Technology solutions.
             </p>
             <hr />
