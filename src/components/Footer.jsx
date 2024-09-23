@@ -38,7 +38,8 @@ function Footer() {
                 {" "}
                 <FiPhone className="icon" />{" "}
                 <p>
-                  +234 805 623 5944 <br /> +234 808 989 2733
+                <a href="tel:+234 8056 235 944" style={{color: "#fff", textDecoration: "none"}}> +234 805 623 5944 </a> 
+                <br /> <a href="tel:+234 808 989 2733" style={{color: "#fff", textDecoration: "none"}}> +234 808 989 2733 </a> 
                 </p>
               </div>
               <div className="info">
