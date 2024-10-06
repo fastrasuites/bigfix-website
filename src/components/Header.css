@@ -7,16 +7,6 @@
   text-align: left;
 }
 
-.top-bar-phone {
-}
-.book-demo-btn {
-  /* background-color: #00b4d8; */
-  background-color: red;
-}
-.book-demo-btn:hover {
-  background-color: #e37016;
-}
-
 /* Header.css */
 /* Ensure the custom toggle button is visible only on smaller screens */
 .custom-toggler {

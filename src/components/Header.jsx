@@ -27,13 +27,24 @@ const Header = () => {
       {/* Top Bar */}
       <div className="top-bar py-2">
         <Container>
-          <Row>
+          <Row style={{ alignItems: "center" }}>
             <Col md={6}>
               <span className="contact-info">
                 <span className="icon">
                   <MdCall />
                 </span>
-               <a href="tel:+234 8056 235 944" style={{color: "#000", textDecoration: "none"}}> &nbsp;Need Quick Response? Call Us +234 8056 235 944</a>
+                <a
+                  href="tel:+234 8056 235 944"
+                  style={{
+                    color: "#0A2F5A",
+                    textDecoration: "none",
+                    fontWeight: "700",
+                  }}
+                >
+                  {" "}
+                  &nbsp;Need Quick Response? Call Us
+                  +234&nbsp;8056&nbsp;235&nbsp;944
+                </a>
               </span>
             </Col>
             <Col md={6} className="text-end">
@@ -72,14 +83,17 @@ const Header = () => {
             className={`collapse navbar-collapse ${navbarOpen ? "show" : ""}`} // Ensure proper collapse behavior
           >
             <Nav className="ms-auto navbar-item">
-              <Link to="/about-us">
-              <Nav.Link href="/about-us">Company</Nav.Link></Link>
+              <Link to="/about-us" className="nav-item">
+                <Nav.Link href="/about-us">Company</Nav.Link>
+              </Link>
 
               {/* Fastrasuite Dropdown */}
               <NavDropdown title="Fastrasuite" id="navbarScrollingDropdown">
-              <Link to="/about-us"><NavDropdown.Item href="/about-us">
-                  About Fastrasuite
-                </NavDropdown.Item></Link>
+                <Link to="/about-us" className="nav-item">
+                  <NavDropdown.Item href="/about-us">
+                    About Fastrasuite
+                  </NavDropdown.Item>
+                </Link>
                 <NavDropdown.Item href="#action4">Take a Tour</NavDropdown.Item>
               </NavDropdown>
 
@@ -134,8 +148,9 @@ const Header = () => {
                   </Row>
                 </div>
               </NavDropdown>
-              <Link to="/career">
-              <Nav.Link href="#insight">Career</Nav.Link></Link>
+              <Link to="/career" className="nav-item">
+                <Nav.Link href="#insight">Career</Nav.Link>
+              </Link>
               <Link to="/book-demo">
                 <Button className="book-demo-btn">Book a Demo</Button>
               </Link>
