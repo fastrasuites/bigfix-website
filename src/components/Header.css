@@ -8,10 +8,10 @@
 }
 
 .top-bar-phone {
-  letter-spacing: 1.2px;
 }
 .book-demo-btn {
-  background-color: #00b4d8;
+  /* background-color: #00b4d8; */
+  background-color: red;
 }
 .book-demo-btn:hover {
   background-color: #e37016;

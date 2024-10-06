@@ -15,7 +15,6 @@
   text-align: left;
   margin-top: -10%;
   color: #e37016;
-  letter-spacing: 0.15em;
 }
 @media (max-width: 768px) {
   .sub-heading {
@@ -46,7 +45,6 @@
   line-height: 28.8px;
   text-align: left;
   color: #edf0f3;
-  letter-spacing: 1.005px;
 }
 
 .btn-group .btn {

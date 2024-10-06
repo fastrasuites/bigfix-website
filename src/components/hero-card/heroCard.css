@@ -29,7 +29,6 @@
   line-height: 25.6px;
   font-weight: 400;
   color: #5c6c7b;
-  letter-spacing: 1.003px;
 }
 
 /* dark card */
@@ -42,7 +41,6 @@
 }
 .dark-blue-card .card-desc {
   color: #edf0f3;
-  letter-spacing: 1.003px;
 }
 
 @media screen and (max-width: 992px) {
