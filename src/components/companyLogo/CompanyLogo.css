@@ -1,0 +1,13 @@
+.clientLogo {
+  width: 100%;
+  mix-blend-mode: luminosity;
+}
+/* .logos-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+}
+.logo {
+  mix-blend-mode: luminosity;
+  width: min-content;
+  opacity: 0.6;
+} */

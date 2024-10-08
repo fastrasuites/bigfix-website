@@ -4,12 +4,14 @@ import OurCompany from "../components/ourCompany/OurCompany";
 import OurStory from "../components/ourStory/OurStory";
 import ContactForm from "../components/sections/contact/ContactForm";
 import bannerUrl from "../assets/img/aboutus-hero.png";
+import CompanyLogo from "../components/companyLogo/CompanyLogo";
 
 const AboutUs = () => {
   return (
     <div style={{ fontFamily: `"PT Sans", sans-serif` }}>
       <AboutUsBanner />
-      <Award />
+      <CompanyLogo />
+      {/* <Award /> */}
 
       <OurCompany />
 
