@@ -38,22 +38,25 @@
 }
 
 .description {
-  max-width: 765px;
+  max-width: 600px;
   font-family: "PT Sans", sans-serif;
   font-size: 18px;
-  font-weight: 400;
+  font-weight: 100;
   line-height: 28.8px;
   text-align: left;
   color: #edf0f3;
+  opacity: 0.5;
 }
 
 .btn-group .btn {
-  margin: 0 10px;
+  /* margin: 0 10px; */
   padding: 10px 20px;
-  transition: background-color 0.7s;
+  transition: all 0.7s;
 }
 .btn-group .btn:hover {
   background-color: #e37016;
+  /* outline: 1px solid #e37016 !important; */
+  border: 1px solid #e37016 !important;
 }
 
 .btn-hero {
@@ -72,16 +75,17 @@
   padding: 10px 16px;
   border-radius: 5px;
 }
-.goto-aboutus:hover {
-  background-color: #e37016;
-}
 
 @keyframes fadeInUp {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(-20px);
   }
-  to {
+  50% {
+    opacity: 1;
+    transform: translateY(-50px);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }

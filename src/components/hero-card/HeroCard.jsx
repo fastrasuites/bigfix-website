@@ -11,8 +11,9 @@ const HeroCard = () => {
         <img src={userCheck} alt="icon checked" className="card-icon" />
         <h4 className="card-title">Expert Guidance</h4>
         <p className="card-desc">
-          Leverage the wisdom of industry leaders. Our team of seasoned experts
-          is here to guide you through every decision.
+          Leverage the wisdom of industry <br />
+          leaders. Our team of seasoned
+          <br /> experts is here to guide you through <br /> every decision.
         </p>
       </div>
 
@@ -21,9 +22,9 @@ const HeroCard = () => {
         <img src={send} alt="icon checked" className="card-icon" />
         <h4 className="card-title">Tailored Solutions</h4>
         <p className="card-desc">
-          One size doesn’t fit all. That’s why we offer customized solutions
-          that are specifically designed to meet your unique needs and
-          challenges.
+          One size doesn’t fit all. That’s why <br />
+          we offer customized solutions that <br /> are specifically designed to
+          meet <br /> your unique needs and challenges.
         </p>
       </div>
 
@@ -32,8 +33,10 @@ const HeroCard = () => {
         <img src={thumbsUp} alt="thumbs up" className="card-icon" />
         <h4 className="card-title">Streamlined Process</h4>
         <p className="card-desc">
-          Our streamlined processes are designed to save you time and resources,
-          ensuring that every step is clear, quick, and effective.
+          Our streamlined processes are <br /> designed to save you time and{" "}
+          <br />
+          resources, ensuring that every step <br /> is clear, quick, and
+          effective.
         </p>
       </div>
     </div>

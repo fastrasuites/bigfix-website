@@ -4,7 +4,7 @@ import "./whyUs.css";
 const WhyUs = () => {
   return (
     <section className="py-5  why-us">
-      <div className="container">
+      <div className="blue-section">
         <div className="why-us-wrap">
           {/* First Box with Background Image */}
 

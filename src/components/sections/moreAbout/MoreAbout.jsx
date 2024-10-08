@@ -16,7 +16,7 @@ const MoreAbout = forwardRef((props, ref) => {
             seamless operations
           </h3>
           <p className="desc">
-            Bigfix Tech specializes in delivering big, powerful,and  tailored IT
+            Bigfix Tech specializes in delivering big, powerful,and tailored IT
             fixes that empower businesses <br />
             to excel. From seamless ERP Implementation to rock-solid IT
             Infrastructure setup, we ensure <br />
@@ -27,7 +27,7 @@ const MoreAbout = forwardRef((props, ref) => {
             inefficiencies for peak performance. With cutting-edge Cloud
             Solutions and top-notch Security <br />
             Services, we safeguard your data and fine-tune your IT environment,
-            enabling your business to <br /> thrive in today’s digital
+            enabling your business to <br /> thrive in today&apo;s digital
             landscape.
           </p>
         </Col>

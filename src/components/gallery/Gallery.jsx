@@ -9,18 +9,22 @@ const Gallery = ({ scrollToContact }) => {
         <article>
           <p className="sub-title">FASTRASUITE</p>
           <h2 className="title">
-            Our Customizable and Comprehensive ERP Software Solution
+            Our Customizable & Comprehensive ERP Software Solution
           </h2>
           <p className="desc">
             Our streamlined processes are designed to save you time and
             resources, ensuring that every step is clear, quick, and effective.
           </p>
         </article>
-        
-         <button className="btn-talk-to-us"  onClick={scrollToContact}> 
-          <a href="/#contact-us" style={{color: "#fff", textDecoration: "none"}}> 
-          Talk to us </a>
-        </button> 
+
+        <button className="btn-talk-to-us" onClick={scrollToContact}>
+          <a
+            href="/#contact-us"
+            style={{ color: "#fff", textDecoration: "none" }}
+          >
+            Talk to us{" "}
+          </a>
+        </button>
       </div>
 
       {/* GALLERY*/}

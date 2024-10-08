@@ -1,93 +1,93 @@
 .services {
-    padding: 8%;
-    background-color: #c2ecf4;
+  padding: 8%;
+  background-color: #c2ecf4;
 }
 .service-card {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .service-card .hover-text {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    top: 0;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.3s ease;
-    opacity: 0;
+  display: none;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 3s ease;
+  opacity: 0;
 }
 
 .service-card:hover .hover-text {
-    display: block;
-    opacity: 1;
+  display: block;
+  opacity: 1;
 }
-
 
 .action {
-    position: absolute;
-    bottom: 10%;
-    right: 15px;
-    left: 15px;
-    padding: 5px 10px;
-    width: 75%;
-    box-sizing: border-box;
-    object-fit: contain;
-    border-radius: 8px;
-    background-color: #0A2F5A;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    align-items: center;
+  position: absolute;
+  bottom: 10%;
+  right: 15px;
+  left: 15px;
+  padding: 5px 10px;
+  width: 75%;
+  box-sizing: border-box;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: #0a2f5a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 48px;
 }
 .action p {
-    font-size: 17px;
-    margin-top: 5px;
-    color: #fff;
-    text-align: left;
-    font-weight: 600;
+  font-size: 20px;
+  margin-top: 0;
+  margin-bottom: 0;
+  color: #fff;
+  text-align: left;
+  font-weight: 400;
+  line-height: 28px;
 }
 .action .icon {
-    font-size: 25px;
-    font-weight: 600;
-    cursor: pointer;
+  font-size: 25px;
+  font-weight: 600;
+  cursor: pointer;
 }
 .icon:hover {
-    font-size: 32px;
-    color: #fff;
-    font-weight: bolder;
-    transition: 0.5s ease-in-out;
+  font-size: 32px;
+  color: #fff;
+  font-weight: bolder;
+  transition: 0.5s ease-in-out;
 }
 .header {
-    font-size: 3rem;
-    color: #1a1a1a;
+  font-size: 3rem;
+  color: #1a1a1a;
 }
 @media (max-width: 768px) {
-    .services {
-        padding: 4%;
-    }
-   
-    .header {
-        font-size: 20px;
-        color: #1a1a1a;
-    }
-    .service-card {
-        display: block !important;
-        flex-direction: row;
-        width: 100%;
-        margin-bottom: 30px;
+  .services {
+    padding: 4%;
+  }
 
-    }
-    .service-card .hover-text {
-        display: block;
-        width: 100%;
-        height: 100%;
-    }
+  .header {
+    font-size: 20px;
+    color: #1a1a1a;
+  }
+  .service-card {
+    display: block !important;
+    flex-direction: row;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+  .service-card .hover-text {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 }

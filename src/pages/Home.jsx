@@ -34,8 +34,8 @@ const Home = () => {
       <WhyUs />
       <MoreAbout ref={aboutRef} />
       <Services />
-      <ContactForm ref={contactRef} />
       <ClientTestimonialSection />
+      <ContactForm ref={contactRef} />
     </div>
   );
 };

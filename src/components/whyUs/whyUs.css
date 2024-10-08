@@ -3,8 +3,12 @@
   font-family: "PT Sans", sans-serif;
 }
 .why-us-wrap {
-  display: flex;
-  gap: 30px;
+  /* display: flex; */
+  /* gap: 30px; */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Two equal columns */
+  gap: 20px; /* Space between items */
+  padding: 20px;
 }
 .bg-image {
   max-height: 672px;
@@ -48,9 +52,10 @@
 
 @media (max-width: 992px) {
   .why-us-wrap {
-    flex-direction: column;
+    /* flex-direction: column;
     width: 73%;
-    margin-inline: auto;
+    margin-inline: auto; */
+    grid-template-columns: repeat(1, 1fr);
   }
   .why-us-article {
     width: 100%;

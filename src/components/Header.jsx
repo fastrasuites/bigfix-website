@@ -84,7 +84,9 @@ const Header = () => {
           >
             <Nav className="ms-auto navbar-item">
               <Link to="/about-us" className="nav-item">
-                <Nav.Link href="/about-us">Company</Nav.Link>
+                <Nav.Link href="/about-us" className="white-hover">
+                  Company
+                </Nav.Link>
               </Link>
 
               {/* Fastrasuite Dropdown */}
@@ -149,7 +151,9 @@ const Header = () => {
                 </div>
               </NavDropdown>
               <Link to="/career" className="nav-item">
-                <Nav.Link href="#insight">Career</Nav.Link>
+                <Nav.Link href="#insight" className="white-hover">
+                  Career
+                </Nav.Link>
               </Link>
               <Link to="/book-demo">
                 <Button className="book-demo-btn">Book a Demo</Button>

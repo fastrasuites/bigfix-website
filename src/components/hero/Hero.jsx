@@ -30,7 +30,7 @@ const Hero = ({ scrollToContact, scrollToAbout }) => {
       <div className="container text-container">
         <h5 className="sub-heading mb-3">BIGFIX INTEGRATED TECHNOLOGIES</h5>
         <h1 className="heading mb-4">
-          ERP and Digital Transformation for{" "}
+          ERP and Digital Transformation <br /> for{" "}
           <span className="highlight">{currentWord}</span>
         </h1>
         <p className="description mb-4">
@@ -39,9 +39,14 @@ const Hero = ({ scrollToContact, scrollToAbout }) => {
           Unlock your business’s potential with Bigfix.
         </p>
         <div className="btn-group btn-hero">
-          <a href="#contact-us"><button className="btn btn-primary rounded" onClick={scrollToContact}>
-            Build my Solution
-          </button></a>
+          <a href="#contact-us">
+            <button
+              className="btn btn-primary rounded"
+              onClick={scrollToContact}
+            >
+              Build my Solution
+            </button>
+          </a>
           {/* <button className="goto-aboutus" onClick={scrollToAbout}>
             About Us
           </button> */}

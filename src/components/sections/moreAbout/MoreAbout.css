@@ -23,11 +23,13 @@
 }
 
 .desc {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #1a1a1a;
   text-align: center;
   font-weight: 10;
   line-height: 1.5;
+  color: #0a2f5a;
+  opacity: 0.8;
 }
 @media (max-width: 480px) {
   .section {
