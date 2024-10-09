@@ -2,7 +2,9 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import "../client/client.css";
-import Client1 from "../../../assets/img/client1.png";
+import Employee1 from "../../../assets/img/e1.png";
+import Employee2 from "../../../assets/img/e2.png";
+import Employee3 from "../../../assets/img/e3.png";
 
 function EmployeeTestimonial() {
   return (
@@ -20,11 +22,12 @@ function EmployeeTestimonial() {
           >
             Testimonies
           </span>
-          <h2 className="titlePhrase clientTitle">BigFix Employees</h2>
+             
+              <h2 className="titlePhrase clientTitle" style={{ marginTop: "10px"}}>BigFix Employees</h2>
           <Row>
             <Col sm={12} md={6} lg={4}>
               <div className="testimonialCard">
-                <img src={Client1} alt="Client" className="img" />
+                <img src={Employee1} alt="Client" className="img" />
                 <div>
                   <span className="star">★★★★★</span>
                   <p
@@ -49,7 +52,7 @@ function EmployeeTestimonial() {
             </Col>
             <Col sm={12} md={6} lg={4}>
               <div className="testimonialCard">
-                <img src={Client1} alt="Client" className="img" />
+                <img src={Employee2} alt="Client" className="img" />
                 <div>
                   <span className="star">★★★★★</span>
                   <p
@@ -74,7 +77,7 @@ function EmployeeTestimonial() {
             </Col>
             <Col sm={12} md={6} lg={4}>
               <div className="testimonialCard">
-                <img src={Client1} alt="Client" className="img" />
+                <img src={Employee3} alt="Client" className="img" />
                 <div>
                   <span className="star">★★★★★</span>
                   <p

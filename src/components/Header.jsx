@@ -91,12 +91,13 @@ const Header = () => {
 
               {/* Fastrasuite Dropdown */}
               <NavDropdown title="Fastrasuite" id="navbarScrollingDropdown">
-                <Link to="/about-us" className="nav-item">
-                  <NavDropdown.Item href="/about-us">
+                <Link to="https://web.fastrasuite.com/" target="_blank" className="nav-item">
+                  <NavDropdown.Item href="https://web.fastrasuite.com/" target="_blank">
                     About Fastrasuite
                   </NavDropdown.Item>
                 </Link>
-                <NavDropdown.Item href="#action4">Take a Tour</NavDropdown.Item>
+                <Link to="/about-us" className="nav-item">
+                <NavDropdown.Item href="/about-us">Take a Tour</NavDropdown.Item></Link>
               </NavDropdown>
 
               {/* Services Dropdown */}
