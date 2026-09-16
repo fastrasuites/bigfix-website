@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import bigfixLogo from "../assets/bigfixlogo.svg";
+import bigfixLogo from "../assets/bigfixlogopng.png";
 import bgImageHome from "../assets/bgimagehomepage.png";
 
 const Home = () => {
@@ -171,6 +171,7 @@ const Home = () => {
         },
       ],
       exploreLink: "Explore EnterpriseOne →",
+      link: "https://www.enterpriseone.com.ng/",
     },
   ];
 
@@ -378,15 +379,18 @@ const Home = () => {
                 </div>
               )}
             </div>
-            <a
-              href="https://www.cloud.enterpriseone.com.ng/"
+            <Link
+              to="https://www.cloud.enterpriseone.com.ng/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-[#1EBED4] transition-colors"
             >
               Cloud Infrastructure
-            </a>
-            <Link to="#" className="hover:text-[#1EBED4] transition-colors">
+            </Link>
+            <Link
+              to="/company"
+              className="hover:text-[#1EBED4] transition-colors"
+            >
               Company
             </Link>
             <Link
@@ -404,9 +408,6 @@ const Home = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="hidden lg:flex w-[173px] h-[48px] justify-center items-center rounded-[10px] bg-[#E37016] text-white font-semibold text-[15px] hover:bg-[#c96012] transition-colors shadow-lg">
-              Get Started
-            </button>
             <button
               className="lg:hidden text-white p-2"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -490,18 +491,13 @@ const Home = () => {
               >
                 Cloud Infrastructure
               </a>
-              <Link to="/company" className="py-2 hover:text-[#1EBED4]">
-                Company
-              </Link>
+
               <Link to="/about-us" className="py-2 hover:text-[#1EBED4]">
                 About Us
               </Link>
               <Link to="/contact" className="py-2 hover:text-[#1EBED4]">
                 Contact
               </Link>
-              <button className="w-full mt-4 h-[48px] flex justify-center items-center rounded-[10px] bg-[#E37016] text-white font-semibold hover:bg-[#c96012] transition-colors">
-                Get Started
-              </button>
             </div>
           </div>
         )}
@@ -536,7 +532,7 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 lg:gap-[24px]">
             <button className="w-full sm:w-auto bg-[#E37016] hover:bg-[#c96012] text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors shadow-lg text-center justify-center flex">
-              Request a Blueprint Review
+              Request a Review
             </button>
             <button className="w-full sm:w-auto border border-white/80 hover:border-white hover:bg-white/10 text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors flex items-center justify-center gap-2 backdrop-blur-sm">
               Watch the 2-Min Overview
@@ -633,7 +629,9 @@ const Home = () => {
                       </div>
                       <div className="mt-4 md:mt-8">
                         <a
-                          href="#"
+                          href={item.link}
+                          target={item.link !== "#" ? "_blank" : "_self"}
+                          rel={item.link !== "#" ? "noopener noreferrer" : ""}
                           className="inline-flex items-center gap-2 text-[16px] font-semibold text-[#0A2F5A] hover:text-[#00B4D8] transition-colors group"
                         >
                           {item.exploreLink}
