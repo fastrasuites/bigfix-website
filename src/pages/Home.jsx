@@ -15,6 +15,7 @@ const Home = () => {
       subtitle: "Core Banking, Asset & Investment Management",
       description:
         "Equity-backed deposit accounts, profit-share calculation, and fund ledgering",
+      link: "#", // Yet to be live
       icon: (
         <svg
           className="w-5 h-3.25 text-[#00B4D8] mt-1"
@@ -33,6 +34,7 @@ const Home = () => {
       subtitle: "Project Costing & Shadow Ledger",
       description:
         "Advanced margin tracking and parallel sub-accounting. Plugs into any existing ERP.",
+      link: "https://www.fastrasuite.com/",
       icon: (
         <svg
           className="w-5 h-[13px] text-[#00B4D8] mt-1"
@@ -51,6 +53,7 @@ const Home = () => {
       subtitle: "Corporate ERP Suite",
       description:
         "General ledger, procurement, asset management, and financial audits.",
+      link: "https://www.enterpriseone.com.ng/",
       icon: (
         <svg
           className="w-5 h-[13px] text-[#00B4D8] mt-1"
@@ -349,8 +352,11 @@ const Home = () => {
                     </div>
                     <div className="flex flex-col gap-5">
                       {navApplications.map((app, index) => (
-                        <div
+                        <a
                           key={index}
+                          href={app.link}
+                          target={app.link !== "#" ? "_blank" : "_self"}
+                          rel={app.link !== "#" ? "noopener noreferrer" : ""}
                           className="flex gap-3 items-start group cursor-pointer"
                         >
                           <div className="mt-1 flex-shrink-0">{app.icon}</div>
@@ -365,14 +371,19 @@ const Home = () => {
                               {app.description}
                             </p>
                           </div>
-                        </div>
+                        </a>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
             </div>
-            <a href="#" className="hover:text-[#1EBED4] transition-colors">
+            <a
+              href="https://www.cloud.enterpriseone.com.ng/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#1EBED4] transition-colors"
+            >
               Cloud Infrastructure
             </a>
             <Link to="#" className="hover:text-[#1EBED4] transition-colors">
@@ -453,24 +464,32 @@ const Home = () => {
                 {isDropdownOpen && (
                   <div className="flex flex-col gap-4 pl-4 py-2 border-l border-white/20 mt-2">
                     {navApplications.map((app, index) => (
-                      <div key={index} className="flex flex-col gap-1">
+                      <a
+                        key={index}
+                        href={app.link}
+                        target={app.link !== "#" ? "_blank" : "_self"}
+                        rel={app.link !== "#" ? "noopener noreferrer" : ""}
+                        className="flex flex-col gap-1"
+                      >
                         <span className="text-[#1EBED4] font-bold">
                           {app.title}
                         </span>
                         <span className="text-gray-400 text-sm">
                           {app.subtitle}
                         </span>
-                      </div>
+                      </a>
                     ))}
                   </div>
                 )}
               </div>
-              <Link
-                to="/cloud-infrastructure"
+              <a
+                href="https://www.cloud.enterpriseone.com.ng/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="py-2 hover:text-[#1EBED4]"
               >
                 Cloud Infrastructure
-              </Link>
+              </a>
               <Link to="/company" className="py-2 hover:text-[#1EBED4]">
                 Company
               </Link>
