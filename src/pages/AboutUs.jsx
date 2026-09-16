@@ -989,7 +989,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import bgImageAbout from "../assets/bgimageabout.png";
-import bigfixLogo from "../assets/bigfixlogo.svg";
+import bigfixLogo from "../assets/bigfixlogopng.png";
 
 const AboutUs = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

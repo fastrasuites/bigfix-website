@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import bigfixLogo from "../assets/bigfixlogo.svg";
+import bigfixLogo from "../assets/bigfixlogopng.png";
 import bgImageHome from "../assets/bgimagehomepage.png";
 
 const Home = () => {
