@@ -546,14 +546,16 @@ const Home = () => {
         <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 flex flex-col gap-[40px]">
           <div className="flex flex-col gap-4">
             <h2 className="text-[32px] md:text-[42px] lg:text-[56px] font-bold leading-[1.2] tracking-[0.2px] text-[#0A2F5A] max-w-[860px]">
-              Software solutions designed to <br className="hidden lg:block" />
+              Custom Enterprise Solutions <br className="hidden lg:block" />
               <span className="text-[#00B4D8]">
-                manage financial, project, and operational processes.
+                Deployed Seamlessly Around Your Business.
               </span>
             </h2>
             <p className="text-[16px] md:text-[20px] font-normal leading-[1.5] tracking-[0.2px] text-[#A8A8A8] max-w-[795px]">
-              High-performance engines built to eliminate system fragmentation
-              and data lag across your entire enterprise operations.
+              We eliminate the risk and complexity of digital transformation.
+              BigFix architects integrate and optimize high-performance software
+              ecosystems tailored entirely to your organization’s unique
+              operational DNA delivering total system harmony from day one.
             </p>
           </div>
 
@@ -1054,9 +1056,14 @@ const Home = () => {
                 development workloads.
               </p>
 
-              <button className="bg-[#E37016] hover:bg-[#c96012] text-[#F7F7F7] font-semibold text-[16px] leading-[19.2px] tracking-[0.2px] px-[43px] py-[18px] rounded-[10px] transition-colors w-fit shadow-lg">
+              <a
+                href="https://cloudone.com.ng"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#E37016] hover:bg-[#c96012] text-[#F7F7F7] font-semibold text-[16px] leading-[19.2px] tracking-[0.2px] px-[43px] py-[18px] rounded-[10px] transition-colors w-fit shadow-lg inline-block"
+              >
                 View VPS Hosting Plans
-              </button>
+              </a>
             </div>
 
             {/* Right Column: Feature Cards */}
