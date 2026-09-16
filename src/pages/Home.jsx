@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import bigfixLogo from "../assets/bigfixlogo.svg";
+import bgImageHome from "../assets/bgimagehomepage.png";
 
 const Home = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -70,7 +72,7 @@ const Home = () => {
       id: "optima",
       title: "OptimaOne",
       subtitle: "Core Banking, Asset & Investment Management",
-      color: "#00B4D8", // Cyan
+      color: "#00B4D8",
       bgColor: "bg-[#00B4D8]/10",
       icon: (
         <svg
@@ -104,7 +106,7 @@ const Home = () => {
       id: "fastra",
       title: "FastraSuite",
       subtitle: "Project Costing & Financial Tracking",
-      color: "#E37016", // Orange
+      color: "#E37016",
       bgColor: "bg-[#E37016]/10",
       icon: (
         <svg
@@ -138,7 +140,7 @@ const Home = () => {
       id: "enterprise",
       title: "EnterpriseOne",
       subtitle: "Corporate ERP",
-      color: "#00B4D8", // Cyan
+      color: "#00B4D8",
       bgColor: "bg-[#00B4D8]/10",
       icon: (
         <svg
@@ -301,23 +303,19 @@ const Home = () => {
       {/* Navbar Section */}
       <nav className="w-full flex justify-center py-4 lg:py-[24px] px-4 md:px-8 lg:px-[94px] bg-[#0A192F] relative z-50 border-b border-white/10 lg:border-none">
         <div className="w-full max-w-[1252px] flex justify-between items-center h-[52.23px]">
-          <div className="w-[138.14px] h-[52.43px] flex flex-col justify-center cursor-pointer">
+          {/* UPDATED LOGO SECTION - Using imported asset */}
+          <Link
+            to="/"
+            className="w-[138.14px] h-[52.43px] flex flex-col justify-center cursor-pointer"
+          >
             <div className="flex items-center gap-1.5">
-              <div className="relative w-8 h-8 flex items-center justify-center">
-                <div className="absolute top-0 right-0 w-5 h-5 bg-[#1EBED4] rounded-tr-lg rounded-bl-sm transform rotate-45"></div>
-                <div className="absolute bottom-0 left-0 w-6 h-6 bg-[#E37016] rounded-tl-lg rounded-br-sm transform -rotate-12"></div>
-                <div className="absolute top-1 left-1 w-3 h-3 bg-white rounded-full opacity-80"></div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-white font-bold text-[28px] leading-[1] tracking-tight">
-                  big<span className="font-normal">fix</span>
-                </span>
-              </div>
+              <img
+                src={bigfixLogo}
+                alt="BigFix Logo"
+                className="w-[138.1px] h-[52.4px] flex pb-[1.4px]"
+              />
             </div>
-            <span className="text-[7px] text-gray-400 tracking-[0.15em] mt-0.5 uppercase font-medium">
-              Integrated Technologies
-            </span>
-          </div>
+          </Link>
 
           <div className="hidden lg:flex gap-[21px] h-[44px] items-center text-white text-[15px] font-semibold">
             <div
@@ -377,7 +375,7 @@ const Home = () => {
             <a href="#" className="hover:text-[#1EBED4] transition-colors">
               Cloud Infrastructure
             </a>
-            <Link href="#" className="hover:text-[#1EBED4] transition-colors">
+            <Link to="#" className="hover:text-[#1EBED4] transition-colors">
               Company
             </Link>
             <Link
@@ -467,18 +465,21 @@ const Home = () => {
                   </div>
                 )}
               </div>
-              <a href="#" className="py-2 hover:text-[#1EBED4]">
+              <Link
+                to="/cloud-infrastructure"
+                className="py-2 hover:text-[#1EBED4]"
+              >
                 Cloud Infrastructure
-              </a>
-              <a href="#" className="py-2 hover:text-[#1EBED4]">
+              </Link>
+              <Link to="/company" className="py-2 hover:text-[#1EBED4]">
                 Company
-              </a>
-              <a href="#" className="py-2 hover:text-[#1EBED4]">
+              </Link>
+              <Link to="/about-us" className="py-2 hover:text-[#1EBED4]">
                 About Us
-              </a>
-              <a href="#" className="py-2 hover:text-[#1EBED4]">
+              </Link>
+              <Link to="/contact" className="py-2 hover:text-[#1EBED4]">
                 Contact
-              </a>
+              </Link>
               <button className="w-full mt-4 h-[48px] flex justify-center items-center rounded-[10px] bg-[#E37016] text-white font-semibold hover:bg-[#c96012] transition-colors">
                 Get Started
               </button>
@@ -492,7 +493,7 @@ const Home = () => {
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2070')`,
+            backgroundImage: `url(${bgImageHome})`,
           }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-r from-[#0A192F] via-[#0A192F]/90 to-[#0A192F]/40"></div>
@@ -1073,16 +1074,11 @@ const Home = () => {
             <div className="lg:col-span-2 flex flex-col gap-6 max-w-[439px]">
               {/* Logo */}
               <div className="flex items-center gap-1.5 mb-2">
-                <div className="relative w-8 h-8 flex items-center justify-center">
-                  <div className="absolute top-0 right-0 w-5 h-5 bg-[#1EBED4] rounded-tr-lg rounded-bl-sm transform rotate-45"></div>
-                  <div className="absolute bottom-0 left-0 w-6 h-6 bg-[#E37016] rounded-tl-lg rounded-br-sm transform -rotate-12"></div>
-                  <div className="absolute top-1 left-1 w-3 h-3 bg-white rounded-full opacity-80"></div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-white font-bold text-[28px] leading-[1] tracking-tight">
-                    big<span className="font-normal">fix</span>
-                  </span>
-                </div>
+                <img
+                  src={bigfixLogo}
+                  alt="BigFix Logo"
+                  className="w-[138.1px] h-[52.4px] flex pb-[1.4px]"
+                />
               </div>
 
               <p className="text-[#C4C4C4] text-[14px] leading-[150%] max-w-[439px]">
@@ -1306,9 +1302,12 @@ const Home = () => {
                 Company
               </h4>
               <div className="flex flex-col gap-4 text-white text-[14px] leading-[150%]">
-                <a href="#" className="hover:text-[#00B4D8] transition-colors">
+                <Link
+                  to="/about-us"
+                  className="hover:text-[#00B4D8] transition-colors"
+                >
                   About Us
-                </a>
+                </Link>
                 <a href="#" className="hover:text-[#00B4D8] transition-colors">
                   Careers
                 </a>
