@@ -1366,7 +1366,7 @@ const Home = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     OptimaOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -1379,7 +1379,7 @@ const Home = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     FastraSuite
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -1392,7 +1392,7 @@ const Home = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     EnterpriseOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -1414,7 +1414,7 @@ const Home = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     CloudOne VPS
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -1439,8 +1439,8 @@ const Home = (): JSX.Element => {
                 <Link to="#" className="hover:text-[#00B4D8] transition-colors">
                   Careers
                 </Link>
-                <a
-                  href="#request-review"
+                <Link
+                  to="#request-review"
                   className="hover:text-[#00B4D8] transition-colors"
                   onClick={(e) => {
                     e.preventDefault();
@@ -1451,7 +1451,7 @@ const Home = (): JSX.Element => {
                   }}
                 >
                   Support
-                </a>
+                </Link>
               </div>
             </div>
           </div>

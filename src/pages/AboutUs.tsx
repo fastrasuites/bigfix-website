@@ -291,22 +291,23 @@ const AboutUs = (): JSX.Element => {
               Cloud Infrastructure
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#1EBED4] transition-all duration-300 group-hover:w-full"></span>
             </a>
-            {/* <Link
-              to="/company"
-              className="hover:text-[#1EBED4] transition-colors"
-            >
-              Company
-            </Link> */}
+
             <Link
               to="/about-us"
               className={`transition-colors relative py-2 group ${
-                location.pathname === "/about-us" ? "text-[#1EBED4]" : "hover:text-[#1EBED4]"
+                location.pathname === "/about-us"
+                  ? "text-[#1EBED4]"
+                  : "hover:text-[#1EBED4]"
               }`}
             >
               About Us
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-[#1EBED4] transition-all duration-300 ${
-                location.pathname === "/about-us" ? "w-full" : "w-0 group-hover:w-full"
-              }`}></span>
+              <span
+                className={`absolute bottom-0 left-0 h-0.5 bg-[#1EBED4] transition-all duration-300 ${
+                  location.pathname === "/about-us"
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
             <a
               href="#contact"
@@ -869,7 +870,7 @@ const AboutUs = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     OptimaOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -882,7 +883,7 @@ const AboutUs = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     FastraSuite
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -895,7 +896,7 @@ const AboutUs = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     EnterpriseOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
@@ -917,7 +918,7 @@ const AboutUs = (): JSX.Element => {
                   rel="noopener noreferrer"
                   className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
                 >
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
+                  <span className="text-white font-semibold text-[14px] leading-[150%] hover:text-[#00B4D8] transition-colors">
                     CloudOne VPS
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
