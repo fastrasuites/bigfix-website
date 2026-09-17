@@ -761,7 +761,12 @@ const AboutUs = () => {
               </p>
 
               <div className="flex flex-col gap-4 text-[14px] text-[#F7F7F7] mt-2">
-                <div className="flex gap-3 items-start">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=8+Adelabu+Street,+Masha,+Surulere,+Lagos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-3 items-start group hover:text-[#00B4D8] transition-colors"
+                >
                   <svg
                     className="w-4 h-4 mt-1 flex-shrink-0"
                     fill="none"
@@ -776,12 +781,12 @@ const AboutUs = () => {
                     />
                   </svg>
                   <div className="flex flex-col gap-1">
-                    <span>8 Adelabu Street, Masha, Surulere, Lagos.</span>
+                    <span className="group-hover:underline">8 Adelabu Street, Masha, Surulere, Lagos.</span>
                     <span className="text-[12px] text-[#C4C4C4]">
                       8am - 5pm
                     </span>
                   </div>
-                </div>
+                </a>
 
                 <div className="flex gap-3 items-start">
                   <svg
