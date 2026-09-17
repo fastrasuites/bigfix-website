@@ -1,11 +1,16 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import bgImageAbout from "../assets/bgimageabout.png";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 
 const AboutUs = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+  }, []);
 
   // Dropdown data for Navbar
   const navApplications = [
@@ -178,7 +183,7 @@ const AboutUs = () => {
     <div className="w-full min-h-screen bg-white font-sans selection:bg-[#E37016] selection:text-white flex flex-col">
       {/* Navbar Section */}
       <nav className="w-full flex justify-center py-4 lg:py-[24px] px-4 md:px-8 lg:px-[94px] bg-[#0A192F] relative z-50 border-b border-white/10 lg:border-none">
-        <div className="w-full max-w-[1252px] flex justify-between items-center h-[52.23px]">
+        <div className="w-full max-w-[1252px] flex justify-between items-center h-[72px]">
           {/* Logo Section - NOW CLICKABLE */}
           <Link
             to="/"
@@ -196,13 +201,13 @@ const AboutUs = () => {
             </span>
           </Link>
 
-          <div className="hidden lg:flex gap-[21px] h-[44px] items-center text-white text-[15px] font-semibold">
+          <div className="hidden lg:flex gap-[21px] h-full items-center text-white text-[15px] font-semibold">
             <div
               className="relative h-full flex items-center"
               onMouseEnter={() => setIsDropdownOpen(true)}
               onMouseLeave={() => setIsDropdownOpen(false)}
             >
-              <button className="flex items-center gap-1 hover:text-[#1EBED4] transition-colors h-full">
+              <button className="flex items-center gap-1 hover:text-[#1EBED4] transition-colors h-full relative py-2 group">
                 Business Applications
                 <svg
                   className={`w-4 h-4 mt-0.5 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
@@ -217,6 +222,7 @@ const AboutUs = () => {
                     d="M19 9l-7 7-7-7"
                   />
                 </svg>
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#1EBED4] transition-all duration-300 group-hover:w-full"></span>
               </button>
 
               {isDropdownOpen && (
@@ -258,28 +264,42 @@ const AboutUs = () => {
               href="https://www.cloud.enterpriseone.com.ng/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[#1EBED4] transition-colors"
+              className="hover:text-[#1EBED4] transition-colors relative py-2 group"
             >
               Cloud Infrastructure
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#1EBED4] transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <Link
+            {/* <Link
               to="/company"
               className="hover:text-[#1EBED4] transition-colors"
             >
               Company
-            </Link>
+            </Link> */}
             <Link
               to="/about-us"
-              className="hover:text-[#1EBED4] transition-colors"
+              className={`transition-colors relative py-2 group ${
+                location.pathname === "/about-us" ? "text-[#1EBED4]" : "hover:text-[#1EBED4]"
+              }`}
             >
               About Us
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-[#1EBED4] transition-all duration-300 ${
+                location.pathname === "/about-us" ? "w-full" : "w-0 group-hover:w-full"
+              }`}></span>
             </Link>
-            <Link
-              to="/contact"
-              className="hover:text-[#1EBED4] transition-colors"
+            <a
+              href="#contact"
+              className="hover:text-[#1EBED4] transition-colors relative py-2 group"
+              onClick={(e) => {
+                e.preventDefault();
+                const element = document.getElementById("contact");
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
             >
               Contact
-            </Link>
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#1EBED4] transition-all duration-300 group-hover:w-full"></span>
+            </a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -721,7 +741,7 @@ const AboutUs = () => {
       </section>
 
       {/* Footer Section */}
-      <footer className="w-full bg-[#0A2F5A] pt-16 lg:pt-[80px] pb-8 px-4 md:px-8 lg:px-[140px] text-white">
+      <footer id="contact" className="w-full bg-[#0A2F5A] pt-16 lg:pt-[80px] pb-8 px-4 md:px-8 lg:px-[140px] text-white">
         <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-12 lg:gap-[80px]">
           {/* Top Grid Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
