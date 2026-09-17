@@ -1,4 +1,4 @@
-const BookDemo = () => {
+const BookDemo = (): JSX.Element => {
   return <div>Book Demo</div>;
 };
 

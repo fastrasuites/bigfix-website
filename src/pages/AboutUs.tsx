@@ -1,11 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import bgImageAbout from "../assets/bgimageabout.png";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 
-const AboutUs = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+interface NavApplication {
+  title: string;
+  subtitle: string;
+  description: string;
+  link: string;
+  icon: ReactNode;
+}
+
+interface WorkStep {
+  num: string;
+  title: string;
+  desc: string;
+  color: string;
+}
+
+interface ApproachCard {
+  title: string;
+  subtitle: string;
+  color: string;
+  icon: ReactNode;
+}
+
+const AboutUs = (): JSX.Element => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -13,7 +35,7 @@ const AboutUs = () => {
   }, []);
 
   // Dropdown data for Navbar
-  const navApplications = [
+  const navApplications: NavApplication[] = [
     {
       title: "Optima One",
       subtitle: "Core Banking, Asset & Investment Management",
@@ -74,7 +96,7 @@ const AboutUs = () => {
   ];
 
   // Data for "How We Work" section
-  const workSteps = [
+  const workSteps: WorkStep[] = [
     {
       num: "01",
       title: "Understand the Business",
@@ -96,7 +118,7 @@ const AboutUs = () => {
   ];
 
   // Data for "Our Approach" cards
-  const approachCards = [
+  const approachCards: ApproachCard[] = [
     {
       title: "Business Applications",
       subtitle: "OptimaOne · FastraSuite · EnterpriseOne",

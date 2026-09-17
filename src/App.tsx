@@ -4,7 +4,7 @@ import AboutUs from "./pages/AboutUs";
 import Career from "./pages/Career";
 import BookDemo from "./pages/BookDemo";
 
-function App() {
+function App(): JSX.Element {
   return (
     <Router>
       <Routes>

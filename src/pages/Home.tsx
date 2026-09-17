@@ -1,12 +1,59 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import bgImageHome from "../assets/bgimagehomepage.png";
 
-const Home = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState("optima");
+interface NavApplication {
+  title: string;
+  subtitle: string;
+  description: string;
+  link: string;
+  icon: ReactNode;
+}
+
+interface SolutionItem {
+  title: string;
+  text: string;
+}
+
+interface SolutionData {
+  id: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  bgColor: string;
+  icon: ReactNode;
+  content: SolutionItem[];
+  exploreLink: string;
+  link?: string;
+}
+
+interface ModuleFeature {
+  title: string;
+  items: {
+    subtitle: string;
+    desc: string;
+  }[];
+}
+
+interface CloudFeature {
+  title: string;
+  desc: string;
+}
+
+interface ModularCard {
+  title: string;
+  subtitle: string;
+  link: string;
+  icon: ReactNode;
+}
+
+const Home = (): JSX.Element => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [activeAccordion, setActiveAccordion] = useState<string | null>(
+    "optima",
+  );
   const location = useLocation();
 
   useEffect(() => {
@@ -14,7 +61,7 @@ const Home = () => {
   }, []);
 
   // Dropdown data for Navbar
-  const navApplications = [
+  const navApplications: NavApplication[] = [
     {
       title: "Optima One",
       subtitle: "Core Banking, Asset & Investment Management",
@@ -75,7 +122,7 @@ const Home = () => {
   ];
 
   // Data for the Software Solutions Accordion
-  const solutionsData = [
+  const solutionsData: SolutionData[] = [
     {
       id: "optima",
       title: "OptimaOne",
@@ -109,6 +156,7 @@ const Home = () => {
         },
       ],
       exploreLink: "Explore OptimaOne →",
+      link: "https://www.OptimaOne.com.ng/",
     },
     {
       id: "fastra",
@@ -143,6 +191,7 @@ const Home = () => {
         },
       ],
       exploreLink: "Explore FastraSuite →",
+      link: "https://www.fastrasuite.com/",
     },
     {
       id: "enterprise",
@@ -181,10 +230,11 @@ const Home = () => {
   ];
 
   // Data for the "Why Modular Infrastructure Works" section
-  const modularCards = [
+  const modularCards: ModularCard[] = [
     {
       title: "OptimaOne",
       subtitle: "Core Banking & Asset Management",
+      link: "https://www.OptimaOne.com.ng/",
       icon: (
         <svg
           className="w-5 h-5"
@@ -201,6 +251,7 @@ const Home = () => {
     {
       title: "FastraSuite",
       subtitle: "Project Costing & Shadow Ledger",
+      link: "https://www.fastrasuite.com/",
       icon: (
         <svg
           className="w-5 h-5"
@@ -217,6 +268,7 @@ const Home = () => {
     {
       title: "EnterpriseOne",
       subtitle: "Corporate ERP Suite",
+      link: "https://www.enterpriseone.com.ng/",
       icon: (
         <svg
           className="w-5 h-5"
@@ -232,7 +284,7 @@ const Home = () => {
   ];
 
   // Data for the "Module Deep-Dive" section
-  const moduleFeatures = [
+  const moduleFeatures: ModuleFeature[] = [
     {
       title: "Manage Funds and Capital in One Place",
       items: [
@@ -288,7 +340,7 @@ const Home = () => {
   ];
 
   // Data for CloudOne Section
-  const cloudFeatures = [
+  const cloudFeatures: CloudFeature[] = [
     {
       title: "Dedicated Resources",
       desc: "Get dedicated CPU and RAM resources for your virtual server.",
@@ -303,7 +355,7 @@ const Home = () => {
     },
   ];
 
-  const toggleAccordion = (id) => {
+  const toggleAccordion = (id: string | null): void => {
     setActiveAccordion(activeAccordion === id ? null : id);
   };
 
@@ -403,13 +455,19 @@ const Home = () => {
             <Link
               to="/about-us"
               className={`transition-colors relative py-2 group ${
-                location.pathname === "/about-us" ? "text-[#1EBED4]" : "hover:text-[#1EBED4]"
+                location.pathname === "/about-us"
+                  ? "text-[#1EBED4]"
+                  : "hover:text-[#1EBED4]"
               }`}
             >
               About Us
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-[#1EBED4] transition-all duration-300 ${
-                location.pathname === "/about-us" ? "w-full" : "w-0 group-hover:w-full"
-              }`}></span>
+              <span
+                className={`absolute bottom-0 left-0 h-0.5 bg-[#1EBED4] transition-all duration-300 ${
+                  location.pathname === "/about-us"
+                    ? "w-full"
+                    : "w-0 group-hover:w-full"
+                }`}
+              ></span>
             </Link>
             <a
               href="#contact"
@@ -546,16 +604,14 @@ const Home = () => {
             </h2>
           </div>
           <p className="text-slate-300 text-[16px] lg:text-[18px] leading-[1.6] max-w-[680px] mb-8 lg:mb-[40px] font-normal">
-            BigFix develops software for financial management, project costing,
-            and corporate operations. Choose the solution that meets your needs
-            today and add more as your business grows
+            BigFix develops advanced enterprise software platforms for financial
+            management, lifecycle project cost orchestration, and corporate
+            operations. Choose the solution that meets your needs today and add
+            more as your business grows.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 lg:gap-[24px]">
             <button className="w-full sm:w-auto bg-[#E37016] hover:bg-[#c96012] text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors shadow-lg text-center justify-center flex">
               Request a Review
-            </button>
-            <button className="w-full sm:w-auto border border-white/80 hover:border-white hover:bg-white/10 text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors flex items-center justify-center gap-2 backdrop-blur-sm">
-              Watch the 2-Min Overview
             </button>
           </div>
         </div>
@@ -696,9 +752,12 @@ const Home = () => {
 
           <div className="flex-1 max-w-[542px] flex flex-col gap-[24px]">
             {modularCards.map((card, idx) => (
-              <div
+              <a
                 key={idx}
-                className="w-full bg-[#FFFFFF1A] border-[0.5px] border-[#F7F7F780] rounded-[10px] p-[24px] flex items-center gap-[24px] backdrop-blur-sm"
+                href={card.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-[#FFFFFF1A] border-[0.5px] border-[#F7F7F780] rounded-[10px] p-[24px] flex items-center gap-[24px] backdrop-blur-sm hover:bg-[#FFFFFF26] transition-colors cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-[4px] bg-[#FFFFFF1A] border-[1.5px] border-[#00B4D8] flex items-center justify-center text-[#00B4D8] flex-shrink-0">
                   {card.icon}
@@ -711,7 +770,7 @@ const Home = () => {
                     {card.subtitle}
                   </p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -1110,7 +1169,10 @@ const Home = () => {
       </section>
 
       {/* NEW SECTION: Footer */}
-      <footer id="contact" className="w-full bg-[#0A2F5A] pt-16 lg:pt-[80px] pb-8 px-4 md:px-8 lg:px-[140px] text-white">
+      <footer
+        id="contact"
+        className="w-full bg-[#0A2F5A] pt-16 lg:pt-[80px] pb-8 px-4 md:px-8 lg:px-[140px] text-white"
+      >
         <div className="w-full max-w-[1440px] mx-auto flex flex-col gap-12 lg:gap-[80px]">
           {/* Top Grid Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
@@ -1152,7 +1214,9 @@ const Home = () => {
                     />
                   </svg>
                   <div className="flex flex-col gap-1">
-                    <span className="group-hover:underline">8 Adelabu Street, Masha, Surulere, Lagos.</span>
+                    <span className="group-hover:underline">
+                      8 Adelabu Street, Masha, Surulere, Lagos.
+                    </span>
                     <span className="text-[12px] text-[#C4C4C4]">
                       8am - 5pm
                     </span>
@@ -1285,30 +1349,45 @@ const Home = () => {
                 Applications
               </h4>
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
+                <a
+                  href="https://www.OptimaOne.com.ng/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
+                >
                   <span className="text-white font-semibold text-[14px] leading-[150%]">
                     OptimaOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
                     Core Banking & Asset Management
                   </span>
-                </div>
-                <div className="flex flex-col gap-1">
+                </a>
+                <a
+                  href="https://www.fastrasuite.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
+                >
                   <span className="text-white font-semibold text-[14px] leading-[150%]">
                     FastraSuite
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
                     Project Costing & Shadow Ledger
                   </span>
-                </div>
-                <div className="flex flex-col gap-1">
+                </a>
+                <a
+                  href="https://www.enterpriseone.com.ng/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
+                >
                   <span className="text-white font-semibold text-[14px] leading-[150%]">
                     EnterpriseOne
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
                     Corporate ERP Suite
                   </span>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -1318,30 +1397,19 @@ const Home = () => {
                 Infrastructure
               </h4>
               <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
+                <a
+                  href="https://www.cloud.enterpriseone.com.ng/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
+                >
                   <span className="text-white font-semibold text-[14px] leading-[150%]">
                     CloudOne VPS
                   </span>
                   <span className="text-white text-[12px] leading-[150%] opacity-90">
                     Enterprise Virtual Servers
                   </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
-                    Dedicated Instances
-                  </span>
-                  <span className="text-white text-[12px] leading-[150%] opacity-90">
-                    Bare-metal performance
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-white font-semibold text-[14px] leading-[150%]">
-                    Global Regions
-                  </span>
-                  <span className="text-white text-[12px] leading-[150%] opacity-90">
-                    40+ deployment zones
-                  </span>
-                </div>
+                </a>
               </div>
             </div>
 
@@ -1357,18 +1425,12 @@ const Home = () => {
                 >
                   About Us
                 </Link>
-                <a href="#" className="hover:text-[#00B4D8] transition-colors">
+                <Link to="#" className="hover:text-[#00B4D8] transition-colors">
                   Careers
-                </a>
-                <a href="#" className="hover:text-[#00B4D8] transition-colors">
-                  Security & Compliance
-                </a>
-                <a href="#" className="hover:text-[#00B4D8] transition-colors">
-                  Documentation
-                </a>
-                <a href="#" className="hover:text-[#00B4D8] transition-colors">
+                </Link>
+                <Link to="#" className="hover:text-[#00B4D8] transition-colors">
                   Support
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -1380,15 +1442,15 @@ const Home = () => {
           <div className="w-full max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[#C4C4C4] text-[14px] leading-[150%]">
             <p>© 2026 FastraSuite. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">
+              <Link to="#" className="hover:text-white transition-colors">
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </Link>
+              <Link to="#" className="hover:text-white transition-colors">
                 Terms of Service
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </Link>
+              <Link to="#" className="hover:text-white transition-colors">
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>
