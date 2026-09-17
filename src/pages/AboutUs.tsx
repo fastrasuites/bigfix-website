@@ -943,9 +943,12 @@ const AboutUs = (): JSX.Element => {
                 <Link to="#" className="hover:text-[#00B4D8] transition-colors">
                   Careers
                 </Link>
-                <Link to="#" className="hover:text-[#00B4D8] transition-colors">
+                <a
+                  href="/#request-review"
+                  className="hover:text-[#00B4D8] transition-colors"
+                >
                   Support
-                </Link>
+                </a>
               </div>
             </div>
           </div>
