@@ -610,7 +610,15 @@ const Home = (): JSX.Element => {
             more as your business grows.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 lg:gap-[24px]">
-            <button className="w-full sm:w-auto bg-[#E37016] hover:bg-[#c96012] text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors shadow-lg text-center justify-center flex">
+            <button
+              className="w-full sm:w-auto bg-[#E37016] hover:bg-[#c96012] text-white px-6 lg:px-[32px] py-3 lg:py-[16px] rounded-[8px] font-semibold text-[16px] transition-colors shadow-lg text-center justify-center flex"
+              onClick={() => {
+                const element = document.getElementById("request-review");
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+            >
               Request a Review
             </button>
           </div>
@@ -857,7 +865,10 @@ const Home = (): JSX.Element => {
       </section>
 
       {/* Let's Find the Right Solution */}
-      <section className="w-full bg-[#F9F9F9] py-16 lg:py-[120px] px-4 md:px-8 lg:px-[140px]">
+      <section
+        id="request-review"
+        className="w-full bg-[#F9F9F9] py-16 lg:py-[120px] px-4 md:px-8 lg:px-[140px]"
+      >
         <div className="w-full max-w-[1440px] mx-auto flex flex-col lg:flex-row justify-between items-center gap-12 lg:gap-[100px]">
           <div className="flex-1 max-w-[559px] flex flex-col gap-6">
             <span className="text-[#E37016] font-semibold text-[16px] leading-[24px] tracking-[-0.2px] uppercase">
@@ -1428,9 +1439,19 @@ const Home = (): JSX.Element => {
                 <Link to="#" className="hover:text-[#00B4D8] transition-colors">
                   Careers
                 </Link>
-                <Link to="#" className="hover:text-[#00B4D8] transition-colors">
+                <a
+                  href="#request-review"
+                  className="hover:text-[#00B4D8] transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const element = document.getElementById("request-review");
+                    if (element) {
+                      element.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                >
                   Support
-                </Link>
+                </a>
               </div>
             </div>
           </div>
