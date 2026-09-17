@@ -1,12 +1,56 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import bgImageHome from "../assets/bgimagehomepage.png";
 
-const Home = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeAccordion, setActiveAccordion] = useState("optima");
+interface NavApplication {
+  title: string;
+  subtitle: string;
+  description: string;
+  link: string;
+  icon: ReactNode;
+}
+
+interface SolutionItem {
+  title: string;
+  text: string;
+}
+
+interface SolutionData {
+  id: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  bgColor: string;
+  icon: ReactNode;
+  content: SolutionItem[];
+  exploreLink: string;
+  link?: string;
+}
+
+interface ModuleFeature {
+  title: string;
+  items: {
+    subtitle: string;
+    desc: string;
+  }[];
+}
+
+interface CloudFeature {
+  title: string;
+  desc: string;
+}
+
+interface ModularCard {
+  title: string;
+  subtitle: string;
+  icon: ReactNode;
+}
+
+const Home = (): JSX.Element => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [activeAccordion, setActiveAccordion] = useState<string | null>("optima");
   const location = useLocation();
 
   useEffect(() => {
@@ -14,7 +58,7 @@ const Home = () => {
   }, []);
 
   // Dropdown data for Navbar
-  const navApplications = [
+  const navApplications: NavApplication[] = [
     {
       title: "Optima One",
       subtitle: "Core Banking, Asset & Investment Management",
@@ -75,7 +119,7 @@ const Home = () => {
   ];
 
   // Data for the Software Solutions Accordion
-  const solutionsData = [
+  const solutionsData: SolutionData[] = [
     {
       id: "optima",
       title: "OptimaOne",
@@ -181,7 +225,7 @@ const Home = () => {
   ];
 
   // Data for the "Why Modular Infrastructure Works" section
-  const modularCards = [
+  const modularCards: ModularCard[] = [
     {
       title: "OptimaOne",
       subtitle: "Core Banking & Asset Management",
@@ -232,7 +276,7 @@ const Home = () => {
   ];
 
   // Data for the "Module Deep-Dive" section
-  const moduleFeatures = [
+  const moduleFeatures: ModuleFeature[] = [
     {
       title: "Manage Funds and Capital in One Place",
       items: [
@@ -288,7 +332,7 @@ const Home = () => {
   ];
 
   // Data for CloudOne Section
-  const cloudFeatures = [
+  const cloudFeatures: CloudFeature[] = [
     {
       title: "Dedicated Resources",
       desc: "Get dedicated CPU and RAM resources for your virtual server.",
@@ -303,7 +347,7 @@ const Home = () => {
     },
   ];
 
-  const toggleAccordion = (id) => {
+  const toggleAccordion = (id: string | null): void => {
     setActiveAccordion(activeAccordion === id ? null : id);
   };
 
