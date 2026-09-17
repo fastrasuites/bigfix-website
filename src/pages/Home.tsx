@@ -70,7 +70,7 @@ const Home = (): JSX.Element => {
       link: "#", // Yet to be live
       icon: (
         <svg
-          className="w-5 h-3.25 text-[#00B4D8] mt-1"
+          className="w-5 h-3 text-[#00B4D8] mt-1"
           viewBox="0 0 24 16"
           fill="none"
           stroke="currentColor"
