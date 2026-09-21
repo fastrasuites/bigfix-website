@@ -18,42 +18,6 @@ import type {
  */
 export const solutionsData: SolutionData[] = [
   {
-    id: "optima",
-    title: "OptimaOne",
-    subtitle: "Core Banking, Asset & Investment Management",
-    color: "#00B4D8",
-    bgColor: "bg-[#00B4D8]/10",
-    icon: (
-      <svg
-        className="w-6 h-6 text-[#00B4D8]"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        strokeWidth="1.5"
-      >
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="M2 8h20M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
-      </svg>
-    ),
-    content: [
-      {
-        title: "WHAT IT DOES",
-        text: "OptimaOne helps financial organizations manage accounts, investments, asset-backed transactions, profit-sharing, and joint-venture funds in one system.",
-      },
-      {
-        title: "KEY VALUE",
-        text: "Built around a central ledger that keeps transactions organized, traceable, and easy to reconcile.",
-      },
-      {
-        title: "INTEGRATION",
-        text: "Connect OptimaOne to payment networks, wealth-management platforms, and other financial systems through APIs.",
-      },
-    ],
-    exploreLink: "Explore OptimaOne →",
-    link: "https://www.OptimaOne.com.ng/",
-    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
-  },
-  {
     id: "fastra",
     title: "FastraSuite",
     subtitle: "Project Costing & Financial Tracking",
@@ -67,7 +31,7 @@ export const solutionsData: SolutionData[] = [
         viewBox="0 0 24 24"
         strokeWidth="1.5"
       >
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 02-2V8l-6-6z" />
         <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
       </svg>
     ),
@@ -122,19 +86,15 @@ export const solutionsData: SolutionData[] = [
     exploreLink: "Explore EnterpriseOne →",
     link: "https://www.enterpriseone.com.ng/",
   },
-];
-/**
- * Product cards shown in the "Why Modular Infrastructure Works" section.
- */
-export const modularCards: ModularCard[] = [
   {
+    id: "optima",
     title: "OptimaOne",
-    subtitle: "Core Banking & Asset Management",
-    link: "https://www.OptimaOne.com.ng/",
-    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
+    subtitle: "Core Banking, Asset & Investment Management",
+    color: "#00B4D8",
+    bgColor: "bg-[#00B4D8]/10",
     icon: (
       <svg
-        className="w-5 h-5"
+        className="w-6 h-6 text-[#00B4D8]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -144,7 +104,29 @@ export const modularCards: ModularCard[] = [
         <path d="M2 8h20M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
       </svg>
     ),
+    content: [
+      {
+        title: "WHAT IT DOES",
+        text: "OptimaOne helps financial organizations manage accounts, investments, asset-backed transactions, profit-sharing, and joint-venture funds in one system.",
+      },
+      {
+        title: "KEY VALUE",
+        text: "Built around a central ledger that keeps transactions organized, traceable, and easy to reconcile.",
+      },
+      {
+        title: "INTEGRATION",
+        text: "Connect OptimaOne to payment networks, wealth-management platforms, and other financial systems through APIs.",
+      },
+    ],
+    exploreLink: "Explore OptimaOne →",
+    link: "https://www.OptimaOne.com.ng/",
+    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
+];
+/**
+ * Product cards shown in the "Why Modular Infrastructure Works" section.
+ */
+export const modularCards: ModularCard[] = [
   {
     title: "FastraSuite",
     subtitle: "Project Costing & Shadow Ledger",
@@ -157,7 +139,7 @@ export const modularCards: ModularCard[] = [
         viewBox="0 0 24 24"
         strokeWidth="1.5"
       >
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 02-2V8l-6-6z" />
         <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
       </svg>
     ),
@@ -175,6 +157,24 @@ export const modularCards: ModularCard[] = [
         strokeWidth="1.5"
       >
         <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-4a2 2 0 012-2h2a2 2 0 012 2v4M9 10h.01M15 10h.01M9 14h.01M15 14h.01" />
+      </svg>
+    ),
+  },
+  {
+    title: "OptimaOne",
+    subtitle: "Core Banking & Asset Management",
+    link: "https://www.OptimaOne.com.ng/",
+    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+      >
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="M2 8h20M6 12h.01M10 12h.01M14 12h.01M18 12h.01" />
       </svg>
     ),
   },

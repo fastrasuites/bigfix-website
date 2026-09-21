@@ -3,9 +3,9 @@ import TextField from "../common/TextField";
 import type { SelectOption } from "../../types";
 
 const PRODUCT_OPTIONS: SelectOption[] = [
-  { value: "optima", label: "OptimaOne" },
   { value: "fastra", label: "FastraSuite" },
   { value: "enterprise", label: "EnterpriseOne" },
+  { value: "optima", label: "OptimaOne" },
 ];
 
 const TIMELINE_OPTIONS: SelectOption[] = [

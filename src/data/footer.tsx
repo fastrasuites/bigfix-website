@@ -89,12 +89,6 @@ export const footerSocials: SocialLink[] = [
  */
 export const footerApplications: FooterProductItem[] = [
   {
-    name: "OptimaOne",
-    href: `/#${OPTIMA_ONE_SECTION_ID}`,
-    description: "Core Banking & Asset Management",
-    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
-  },
-  {
     name: "FastraSuite",
     href: "https://www.fastrasuite.com/",
     description: "Project Costing & Shadow Ledger",
@@ -103,6 +97,12 @@ export const footerApplications: FooterProductItem[] = [
     name: "EnterpriseOne",
     href: "https://www.enterpriseone.com.ng/",
     description: "Corporate ERP Suite",
+  },
+  {
+    name: "OptimaOne",
+    href: `/#${OPTIMA_ONE_SECTION_ID}`,
+    description: "Core Banking & Asset Management",
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
 ];
 

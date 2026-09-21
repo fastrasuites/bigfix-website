@@ -7,26 +7,6 @@ import { createCrossPageScrollHandler } from "../utils/scroll";
  */
 export const navApplications: NavApplication[] = [
   {
-    title: "Optima One",
-    subtitle: "Core Banking, Asset & Investment Management",
-    description:
-      "Equity-backed deposit accounts, profit-share calculation, and fund ledgering",
-    link: `/#${OPTIMA_ONE_SECTION_ID}`,
-    icon: (
-      <svg
-        className="w-5 h-3 text-[#00B4D8] mt-1"
-        viewBox="0 0 24 16"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      >
-        <rect x="1" y="2" width="22" height="12" rx="2" />
-        <path d="M1 6h22" />
-      </svg>
-    ),
-    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
-  },
-  {
     title: "FastraSuite",
     subtitle: "Project Costing & Shadow Ledger",
     description:
@@ -63,6 +43,26 @@ export const navApplications: NavApplication[] = [
         <path d="M8 5h8M8 9h8M8 13h4" />
       </svg>
     ),
+  },
+  {
+    title: "Optima One",
+    subtitle: "Core Banking, Asset & Investment Management",
+    description:
+      "Equity-backed deposit accounts, profit-share calculation, and fund ledgering",
+    link: `/#${OPTIMA_ONE_SECTION_ID}`,
+    icon: (
+      <svg
+        className="w-5 h-3 text-[#00B4D8] mt-1"
+        viewBox="0 0 24 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="1" y="2" width="22" height="12" rx="2" />
+        <path d="M1 6h22" />
+      </svg>
+    ),
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
 ];
 
