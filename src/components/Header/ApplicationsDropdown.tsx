@@ -20,6 +20,7 @@ const ApplicationsDropdown = ({
             target={app.link !== "#" ? "_blank" : "_self"}
             rel={app.link !== "#" ? "noopener noreferrer" : ""}
             className="flex gap-3 items-start group cursor-pointer"
+            onClick={app.onClick}
           >
             <div className="mt-1 flex-shrink-0">{app.icon}</div>
             <div className="flex flex-col gap-[2px]">

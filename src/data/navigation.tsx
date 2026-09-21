@@ -1,4 +1,6 @@
 import type { NavApplication, NavLink } from "../types";
+import { OPTIMA_ONE_SECTION_ID } from "../constants/links";
+import { createCrossPageScrollHandler } from "../utils/scroll";
 
 /**
  * Products listed in the "Business Applications" navigation dropdown.
@@ -9,7 +11,7 @@ export const navApplications: NavApplication[] = [
     subtitle: "Core Banking, Asset & Investment Management",
     description:
       "Equity-backed deposit accounts, profit-share calculation, and fund ledgering",
-    link: "#", // Yet to be live
+    link: `/#${OPTIMA_ONE_SECTION_ID}`,
     icon: (
       <svg
         className="w-5 h-3 text-[#00B4D8] mt-1"
@@ -22,6 +24,7 @@ export const navApplications: NavApplication[] = [
         <path d="M1 6h22" />
       </svg>
     ),
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
   {
     title: "FastraSuite",

@@ -9,6 +9,7 @@ export interface NavApplication {
   description: string;
   link: string;
   icon: ReactNode;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**
