@@ -47,3 +47,9 @@ export const createPageScrollHandler =
     }
     // else: let the Link/router handle navigation
   };
+
+/**
+ * Returns true if the URL is an external link (http:// or https://).
+ */
+export const isExternalUrl = (url: string | undefined): boolean =>
+  url !== undefined && /^https?:\/\//i.test(url);

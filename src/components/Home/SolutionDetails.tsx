@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { isExternalUrl } from "../../utils/scroll";
 import type { SolutionDetailsProps } from "../../types";
 
 /**
@@ -36,8 +37,8 @@ const SolutionDetails = ({ solution }: SolutionDetailsProps): JSX.Element => (
     <div className="mt-4 md:mt-8">
       <a
         href={solution.link}
-        target={solution.link && solution.link !== "#" ? "_blank" : "_self"}
-        rel={solution.link && solution.link !== "#" ? "noopener noreferrer" : ""}
+        target={isExternalUrl(solution.link) ? "_blank" : undefined}
+        rel={isExternalUrl(solution.link) ? "noopener noreferrer" : undefined}
         className="inline-flex items-center gap-2 text-[16px] font-semibold text-[#0A2F5A] hover:text-[#00B4D8] transition-colors group"
         onClick={solution.onClick}
       >

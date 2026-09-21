@@ -1,3 +1,4 @@
+import { isExternalUrl } from "../../utils/scroll";
 import type { ApplicationsDropdownProps } from "../../types";
 
 /**
@@ -17,8 +18,8 @@ const ApplicationsDropdown = ({
           <a
             key={app.title}
             href={app.link}
-            target={app.link !== "#" ? "_blank" : "_self"}
-            rel={app.link !== "#" ? "noopener noreferrer" : ""}
+            target={isExternalUrl(app.link) ? "_blank" : undefined}
+            rel={isExternalUrl(app.link) ? "noopener noreferrer" : undefined}
             className="flex gap-3 items-start group cursor-pointer"
             onClick={app.onClick}
           >

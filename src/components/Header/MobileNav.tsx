@@ -4,6 +4,7 @@ import {
   CLOUD_INFRASTRUCTURE_URL,
   CONTACT_PATH,
 } from "../../constants/links";
+import { isExternalUrl } from "../../utils/scroll";
 import type { MobileNavProps } from "../../types";
 
 /**
@@ -43,8 +44,8 @@ const MobileNav = ({
               <a
                 key={app.title}
                 href={app.link}
-                target={app.link !== "#" ? "_blank" : "_self"}
-                rel={app.link !== "#" ? "noopener noreferrer" : ""}
+                target={isExternalUrl(app.link) ? "_blank" : undefined}
+                rel={isExternalUrl(app.link) ? "noopener noreferrer" : undefined}
                 className="flex flex-col gap-1"
               >
                 <span className="text-[#1EBED4] font-bold">{app.title}</span>

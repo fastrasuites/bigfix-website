@@ -1,3 +1,4 @@
+import { isExternalUrl } from "../../utils/scroll";
 import type { FooterProductColumnProps } from "../../types";
 
 /**
@@ -16,8 +17,8 @@ const FooterProductColumn = ({
       <a
         key={item.name}
         href={item.href}
-        target="_blank"
-        rel="noopener noreferrer"
+        target={isExternalUrl(item.href) ? "_blank" : undefined}
+        rel={isExternalUrl(item.href) ? "noopener noreferrer" : undefined}
         className="flex flex-col gap-1 text-left hover:text-[#00B4D8] transition-colors"
         onClick={item.onClick}
       >
