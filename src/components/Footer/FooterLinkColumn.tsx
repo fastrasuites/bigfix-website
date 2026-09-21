@@ -30,6 +30,7 @@ const FooterLinkColumn = ({
             key={link.label}
             to={link.href}
             className="hover:text-[#00B4D8] transition-colors"
+            onClick={link.onClick}
           >
             {link.label}
           </Link>

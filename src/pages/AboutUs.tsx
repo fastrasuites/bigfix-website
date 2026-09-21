@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import bgImageAbout from "../assets/bgimageabout.png";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import AboutHero from "../components/AboutUs/AboutHero";
@@ -8,6 +9,7 @@ import VisionMissionSection from "../components/AboutUs/VisionMissionSection";
 import WhoWeAreSection from "../components/AboutUs/WhoWeAreSection";
 import Footer from "../components/Footer/Footer";
 import Header from "../components/Header/Header";
+import { ABOUT_US_TOP_SECTION_ID } from "../constants/links";
 import { aboutStats, approachCards, visionMissionCards, workSteps } from "../data/about";
 import {
   aboutSupportLink,
@@ -22,16 +24,23 @@ import { aboutMobileNavLinks, navApplications } from "../data/navigation";
 import { useNavigationState } from "../hooks/useNavigationState";
 import { useSmoothScroll } from "../hooks/useSmoothScroll";
 
+const scrollToAboutTop = () => {
+  document.getElementById(ABOUT_US_TOP_SECTION_ID)?.scrollIntoView({ behavior: "smooth" });
+};
+
 /**
  * About page: company story, vision and mission, process, approach and CTA.
  */
 const AboutUs = (): JSX.Element => {
   useSmoothScroll();
+  useEffect(() => {
+    scrollToAboutTop();
+  }, []);
   const { isDropdownOpen, isMobileMenuOpen, setDropdownOpen, toggleMobileMenu } =
     useNavigationState();
 
   return (
-    <div className="w-full min-h-screen bg-white font-sans selection:bg-[#E37016] selection:text-white flex flex-col">
+    <div id="about-us-top" className="w-full min-h-screen bg-white font-sans selection:bg-[#E37016] selection:text-white flex flex-col">
       <Header
         logoSrc={bigfixLogo}
         navApplications={navApplications}

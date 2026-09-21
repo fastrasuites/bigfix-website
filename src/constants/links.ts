@@ -17,3 +17,4 @@ export const CONTACT_SECTION_ID = "contact";
 export const REQUEST_REVIEW_SECTION_ID = "request-review";
 export const OUR_COMPANY_SECTION_ID = "our-company";
 export const OPTIMA_ONE_SECTION_ID = "optimaone-section";
+export const ABOUT_US_TOP_SECTION_ID = "about-us-top";

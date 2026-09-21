@@ -1,5 +1,5 @@
-import { ABOUT_US_PATH, REQUEST_REVIEW_SECTION_ID, OPTIMA_ONE_SECTION_ID } from "../constants/links";
-import { createScrollHandler, createCrossPageScrollHandler } from "../utils/scroll";
+import { ABOUT_US_PATH, REQUEST_REVIEW_SECTION_ID, OPTIMA_ONE_SECTION_ID, ABOUT_US_TOP_SECTION_ID } from "../constants/links";
+import { createScrollHandler, createCrossPageScrollHandler, createPageScrollHandler } from "../utils/scroll";
 import type {
   FooterContact,
   FooterLinkItem,
@@ -122,7 +122,11 @@ export const footerInfrastructure: FooterProductItem[] = [
  * each page can decide how that link behaves.
  */
 export const footerCompanyLinks: FooterLinkItem[] = [
-  { label: "About Us", href: ABOUT_US_PATH },
+  {
+    label: "About Us",
+    href: ABOUT_US_PATH,
+    onClick: createPageScrollHandler("/about-us", ABOUT_US_TOP_SECTION_ID),
+  },
   { label: "Careers", href: "#" },
   {
     label: "Support",

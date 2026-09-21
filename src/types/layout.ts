@@ -22,6 +22,7 @@ export interface FooterLinkItem {
    * (plain anchor + optional click handler) instead of a router `Link`.
    */
   isSupportLink?: boolean;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**

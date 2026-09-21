@@ -32,3 +32,18 @@ export const createCrossPageScrollHandler =
     }
     // else: let default navigation to "/#id" happen
   };
+
+/**
+ * Builds a scroll handler for links pointing to a specific page:
+ * - If already on the target page, prevents default and smooth-scrolls to the section.
+ * - Otherwise, lets the router handle navigation to the target page.
+ */
+export const createPageScrollHandler =
+  (pathname: string, id: string) =>
+  (event: MouseEvent<HTMLElement>): void => {
+    if (window.location.pathname === pathname) {
+      event.preventDefault();
+      scrollToSection(id);
+    }
+    // else: let the Link/router handle navigation
+  };
