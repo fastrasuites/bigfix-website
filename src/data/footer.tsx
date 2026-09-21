@@ -1,5 +1,5 @@
 import { ABOUT_US_PATH, REQUEST_REVIEW_SECTION_ID, OPTIMA_ONE_SECTION_ID } from "../constants/links";
-import { createScrollHandler } from "../utils/scroll";
+import { createScrollHandler, createCrossPageScrollHandler } from "../utils/scroll";
 import type {
   FooterContact,
   FooterLinkItem,
@@ -90,9 +90,9 @@ export const footerSocials: SocialLink[] = [
 export const footerApplications: FooterProductItem[] = [
   {
     name: "OptimaOne",
-    href: "https://www.OptimaOne.com.ng/",
+    href: `/#${OPTIMA_ONE_SECTION_ID}`,
     description: "Core Banking & Asset Management",
-    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
   {
     name: "FastraSuite",

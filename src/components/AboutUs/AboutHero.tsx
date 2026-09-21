@@ -1,8 +1,4 @@
-import { OUR_COMPANY_SECTION_ID } from "../../constants/links";
-import { createScrollHandler } from "../../utils/scroll";
 import type { AboutHeroProps } from "../../types";
-
-const handleCompanyClick = createScrollHandler(OUR_COMPANY_SECTION_ID);
 
 /**
  * About page hero with the company positioning statement.
@@ -35,13 +31,13 @@ const AboutHero = ({ backgroundImage }: AboutHeroProps): JSX.Element => (
         tailored to solve the complex financial, operational, and technology
         challenges faced by modern organizations.
       </p>
-      <a
+      {/* <a
         href={`#${OUR_COMPANY_SECTION_ID}`}
         className="inline-block bg-[#1EBED4] hover:bg-[#00B4D8] text-white font-semibold text-[16px] leading-[19.2px] tracking-[0.2px] px-[43px] py-[18px] rounded-[10px] transition-all duration-300 ease-in-out w-fit shadow-lg hover:shadow-[#1EBED4]/30 hover:-translate-y-0.5"
         onClick={handleCompanyClick}
       >
         Our Company
-      </a>
+      </a> */}
     </div>
   </section>
 );
