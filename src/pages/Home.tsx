@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import bgImageHome from "../assets/bgimagehomepage.png";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import Footer from "../components/Footer/Footer";
@@ -39,6 +40,13 @@ const scrollToRequestReview = createScrollHandler(REQUEST_REVIEW_SECTION_ID);
  */
 const Home = (): JSX.Element => {
   useSmoothScroll();
+  useEffect(() => {
+    if (window.location.hash) {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, []);
   const { isDropdownOpen, isMobileMenuOpen, setDropdownOpen, toggleMobileMenu } =
     useNavigationState();
 

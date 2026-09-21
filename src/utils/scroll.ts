@@ -20,17 +20,19 @@ export const createScrollHandler =
 
 /**
  * Builds a cross-page scroll handler:
- * - If already on the home page ("/"), prevents default and smooth-scrolls to the section.
- * - Otherwise, lets the browser navigate to "/#id" (which loads the home page and scrolls).
+ * - Always prevents default to avoid unhandled anchor navigation.
+ * - If already on the home page ("/"), smooth-scrolls to the section.
+ * - Otherwise, navigates to "/#id" so the target page loads the section.
  */
 export const createCrossPageScrollHandler =
   (id: string) =>
   (event: MouseEvent<HTMLElement>): void => {
+    event.preventDefault();
     if (window.location.pathname === "/") {
-      event.preventDefault();
       scrollToSection(id);
+    } else {
+      window.location.href = `/#${id}`;
     }
-    // else: let default navigation to "/#id" happen
   };
 
 /**
