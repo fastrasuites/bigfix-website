@@ -36,10 +36,16 @@ export interface SocialLink {
 export interface HeaderProps {
   logoSrc: string;
   navApplications: NavApplication[];
+  services: NavLink[];
   isDropdownOpen: boolean;
+  isServicesOpen: boolean;
   isMobileMenuOpen: boolean;
   /** Opens/closes the applications dropdown (desktop hover + mobile trigger). */
   onDropdownChange: (isOpen: boolean) => void;
+  /** Opens/closes the services dropdown (desktop hover + mobile trigger). */
+  onServicesChange: (isOpen: boolean) => void;
+  /** Callback for the Book a Demo button. */
+  onBookDemo: () => void;
   onMobileMenuToggle: () => void;
   /** Optional tagline rendered underneath the logo. */
   tagline?: string;
@@ -54,8 +60,12 @@ export interface HeaderLogoProps {
 
 export interface DesktopNavProps {
   applications: NavApplication[];
+  services: NavLink[];
   isDropdownOpen: boolean;
+  isServicesOpen: boolean;
   onDropdownChange: (isOpen: boolean) => void;
+  onServicesChange: (isOpen: boolean) => void;
+  onBookDemo: () => void;
 }
 
 export interface ApplicationsDropdownProps {
@@ -64,8 +74,12 @@ export interface ApplicationsDropdownProps {
 
 export interface MobileNavProps {
   applications: NavApplication[];
+  services: NavLink[];
   isDropdownOpen: boolean;
+  isServicesOpen: boolean;
   onDropdownChange: (isOpen: boolean) => void;
+  onServicesChange: (isOpen: boolean) => void;
+  onBookDemo: () => void;
   extraLinks?: NavLink[];
 }
 

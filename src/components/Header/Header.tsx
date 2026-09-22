@@ -10,9 +10,13 @@ import MobileNav from "./MobileNav";
 const Header = ({
   logoSrc,
   navApplications,
+  services,
   isDropdownOpen,
+  isServicesOpen,
   isMobileMenuOpen,
   onDropdownChange,
+  onServicesChange,
+  onBookDemo,
   onMobileMenuToggle,
   tagline,
   mobileLinks,
@@ -23,8 +27,12 @@ const Header = ({
 
       <DesktopNav
         applications={navApplications}
+        services={services}
         isDropdownOpen={isDropdownOpen}
+        isServicesOpen={isServicesOpen}
         onDropdownChange={onDropdownChange}
+        onServicesChange={onServicesChange}
+        onBookDemo={onBookDemo}
       />
 
       <div className="flex items-center gap-4">
@@ -61,8 +69,12 @@ const Header = ({
     {isMobileMenuOpen && (
       <MobileNav
         applications={navApplications}
+        services={services}
         isDropdownOpen={isDropdownOpen}
+        isServicesOpen={isServicesOpen}
         onDropdownChange={onDropdownChange}
+        onServicesChange={onServicesChange}
+        onBookDemo={onBookDemo}
         extraLinks={mobileLinks}
       />
     )}

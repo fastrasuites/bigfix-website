@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import bgImageHome from "../assets/bgimagehomepage.png";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import Footer from "../components/Footer/Footer";
@@ -27,7 +28,7 @@ import {
   requestReviewBenefits,
   solutionsData,
 } from "../data/home";
-import { navApplications } from "../data/navigation";
+import { navApplications, navServices } from "../data/navigation";
 import { useNavigationState } from "../hooks/useNavigationState";
 import { useSmoothScroll } from "../hooks/useSmoothScroll";
 import { createScrollHandler } from "../utils/scroll";
@@ -47,17 +48,28 @@ const Home = (): JSX.Element => {
       });
     }
   }, []);
-  const { isDropdownOpen, isMobileMenuOpen, setDropdownOpen, toggleMobileMenu } =
-    useNavigationState();
+  const navigate = useNavigate();
+  const {
+    isDropdownOpen,
+    isServicesOpen,
+    isMobileMenuOpen,
+    setDropdownOpen,
+    setServicesOpen,
+    toggleMobileMenu,
+  } = useNavigationState();
 
   return (
     <div className="w-full min-h-screen bg-white font-sans selection:bg-[#E37016] selection:text-white flex flex-col">
       <Header
         logoSrc={bigfixLogo}
         navApplications={navApplications}
+        services={navServices}
         isDropdownOpen={isDropdownOpen}
+        isServicesOpen={isServicesOpen}
         isMobileMenuOpen={isMobileMenuOpen}
         onDropdownChange={setDropdownOpen}
+        onServicesChange={setServicesOpen}
+        onBookDemo={() => navigate("/book-demo")}
         onMobileMenuToggle={toggleMobileMenu}
       />
 
