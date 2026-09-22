@@ -2,16 +2,13 @@ import { useLocation } from "react-router-dom";
 import {
   ABOUT_US_PATH,
   CLOUD_INFRASTRUCTURE_URL,
-  CONTACT_SECTION_ID,
+  CONTACT_PATH,
 } from "../../constants/links";
-import { createScrollHandler } from "../../utils/scroll";
 import type { DesktopNavProps } from "../../types";
 import NavUnderline from "./NavUnderline";
 import NavUnderlineLink from "./NavUnderlineLink";
 import ApplicationsDropdown from "./ApplicationsDropdown";
 import ServicesDropdown from "./ServicesDropdown";
-
-const handleContactClick = createScrollHandler(CONTACT_SECTION_ID);
 
 const DesktopNav = ({
   applications,
@@ -93,8 +90,8 @@ const DesktopNav = ({
       />
       <NavUnderlineLink
         label="Contact"
-        href={`#${CONTACT_SECTION_ID}`}
-        onClick={handleContactClick}
+        to={CONTACT_PATH}
+        isActive={location.pathname === CONTACT_PATH}
       />
 
       <button
