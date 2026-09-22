@@ -106,10 +106,10 @@ const ContactUs = (): JSX.Element => {
                 <div className="flex items-center gap-4">
                   <span className="text-[#00B4D8] text-2xl">📞</span>
                   <div>
-                    <a href="tel:+2348056235944" className="text-[#0A2F5A] font-medium hover:text-[#00B4D8] transition-colors block">
+                    <a href="https://wa.me/2348056235944" target="_blank" rel="noopener noreferrer" className="text-[#0A2F5A] font-medium hover:text-[#00B4D8] transition-colors block">
                       +234 805 623 5944
                     </a>
-                    <a href="tel:+2348089896733" className="text-[#0A2F5A] font-medium hover:text-[#00B4D8] transition-colors block">
+                    <a href="https://wa.me/2348089896733" target="_blank" rel="noopener noreferrer" className="text-[#0A2F5A] font-medium hover:text-[#00B4D8] transition-colors block">
                       +234 808 989 6733
                     </a>
                   </div>
@@ -131,11 +131,11 @@ const ContactUs = (): JSX.Element => {
             <div className="w-full lg:w-1/2">
               <div className="rounded-2xl overflow-hidden shadow-xl">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.5!2d3.38!3d6.45!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMjYnMTEuMiJFdjhEMMM!5e0!3m2!1sen!2sng!4v1700000000000"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.48!2d3.38!3d6.45!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103c0b1e0e8e8e8e%3A0x1e0e8e8e8e8e8e8e!2zNsKwMjYnMTEuMiJFdjhEMMM!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
                   className="w-full h-[400px] lg:h-[500px] border-0"
                   allowFullScreen
                   loading="lazy"
-                  title="BigFix Location"
+                  title="BigFix Location - 8 Adelabu Street, Masha, Surulere, Lagos"
                 ></iframe>
               </div>
             </div>
@@ -244,8 +244,12 @@ const ContactUs = (): JSX.Element => {
             <div className="flex items-center gap-6">
               <div className="text-center">
                 <h4 className="text-[#0A2F5A] font-bold mb-1">24/7 Customer support</h4>
-                <p className="text-[#A8A8A8] text-sm">+234 805 623 5944</p>
-                <p className="text-[#A8A8A8] text-sm">+234 808 989 6733</p>
+                <a href="https://wa.me/2348056235944" target="_blank" rel="noopener noreferrer" className="text-[#A8A8A8] text-sm hover:text-[#00B4D8] transition-colors block">
+                  +234 805 623 5944
+                </a>
+                <a href="https://wa.me/2348089896733" target="_blank" rel="noopener noreferrer" className="text-[#A8A8A8] text-sm hover:text-[#00B4D8] transition-colors block">
+                  +234 808 989 6733
+                </a>
               </div>
             </div>
           </div>

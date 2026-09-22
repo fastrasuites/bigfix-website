@@ -34,6 +34,8 @@ export interface FooterContact {
   mapUrl: string;
   phone1: string;
   phone2: string;
+  whatsappUrl1: string;
+  whatsappUrl2: string;
   email: string;
 }
 

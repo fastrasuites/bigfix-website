@@ -49,8 +49,12 @@ const FooterContactDetails = ({
         />
       </svg>
       <div className="flex flex-col gap-1">
-        <span>{contact.phone1}</span>
-        <span>{contact.phone2}</span>
+        <a href={contact.whatsappUrl1} target="_blank" rel="noopener noreferrer" className="hover:text-[#00B4D8] transition-colors">
+          {contact.phone1}
+        </a>
+        <a href={contact.whatsappUrl2} target="_blank" rel="noopener noreferrer" className="hover:text-[#00B4D8] transition-colors">
+          {contact.phone2}
+        </a>
       </div>
     </div>
 
