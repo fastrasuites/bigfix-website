@@ -5,10 +5,12 @@ import Career from "./pages/Career";
 import BookDemo from "./pages/BookDemo";
 import SoftwareDevelopment from "./pages/SoftwareDevelopment";
 import CloudStorage from "./pages/CloudStorage";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App(): JSX.Element {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about-us" element={<AboutUs />} />
