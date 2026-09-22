@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import AboutUs from "./pages/AboutUs";
 import Career from "./pages/Career";
 import BookDemo from "./pages/BookDemo";
+import SoftwareDevelopment from "./pages/SoftwareDevelopment";
 
 function App(): JSX.Element {
   return (
@@ -12,6 +13,7 @@ function App(): JSX.Element {
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/career" element={<Career />} />
         <Route path="/book-demo" element={<BookDemo />} />
+        <Route path="/software-development" element={<SoftwareDevelopment />} />
       </Routes>
     </Router>
   );

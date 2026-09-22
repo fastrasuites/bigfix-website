@@ -83,13 +83,13 @@ const MobileNav = ({
         {isServicesOpen && (
           <div className="flex flex-col gap-4 pl-4 py-2 border-l border-white/20 mt-2">
             {services.map((service) => (
-              <a
+              <Link
                 key={service.label}
-                href={service.to}
+                to={service.to}
                 className="text-[#1EBED4] font-bold"
               >
                 {service.label}
-              </a>
+              </Link>
             ))}
           </div>
         )}

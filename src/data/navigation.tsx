@@ -70,9 +70,9 @@ export const navApplications: NavApplication[] = [
  * Services listed in the "Services" navigation dropdown.
  */
 export const navServices: NavLink[] = [
-  { label: "Enterprise Software Development", to: "/book-demo" },
-  { label: "Cloud Storage", to: "/book-demo" },
-  { label: "IT Consultancy", to: "/book-demo" },
+  { label: "Enterprise Software Development", to: "/software-development" },
+  { label: "Cloud Storage", to: "/cloud-storage" },
+  { label: "IT Consultancy", to: "/it-consultancy" },
 ];
 
 /**
