@@ -4,6 +4,7 @@ import AboutUs from "./pages/AboutUs";
 import Career from "./pages/Career";
 import BookDemo from "./pages/BookDemo";
 import SoftwareDevelopment from "./pages/SoftwareDevelopment";
+import CloudStorage from "./pages/CloudStorage";
 
 function App(): JSX.Element {
   return (
@@ -14,6 +15,7 @@ function App(): JSX.Element {
         <Route path="/career" element={<Career />} />
         <Route path="/book-demo" element={<BookDemo />} />
         <Route path="/software-development" element={<SoftwareDevelopment />} />
+        <Route path="/cloud-storage" element={<CloudStorage />} />
       </Routes>
     </Router>
   );
