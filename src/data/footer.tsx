@@ -15,7 +15,7 @@ export const footerContact: FooterContact = {
   address: "8 Adelabu Street, Masha, Surulere, Lagos.",
   addressHours: "8am - 5pm",
   mapUrl:
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3958.5!2d3.38!3d6.45!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwMjYnMTEuMiJFdjhEMMM!5e0!3m2!1sen!2sng!4v1700000000000",
+    "https://www.google.com/maps/search/?api=1&query=8+Adelabu+Street,+Masha,+Surulere,+Lagos,+Nigeria",
   phone1: "+234 805 623 5944",
   phone2: "+234 808 989 6733",
   whatsappUrl1: "https://wa.me/2348056235944",
