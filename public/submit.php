@@ -127,9 +127,6 @@ switch ($source) {
         if (empty($data['product'])) {
             $errors[] = 'Product of interest is required';
         }
-        if (empty($data['industry'])) {
-            $errors[] = 'Industry is required';
-        }
         break;
 }
 
