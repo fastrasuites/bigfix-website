@@ -76,6 +76,11 @@ function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
     $headers[] = "X-Mailer: PHP/" . phpversion();
 
     $result = mail($config['to_email'], $subject, $htmlBody, implode("\r\n", $headers));
+    
+    if (!$result) {
+        error_log("PHP mail() failed for submission notification");
+    }
+    
     return $result;
 }
 
