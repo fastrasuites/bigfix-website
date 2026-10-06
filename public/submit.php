@@ -32,6 +32,9 @@ if (!file_exists($configFile)) {
 
 $config = require $configFile;
 
+// Set sendmail_from for PHP mail() to work on some hosts
+ini_set('sendmail_from', $config['smtp_user']);
+
 // Decode JSON input (sent by fetch API)
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
