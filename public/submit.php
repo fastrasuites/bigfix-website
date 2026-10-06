@@ -69,34 +69,131 @@ function isValidPhone($phone) {
 }
 
 /**
+ * Send email notification using SMTP (no external dependencies)
+ */
+function sendEmailViaSMTP($config, $subject, $htmlBody) {
+    $to = $config['to_email'];
+    $from_email = $config['smtp_user'];
+    $from_name = $config['from_name'];
+    $smtp_pass = $config['smtp_pass'];
+    $smtp_host = $config['smtp_host'] ?? 'mail.bigfixtech.com';
+    $smtp_port = $config['smtp_port'] ?? 465;
+    $smtp_encryption = $config['smtp_encryption'] ?? 'ssl';
+
+    $message = "MIME-Version: 1.0\r\n";
+    $message .= "From: {$from_name} <{$from_email}>\r\n";
+    $message .= "Reply-To: {$to}\r\n";
+    $message .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $message .= "Subject: " . mb_encode_mimeheader($subject, 'UTF-8', 'B') . "\r\n";
+    $message .= "To: {$to}\r\n\r\n";
+    $message .= $htmlBody;
+
+    $boundary = md5(uniqid(time()));
+    $multipart = "MIME-Version: 1.0\r\n";
+    $multipart .= "From: {$from_name} <{$from_email}>\r\n";
+    $multipart .= "To: {$to}\r\n";
+    $multipart .= "Subject: " . mb_encode_mimeheader($subject, 'UTF-8', 'B') . "\r\n";
+    $multipart .= "Content-Type: multipart/mixed; boundary=\"" . $boundary . "\"\r\n\r\n";
+    $multipart .= "--" . $boundary . "\r\n";
+    $multipart .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $multipart .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+    $multipart .= $htmlBody . "\r\n";
+    $multipart .= "--" . $boundary . "--\r\n";
+
+    // Debug log
+    $log_entry = date('Y-m-d H:i:s') . " - SMTP attempt to: {$to} from: {$from_email} host: {$smtp_host}:{$smtp_port} enc: {$smtp_encryption}\n";
+    file_put_contents(__DIR__ . '/submit-debug.log', $log_entry, FILE_APPEND | LOCK_EX);
+
+    $errno = 0;
+    $errstr = '';
+    
+    if ($smtp_encryption === 'ssl' || $smtp_port == 465) {
+        $connection_string = "ssl://{$smtp_host}:{$smtp_port}";
+    } else {
+        $connection_string = "tls://{$smtp_host}:{$smtp_port}";
+    }
+    
+    $socket = @fsockopen($connection_string, $smtp_port, $errno, $errstr, 30);
+    
+    if (!$socket) {
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - SMTP connection FAILED: {$errstr} ({$errno})\n", FILE_APPEND | LOCK_EX);
+        
+        // Fallback to mail()
+        $headers = [
+            "From: {$from_name} <{$from_email}>",
+            "Reply-To: {$to}",
+            "Content-Type: text/html; charset=UTF-8",
+            "X-Mailer: PHP/" . phpversion(),
+        ];
+        
+        $result = @mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() fallback: " . ($result ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
+        return $result;
+    }
+
+    stream_set_timeout($socket, 30);
+    
+    $server_response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Server response: " . trim($server_response) . "\n", FILE_APPEND | LOCK_EX);
+
+    fwrite($socket, "EHLO {$smtp_host}\r\n");
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - EHLO response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    fwrite($socket, "AUTH LOGIN\r\n");
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - AUTH LOGIN response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    $encoded_user = base64_encode($from_email);
+    fwrite($socket, $encoded_user . "\r\n");
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Username response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    $encoded_pass = base64_encode($smtp_pass);
+    fwrite($socket, $encoded_pass . "\r\n");
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Password response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    if (strpos($response, "235") !== 0) {
+        fclose($socket);
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - SMTP AUTH FAILED\n", FILE_APPEND | LOCK_EX);
+        return false;
+    }
+
+    fwrite($socket, "MAIL FROM: <{$from_email}>\r\n");
+    $response = fgets($socket, 515);
+
+    fwrite($socket, "RCPT TO: <{$to}>\r\n");
+    $response = fgets($socket, 515);
+
+    fwrite($socket, "DATA\r\n");
+    $response = fgets($socket, 515);
+
+    fwrite($socket, $multipart);
+    fwrite($socket, "\r\n.\r\n");
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - DATA response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    fwrite($socket, "QUIT\r\n");
+    fclose($socket);
+
+    $success = strpos($response, "250") !== false;
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - SMTP result: " . ($success ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
+    
+    return $success;
+}
+
+/**
  * Send email notification using PHP's built-in mail() function
  */
 function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
-    $to = $config['to_email'];
-    $from_name = $config['from_name'];
-    $from_email = $config['smtp_user'];
-    
-    $headers = [];
-    $headers[] = "From: {$from_name} <{$from_email}>";
-    $headers[] = "Reply-To: {$to}";
-    $headers[] = "Content-Type: text/html; charset=UTF-8";
-    $headers[] = "X-Mailer: PHP/" . phpversion();
-
-    // Write debug info to file
-    $log_entry = date('Y-m-d H:i:s') . " - Email attempt to: {$to} from: {$from_email}\n";
-    file_put_contents(__DIR__ . '/submit-debug.log', $log_entry, FILE_APPEND | LOCK_EX);
-    
-    $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+    // Try SMTP first, fallback to mail()
+    $result = sendEmailViaSMTP($config, $subject, $htmlBody);
     
     if (!$result) {
-        error_log("PHP mail() FAILED for submission notification to {$to}");
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() FAILED, retrying with -f\n", FILE_APPEND | LOCK_EX);
-        // Try with sendmail -f parameter for better compatibility
-        $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers), "-f{$from_email}");
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Retry result: " . ($result ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
+        error_log("SMTP and mail() both FAILED for submission notification to {$config['to_email']}");
     } else {
-        error_log("PHP mail() SUCCESS for submission notification to {$to}");
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() SUCCESS\n", FILE_APPEND | LOCK_EX);
+        error_log("Email sent successfully to {$config['to_email']}");
     }
     
     return $result;
