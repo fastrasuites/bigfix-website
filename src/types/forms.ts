@@ -10,6 +10,8 @@ export interface TextFieldProps {
   label: string;
   placeholder: string;
   type?: "text" | "email";
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 export interface SelectFieldProps {
@@ -17,4 +19,6 @@ export interface SelectFieldProps {
   /** Placeholder copy rendered as the disabled first option. */
   placeholder: string;
   options: SelectOption[];
+  value?: string;
+  onChange?: (value: string) => void;
 }

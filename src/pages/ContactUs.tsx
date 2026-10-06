@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import bigfixLogo from "../assets/bigfixlogopng.png";
 import Footer from "../components/Footer/Footer";
@@ -14,6 +14,7 @@ import {
   footerSocials,
 } from "../data/footer";
 import { useNavigationState } from "../hooks/useNavigationState";
+import { submitForm } from "../utils/api";
 
 const clientLogos = [
   "OptimaOne",
@@ -39,14 +40,25 @@ const ContactUs = (): JSX.Element => {
     subject: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    const result = await submitForm("contact", formData);
+    setSubmitStatus(result.success ? "success" : "error");
+    setIsSubmitting(false);
+
+    if (result.success) {
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    }
   };
 
   return (
@@ -265,9 +277,22 @@ const ContactUs = (): JSX.Element => {
                     required
                   />
                 </div>
+                {submitStatus === "success" && (
+                  <p className="text-[#00B4D8] text-sm font-medium mb-4">
+                    Your message has been sent successfully. We'll get back to you soon.
+                  </p>
+                )}
+
+                {submitStatus === "error" && (
+                  <p className="text-red-500 text-sm font-medium mb-4">
+                    Something went wrong. Please try again.
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full bg-[#0A2F5A] hover:bg-[#082044] text-white font-semibold text-lg px-8 py-4 rounded-full transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#0A2F5A] hover:bg-[#082044] text-white font-semibold text-lg px-8 py-4 rounded-full transition-colors disabled:opacity-50"
                 >
                   Send Message
                 </button>

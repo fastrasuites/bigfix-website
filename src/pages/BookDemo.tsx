@@ -16,6 +16,7 @@ import {
 } from "../data/footer";
 import { useNavigationState } from "../hooks/useNavigationState";
 import { useSmoothScroll } from "../hooks/useSmoothScroll";
+import { submitForm } from "../utils/api";
 
 interface FormData {
   name: string;
@@ -26,7 +27,9 @@ interface FormData {
   industry: string;
   users: string;
   date: string;
-  time: string;
+  hour: string;
+  minute: string;
+  ampm: string;
   notes: string;
 }
 
@@ -39,7 +42,9 @@ const initialFormData: FormData = {
   industry: "",
   users: "",
   date: "",
-  time: "",
+  hour: "",
+  minute: "",
+  ampm: "AM",
   notes: "",
 };
 
@@ -62,7 +67,6 @@ const industryOptions = [
 ];
 
 const userOptions = [
-  { value: "", label: "" },
   { value: "1-5", label: "1 - 5 Users" },
   { value: "5-10", label: "5 - 10 Users" },
   { value: "10-20", label: "10 - 20 Users" },
@@ -88,6 +92,8 @@ const BookDemo = (): JSX.Element => {
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -96,9 +102,22 @@ const BookDemo = (): JSX.Element => {
   const handleNext = () => setStep((s) => Math.min(3, s + 1));
   const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
-  const handleSubmit = () => {
-    console.log("Form submitted:", formData);
-    navigate("/");
+  const handleSubmit = async () => {
+    const compositeTime = [formData.hour, formData.minute, formData.ampm]
+      .filter(Boolean)
+      .join(" ");
+    const payload = { ...formData, time: compositeTime };
+
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    const result = await submitForm("book_demo", payload);
+    setSubmitStatus(result.success ? "success" : "error");
+    setIsSubmitting(false);
+
+    if (result.success) {
+      setTimeout(() => navigate("/"), 1500);
+    }
   };
 
   return (
@@ -347,45 +366,45 @@ const BookDemo = (): JSX.Element => {
                     className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
                   />
                 </div>
-                <div>
-                  <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
-                    Choose time*
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      value={formData.time}
-                      onChange={(e) => handleChange("time", e.target.value)}
-                      className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
-                    >
-                      <option value="">Hour</option>
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                          {i + 1}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={formData.time}
-                      onChange={(e) => handleChange("time", e.target.value)}
-                      className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
-                    >
-                      <option value="">Minute</option>
-                      {Array.from({ length: 4 }, (_, i) => (
-                        <option key={i} value={i * 15}>
-                          {i * 15}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={formData.time}
-                      onChange={(e) => handleChange("time", e.target.value)}
-                      className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
-                    >
-                      <option value="AM">AM</option>
-                      <option value="PM">PM</option>
-                    </select>
-                  </div>
-                </div>
+                 <div>
+                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
+                     Choose time*
+                   </label>
+                   <div className="flex gap-2">
+                     <select
+                       value={formData.hour}
+                       onChange={(e) => handleChange("hour", e.target.value)}
+                       className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                     >
+                       <option value="">Hour</option>
+                       {Array.from({ length: 12 }, (_, i) => (
+                         <option key={i + 1} value={i + 1}>
+                           {i + 1}
+                         </option>
+                       ))}
+                     </select>
+                     <select
+                       value={formData.minute}
+                       onChange={(e) => handleChange("minute", e.target.value)}
+                       className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                     >
+                       <option value="">Minute</option>
+                       {Array.from({ length: 4 }, (_, i) => (
+                         <option key={i} value={i * 15}>
+                           {i * 15}
+                         </option>
+                       ))}
+                     </select>
+                     <select
+                       value={formData.ampm}
+                       onChange={(e) => handleChange("ampm", e.target.value)}
+                       className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                     >
+                       <option value="AM">AM</option>
+                       <option value="PM">PM</option>
+                     </select>
+                   </div>
+                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
                     Anything else you would like us to know?
@@ -407,11 +426,22 @@ const BookDemo = (): JSX.Element => {
                   </button>
                   <button
                     onClick={handleSubmit}
-                    className="flex-1 bg-[#0A2F5A] hover:bg-[#0A2F5A]/90 text-white font-semibold text-sm rounded-full py-3 transition-colors"
+                    disabled={isSubmitting}
+                    className="flex-1 bg-[#0A2F5A] hover:bg-[#0A2F5A]/90 text-white font-semibold text-sm rounded-full py-3 transition-colors disabled:opacity-50"
                   >
-                    Send Request
+                    {isSubmitting ? "Submitting..." : "Send Request"}
                   </button>
                 </div>
+                {submitStatus === "success" && (
+                  <p className="text-[#00B4D8] text-center text-sm font-medium mt-2">
+                    Demo request submitted! Redirecting...
+                  </p>
+                )}
+                {submitStatus === "error" && (
+                  <p className="text-red-500 text-center text-sm font-medium mt-2">
+                    Something went wrong. Please try again.
+                  </p>
+                )}
               </div>
             )}
           </div>
