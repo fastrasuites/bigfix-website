@@ -69,16 +69,27 @@ function isValidPhone($phone) {
  * Send email notification using PHP's built-in mail() function
  */
 function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
+    $to = $config['to_email'];
+    $from_name = $config['from_name'];
+    $from_email = $config['smtp_user'];
+    
     $headers = [];
-    $headers[] = "From: " . $config['from_name'] . " <" . $config['smtp_user'] . ">";
-    $headers[] = "Reply-To: " . $config['to_email'];
+    $headers[] = "From: {$from_name} <{$from_email}>";
+    $headers[] = "Reply-To: {$to}";
     $headers[] = "Content-Type: text/html; charset=UTF-8";
     $headers[] = "X-Mailer: PHP/" . phpversion();
 
-    $result = mail($config['to_email'], $subject, $htmlBody, implode("\r\n", $headers));
+    error_log("Attempting to send email to: {$to} from: {$from_email}");
+    
+    $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers));
     
     if (!$result) {
-        error_log("PHP mail() failed for submission notification");
+        error_log("PHP mail() FAILED for submission notification to {$to}");
+        // Try with sendmail -f parameter for better compatibility
+        $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers), "-f{$from_email}");
+        error_log("Retry with -f parameter: " . ($result ? "SUCCESS" : "FAILED"));
+    } else {
+        error_log("PHP mail() SUCCESS for submission notification to {$to}");
     }
     
     return $result;
