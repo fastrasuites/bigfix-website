@@ -79,17 +79,21 @@ function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
     $headers[] = "Content-Type: text/html; charset=UTF-8";
     $headers[] = "X-Mailer: PHP/" . phpversion();
 
-    error_log("Attempting to send email to: {$to} from: {$from_email}");
+    // Write debug info to file
+    $log_entry = date('Y-m-d H:i:s') . " - Email attempt to: {$to} from: {$from_email}\n";
+    file_put_contents(__DIR__ . '/submit-debug.log', $log_entry, FILE_APPEND | LOCK_EX);
     
     $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers));
     
     if (!$result) {
         error_log("PHP mail() FAILED for submission notification to {$to}");
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() FAILED, retrying with -f\n", FILE_APPEND | LOCK_EX);
         // Try with sendmail -f parameter for better compatibility
         $result = mail($to, $subject, $htmlBody, implode("\r\n", $headers), "-f{$from_email}");
-        error_log("Retry with -f parameter: " . ($result ? "SUCCESS" : "FAILED"));
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Retry result: " . ($result ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
     } else {
         error_log("PHP mail() SUCCESS for submission notification to {$to}");
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() SUCCESS\n", FILE_APPEND | LOCK_EX);
     }
     
     return $result;
