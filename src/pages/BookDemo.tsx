@@ -136,7 +136,7 @@ const BookDemo = (): JSX.Element => {
             </div>
             <div className="flex flex-col">
               <span>+234 805 623 5944</span>
-              <span>+234 808 989 6733</span>
+              <span>+234 808 989 2733</span>
             </div>
             <div className="flex flex-col">
               <span>info@bigfixtech.com</span>
@@ -177,8 +177,8 @@ const BookDemo = (): JSX.Element => {
                       step === i + 1
                         ? "text-[#0A2F5A]"
                         : step > i + 1
-                        ? "text-[#00B4D8]"
-                        : "text-[#A8A8A8]"
+                          ? "text-[#00B4D8]"
+                          : "text-[#A8A8A8]"
                     }`}
                   >
                     {label}
@@ -306,7 +306,9 @@ const BookDemo = (): JSX.Element => {
                           name="users"
                           value={opt.value}
                           checked={formData.users === opt.value}
-                          onChange={(e) => handleChange("users", e.target.value)}
+                          onChange={(e) =>
+                            handleChange("users", e.target.value)
+                          }
                           className="accent-[#00B4D8]"
                         />
                         <span className="text-[#0A2F5A]">{opt.label}</span>

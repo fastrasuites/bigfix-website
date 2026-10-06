@@ -14,11 +14,25 @@ import {
 } from "../data/footer";
 import { useNavigationState } from "../hooks/useNavigationState";
 
-const clientLogos = ["TechCorp", "FinServe", "GlobalBank", "OptimaOne", "CloudOne"];
+const clientLogos = [
+  "TechCorp",
+  "FinServe",
+  "GlobalBank",
+  "OptimaOne",
+  "CloudOne",
+];
 
 const syncSteps = [
-  { icon: "☁️", title: "Google Drive", desc: "Sync with your Google Drive seamlessly." },
-  { icon: "📁", title: "Dropbox", desc: "Access your Dropbox files instantly." },
+  {
+    icon: "☁️",
+    title: "Google Drive",
+    desc: "Sync with your Google Drive seamlessly.",
+  },
+  {
+    icon: "📁",
+    title: "Dropbox",
+    desc: "Access your Dropbox files instantly.",
+  },
   { icon: "💻", title: "OneDrive", desc: "Integrate with Microsoft OneDrive." },
   { icon: "📄", title: "PDF Files", desc: "Manage and edit PDF documents." },
 ];
@@ -31,7 +45,14 @@ const workflowItems = [
 ];
 
 const CloudStorage = (): JSX.Element => {
-  const { isDropdownOpen, isServicesOpen, isMobileMenuOpen, setDropdownOpen, setServicesOpen, toggleMobileMenu } = useNavigationState();
+  const {
+    isDropdownOpen,
+    isServicesOpen,
+    isMobileMenuOpen,
+    setDropdownOpen,
+    setServicesOpen,
+    toggleMobileMenu,
+  } = useNavigationState();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,7 +76,8 @@ const CloudStorage = (): JSX.Element => {
             Cloud Services
           </h1>
           <p className="text-white/70 text-lg mb-10 max-w-lg">
-            Work with your files from anywhere, anytime. Seamlessly integrate your cloud files with OptimaOne, FastraSuite, and EnterpriseOne.
+            Work with your files from anywhere, anytime. Seamlessly integrate
+            your cloud files with OptimaOne, FastraSuite, and EnterpriseOne.
           </p>
           <Link
             to="/book-demo"
@@ -64,8 +86,13 @@ const CloudStorage = (): JSX.Element => {
             Request a Demo
           </Link>
         </div>
-        <div className="w-full lg:w-[40%] min-h-[300px] lg:min-h-[500px] bg-cover bg-center rounded-tl-3xl lg:rounded-tl-none lg:rounded-br-3xl" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80')" }}>
-        </div>
+        <div
+          className="w-full lg:w-[40%] min-h-[300px] lg:min-h-[500px] bg-cover bg-center rounded-tl-3xl lg:rounded-tl-none lg:rounded-br-3xl"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80')",
+          }}
+        ></div>
       </section>
 
       {/* Trusted by Strip */}
@@ -76,7 +103,10 @@ const CloudStorage = (): JSX.Element => {
           </h3>
           <div className="flex justify-center items-center gap-12 flex-wrap">
             {clientLogos.map((name) => (
-              <span key={name} className="text-[#A8A8A8] text-xl font-bold tracking-wide grayscale hover:grayscale-0 transition-all duration-300">
+              <span
+                key={name}
+                className="text-[#A8A8A8] text-xl font-bold tracking-wide grayscale hover:grayscale-0 transition-all duration-300"
+              >
                 {name}
               </span>
             ))}
@@ -89,9 +119,14 @@ const CloudStorage = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             <div className="w-full lg:w-1/2">
-              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">Sync Files to Your Secured Cloud Space</h2>
+              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">
+                Sync Files to Your Secured Cloud Space
+              </h2>
               <p className="text-[#A8A8A8] text-base leading-relaxed mb-8">
-                Access your files anytime, away from your office, and work seamlessly while automating manual processes and workflows. Manage your files in your secure cloud workspace and facilitate its accessibility across multiple devices.
+                Access your files anytime, away from your office, and work
+                seamlessly while automating manual processes and workflows.
+                Manage your files in your secure cloud workspace and facilitate
+                its accessibility across multiple devices.
               </p>
               <Link
                 to="/book-demo"
@@ -103,9 +138,14 @@ const CloudStorage = (): JSX.Element => {
             <div className="w-full lg:w-1/2">
               <div className="grid grid-cols-2 gap-4">
                 {syncSteps.map((item) => (
-                  <div key={item.title} className="bg-[#F7F7F7] rounded-2xl p-6 text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div
+                    key={item.title}
+                    className="bg-[#F7F7F7] rounded-2xl p-6 text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  >
                     <span className="text-4xl mb-3 block">{item.icon}</span>
-                    <h4 className="text-[#0A2F5A] font-bold mb-1">{item.title}</h4>
+                    <h4 className="text-[#0A2F5A] font-bold mb-1">
+                      {item.title}
+                    </h4>
                     <p className="text-[#A8A8A8] text-xs">{item.desc}</p>
                   </div>
                 ))}
@@ -120,9 +160,14 @@ const CloudStorage = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 lg:flex-row-reverse">
             <div className="w-full lg:w-1/2">
-              <h2 className="text-white text-3xl font-bold mb-4">Read and Edit Your Files from Anywhere</h2>
+              <h2 className="text-white text-3xl font-bold mb-4">
+                Read and Edit Your Files from Anywhere
+              </h2>
               <p className="text-white/70 text-base leading-relaxed mb-8">
-                You can work on your office files from anywhere without setting up a complex network. Supported file formats include but are not limited to Microsoft Office, Excel, PowerPoint, Access, JPEG, PNG, MP3, and MP4.
+                You can work on your office files from anywhere without setting
+                up a complex network. Supported file formats include but are not
+                limited to Microsoft Office, Excel, PowerPoint, Access, JPEG,
+                PNG, MP3, and MP4.
               </p>
               <Link
                 to="/book-demo"
@@ -147,9 +192,14 @@ const CloudStorage = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             <div className="w-full lg:w-1/2">
-              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">Establish an Intelligent Workflow</h2>
+              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">
+                Establish an Intelligent Workflow
+              </h2>
               <p className="text-[#A8A8A8] text-base leading-relaxed mb-8">
-                Having all of an organization's files in one repository can reduce operational downtimes and improve administrative effectiveness. Seamlessly integrate your cloud files with OptimaOne, FastraSuite, and EnterpriseOne.
+                Having all of an organization's files in one repository can
+                reduce operational downtimes and improve administrative
+                effectiveness. Seamlessly integrate your cloud files with
+                OptimaOne, FastraSuite, and EnterpriseOne.
               </p>
               <Link
                 to="/book-demo"
@@ -181,9 +231,14 @@ const CloudStorage = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 lg:flex-row-reverse">
             <div className="w-full lg:w-1/2">
-              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">Share Files/Folders and Collaborate with Your Team</h2>
+              <h2 className="text-[#0A2F5A] text-3xl font-bold mb-4">
+                Share Files/Folders and Collaborate with Your Team
+              </h2>
               <p className="text-[#A8A8A8] text-base leading-relaxed mb-8">
-                Store and organize your team's work files in a shared and secure space. Create files and invite users to view or edit them. You can also create a shared folder so that your team can collectively have access to files within the folder.
+                Store and organize your team's work files in a shared and secure
+                space. Create files and invite users to view or edit them. You
+                can also create a shared folder so that your team can
+                collectively have access to files within the folder.
               </p>
               <Link
                 to="/book-demo"
@@ -208,9 +263,14 @@ const CloudStorage = (): JSX.Element => {
         <div className="max-w-7xl mx-auto px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             <div className="w-full lg:w-1/2">
-              <h2 className="text-white text-3xl font-bold mb-4">Create A Public Folder For Your Organization</h2>
+              <h2 className="text-white text-3xl font-bold mb-4">
+                Create A Public Folder For Your Organization
+              </h2>
               <p className="text-white/70 text-base leading-relaxed mb-8">
-                Create a main folder with access privileges and achieve data loss prevention, visibility, control, and compliance. Increase team collaboration and security while increasing the advantage of scalability and performance.
+                Create a main folder with access privileges and achieve data
+                loss prevention, visibility, control, and compliance. Increase
+                team collaboration and security while increasing the advantage
+                of scalability and performance.
               </p>
               <Link
                 to="/book-demo"
@@ -236,7 +296,9 @@ const CloudStorage = (): JSX.Element => {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div>
-                <h3 className="text-[#0A2F5A] text-xl font-bold mb-1">Have any questions? Talk to us</h3>
+                <h3 className="text-[#0A2F5A] text-xl font-bold mb-1">
+                  Have any questions? Talk to us
+                </h3>
                 <Link
                   to="/book-demo"
                   className="inline-block bg-[#00B4D8] hover:bg-[#0099b3] text-white font-semibold px-6 py-3 rounded-full transition-colors"
@@ -247,9 +309,11 @@ const CloudStorage = (): JSX.Element => {
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <h4 className="text-[#0A2F5A] font-bold mb-1">24/7 Customer support</h4>
+                <h4 className="text-[#0A2F5A] font-bold mb-1">
+                  24/7 Customer support
+                </h4>
                 <p className="text-[#A8A8A8] text-sm">+234 805 623 5944</p>
-                <p className="text-[#A8A8A8] text-sm">+234 808 989 6733</p>
+                <p className="text-[#A8A8A8] text-sm">+234 808 989 2733</p>
               </div>
             </div>
           </div>

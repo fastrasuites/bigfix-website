@@ -1,5 +1,14 @@
-import { ABOUT_US_PATH, REQUEST_REVIEW_SECTION_ID, OPTIMA_ONE_SECTION_ID, ABOUT_US_TOP_SECTION_ID } from "../constants/links";
-import { createScrollHandler, createCrossPageScrollHandler, createPageScrollHandler } from "../utils/scroll";
+import {
+  ABOUT_US_PATH,
+  REQUEST_REVIEW_SECTION_ID,
+  OPTIMA_ONE_SECTION_ID,
+  ABOUT_US_TOP_SECTION_ID,
+} from "../constants/links";
+import {
+  createScrollHandler,
+  createCrossPageScrollHandler,
+  createPageScrollHandler,
+} from "../utils/scroll";
 import type {
   FooterContact,
   FooterLinkItem,
@@ -17,9 +26,9 @@ export const footerContact: FooterContact = {
   mapUrl:
     "https://www.google.com/maps/search/?api=1&query=8+Adelabu+Street,+Masha,+Surulere,+Lagos,+Nigeria",
   phone1: "+234 805 623 5944",
-  phone2: "+234 808 989 6733",
+  phone2: "+234 808 989 2733",
   whatsappUrl1: "https://wa.me/2348056235944",
-  whatsappUrl2: "https://wa.me/2348089896733",
+  whatsappUrl2: "https://wa.me/2348089892733",
   email: "info@bigfixtech.com",
 };
 
