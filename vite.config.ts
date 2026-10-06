@@ -5,4 +5,12 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      "/submit.php": {
+        target: "https://bigfixtech.com",
+        changeOrigin: true,
+      },
+    },
+  },
 });

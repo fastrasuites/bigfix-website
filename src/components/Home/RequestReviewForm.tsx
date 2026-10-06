@@ -10,6 +10,16 @@ const PRODUCT_OPTIONS: SelectOption[] = [
   { value: "optima", label: "OptimaOne" },
 ];
 
+const INDUSTRY_OPTIONS: SelectOption[] = [
+  { value: "financial", label: "Financial Services" },
+  { value: "banking", label: "Banking" },
+  { value: "investment", label: "Investment Management" },
+  { value: "erp", label: "Corporate ERP" },
+  { value: "technology", label: "Technology" },
+  { value: "construction", label: "Construction" },
+  { value: "other", label: "Other" },
+];
+
 const TIMELINE_OPTIONS: SelectOption[] = [
   { value: "immediate", label: "Immediately" },
   { value: "1-3", label: "1-3 Months" },
@@ -26,6 +36,7 @@ const RequestReviewForm = (): JSX.Element => {
     email: "",
     company: "",
     product: "",
+    industry: "",
     operation: "",
     timeline: "",
   });
@@ -51,6 +62,7 @@ const RequestReviewForm = (): JSX.Element => {
         email: "",
         company: "",
         product: "",
+        industry: "",
         operation: "",
         timeline: "",
       });
@@ -93,6 +105,13 @@ const RequestReviewForm = (): JSX.Element => {
             options={PRODUCT_OPTIONS}
             value={formData.product}
             onChange={(value) => handleChange("product", value)}
+          />
+          <SelectField
+            label="Industry *"
+            placeholder="What industry are you in?"
+            options={INDUSTRY_OPTIONS}
+            value={formData.industry}
+            onChange={(value) => handleChange("industry", value)}
           />
           <TextField
             label="Primary Operation *"
