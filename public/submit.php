@@ -100,42 +100,81 @@ function sendEmailViaSMTP($config, $subject, $htmlBody) {
     $multipart .= $htmlBody . "\r\n";
     $multipart .= "--" . $boundary . "--\r\n";
 
-    // Debug log
     $log_entry = date('Y-m-d H:i:s') . " - SMTP attempt to: {$to} from: {$from_email} host: {$smtp_host}:{$smtp_port} enc: {$smtp_encryption}\n";
     file_put_contents(__DIR__ . '/submit-debug.log', $log_entry, FILE_APPEND | LOCK_EX);
 
     $errno = 0;
     $errstr = '';
     
+    // Try multiple connection methods
+    $connection_success = false;
+    $socket = null;
+    
+    // Method 1: Try ssl:// for port 465
     if ($smtp_encryption === 'ssl' || $smtp_port == 465) {
-        $connection_string = "ssl://{$smtp_host}:{$smtp_port}";
-    } else {
-        $connection_string = "tls://{$smtp_host}:{$smtp_port}";
+        $socket = @fsockopen("ssl://{$smtp_host}", $smtp_port, $errno, $errstr, 10);
+        if (!$socket) {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen ssl:// failed: {$errstr} ({$errno})\n", FILE_APPEND | LOCK_EX);
+            // Try without ssl:// prefix (plain connection)
+            $socket = @fsockopen($smtp_host, $smtp_port, $errno, $errstr, 10);
+            if ($socket) {
+                file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen plain succeeded (port {$smtp_port})\n", FILE_APPEND | LOCK_EX);
+                // For plain connection on 465, we might need STARTTLS
+            }
+        } else {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen ssl:// succeeded\n", FILE_APPEND | LOCK_EX);
+            $connection_success = true;
+        }
     }
     
-    $socket = @fsockopen($connection_string, $smtp_port, $errno, $errstr, 30);
+    // Method 2: Try tls:// for port 587
+    if (!$connection_success && ($smtp_port == 587 || $smtp_encryption === 'tls')) {
+        $socket = @fsockopen("tls://{$smtp_host}", $smtp_port, $errno, $errstr, 10);
+        if (!$socket) {
+            $socket = @fsockopen($smtp_host, $smtp_port, $errno, $errstr, 10);
+        }
+        if ($socket) {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen tls/plain succeeded (port {$smtp_port})\n", FILE_APPEND | LOCK_EX);
+            $connection_success = true;
+        } else {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen tls failed: {$errstr} ({$errno})\n", FILE_APPEND | LOCK_EX);
+        }
+    }
     
+    // Method 3: Try plain connection on port 25 or 587
+    if (!$connection_success) {
+        $socket = @fsockopen($smtp_host, 587, $errno, $errstr, 10);
+        if (!$socket) {
+            $socket = @fsockopen($smtp_host, 25, $errno, $errstr, 10);
+        }
+        if ($socket) {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen plain succeeded on port 587/25\n", FILE_APPEND | LOCK_EX);
+            $connection_success = true;
+        } else {
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - fsockopen all methods FAILED: {$errstr} ({$errno})\n", FILE_APPEND | LOCK_EX);
+        }
+    }
+
     if (!$socket) {
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - SMTP connection FAILED: {$errstr} ({$errno})\n", FILE_APPEND | LOCK_EX);
-        
-        // Fallback to mail()
+        // Ultimate fallback: try mail() with additional headers
         $headers = [
             "From: {$from_name} <{$from_email}>",
             "Reply-To: {$to}",
             "Content-Type: text/html; charset=UTF-8",
             "X-Mailer: PHP/" . phpversion(),
         ];
-        
+
         $result = @mail($to, $subject, $htmlBody, implode("\r\n", $headers));
         file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - mail() fallback: " . ($result ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
         return $result;
     }
 
     stream_set_timeout($socket, 30);
-    
-    $server_response = fgets($socket, 515);
-    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Server response: " . trim($server_response) . "\n", FILE_APPEND | LOCK_EX);
 
+    $response = fgets($socket, 515);
+    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Server greeting: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+    // SMTP conversation
     fwrite($socket, "EHLO {$smtp_host}\r\n");
     $response = fgets($socket, 515);
     file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - EHLO response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
@@ -179,7 +218,7 @@ function sendEmailViaSMTP($config, $subject, $htmlBody) {
 
     $success = strpos($response, "250") !== false;
     file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - SMTP result: " . ($success ? "SUCCESS" : "FAILED") . "\n", FILE_APPEND | LOCK_EX);
-    
+
     return $success;
 }
 
