@@ -143,7 +143,7 @@ if (!empty($errors)) {
 // Database storage
 try {
     $pdo = new PDO(
-        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=latin1",
         $config['db_user'],
         $config['db_pass'],
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
@@ -176,7 +176,7 @@ try {
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database error']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
     exit;
 }
 
