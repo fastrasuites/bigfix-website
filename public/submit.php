@@ -179,6 +179,25 @@ function sendEmailViaSMTP($config, $subject, $htmlBody) {
     $response = fgets($socket, 515);
     file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - EHLO response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
 
+    // For TLS/STARTTLS on port 587, send STARTTLS and upgrade socket
+    if ($smtp_encryption === 'tls' || $smtp_port == 587) {
+        fwrite($socket, "STARTTLS\r\n");
+        $response = fgets($socket, 515);
+        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - STARTTLS response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+
+        // Check if STARTTLS is supported
+        if (strpos($response, "220") === 0) {
+            // Enable crypto on the socket
+            stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - STARTTLS crypto enabled\n", FILE_APPEND | LOCK_EX);
+
+            // Re-send EHLO after TLS
+            fwrite($socket, "EHLO {$smtp_host}\r\n");
+            $response = fgets($socket, 515);
+            file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Post-TLS EHLO response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
+        }
+    }
+
     fwrite($socket, "AUTH LOGIN\r\n");
     $response = fgets($socket, 515);
     file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - AUTH LOGIN response: " . trim($response) . "\n", FILE_APPEND | LOCK_EX);
