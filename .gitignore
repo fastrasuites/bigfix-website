@@ -25,3 +25,4 @@ dist-ssr
 
 # Sensitive configuration files
 **/submit-config.php
+*.env

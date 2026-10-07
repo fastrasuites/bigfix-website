@@ -7,6 +7,11 @@
   RewriteRule ^ index.html [L]
 </IfModule>
 
+# Deny direct access to the secrets config
+<Files "submit-config.php">
+    Require all denied
+</Files>
+
 # Security headers
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"

@@ -1,279 +1,231 @@
 <?php
+declare(strict_types=1);
+
+use PHPMailer\PHPMailer\PHPMailer;
+
+require __DIR__ . '/phpmailer/Exception.php';
+require __DIR__ . '/phpmailer/PHPMailer.php';
+require __DIR__ . '/phpmailer/SMTP.php';
+
 /**
  * Form submission endpoint for BigFix landing page.
- * Receives POST requests from the React forms, validates input,
- * stores in MySQL, and sends an email notification via PHP mail().
+ * Validates input, stores RAW (unescaped) data in MySQL, emails a notification via external SMTP (PHPMailer).
+ * Escaping happens at OUTPUT time (email body, dashboard), never before storage.
  */
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+header('X-Content-Type-Options: nosniff');
+
+function respond(int $code, array $body): never
+{
+    http_response_code($code);
+    echo json_encode($body);
+    exit;
+}
+
+// ---- Config -------------------------------------------------------------
+$configFile = __DIR__ . '/submit-config.php';
+if (!is_file($configFile)) {
+    respond(500, ['success' => false, 'message' => 'Server configuration error']);
+}
+$config = require $configFile;
+
+// ---- CORS: only allow your own site(s) ----------------------------------
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if ($origin !== '' && in_array($origin, $config['allowed_origins'] ?? [], true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+}
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Handle CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit(0);
+    http_response_code(204);
+    exit;
 }
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit;
+    respond(405, ['success' => false, 'message' => 'Method not allowed']);
 }
 
-// Load configuration
-$configFile = __DIR__ . '/submit-config.php';
-if (!file_exists($configFile)) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Configuration file missing']);
-    exit;
+// ---- Helpers ------------------------------------------------------------
+function h(string $s): string
+{
+    return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
-$config = require $configFile;
+/** Trim, strip tags, remove control characters, cap length. Returns null if empty. */
+function clean(mixed $v, int $max, bool $multiline = false): ?string
+{
+    if (!is_string($v) && !is_int($v) && !is_float($v)) {
+        return null;
+    }
+    $v = trim(strip_tags((string)$v));
+    $pattern = $multiline ? '/[^\P{C}\n]+/u' : '/\p{C}+/u';
+    $v = preg_replace($pattern, '', $v) ?? '';
+    $v = mb_substr($v, 0, $max);
+    return $v === '' ? null : $v;
+}
 
-// Set sendmail_from for PHP mail() to work on some hosts
-ini_set('sendmail_from', $config['smtp_user']);
+function isValidPhone(string $phone): bool
+{
+    $digits = preg_replace('/[^0-9]/', '', $phone) ?? '';
+    return strlen($digits) >= 10 && strlen($digits) <= 15;
+}
 
-// Decode JSON input (sent by fetch API)
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
+function isValidDate(string $d): bool
+{
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return $dt !== false && $dt->format('Y-m-d') === $d;
+}
 
-if (!$input) {
+// ---- Parse input --------------------------------------------------------
+$raw = file_get_contents('php://input');
+if (strlen($raw) > 50000) {
+    respond(413, ['success' => false, 'message' => 'Payload too large']);
+}
+$input = json_decode($raw, true);
+if (!is_array($input)) {
     $input = $_POST;
 }
 
-/**
- * Sanitize input data
- */
-function sanitize($data) {
-    if (is_array($data)) {
-        return array_map('sanitize', $data);
-    }
-    return htmlspecialchars(strip_tags(trim($data)), ENT_QUOTES, 'UTF-8');
+// Honeypot: add a hidden <input name="website"> to your forms. Bots fill it, humans don't.
+if (!empty($input['website'])) {
+    respond(200, ['success' => true, 'message' => 'Submission received successfully']);
 }
 
-/**
- * Validate email format
- */
-function isValidEmail($email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+$allowedSources = ['contact', 'book_demo', 'home_review'];
+$source = clean($input['source'] ?? null, 30);
+if ($source === null || !in_array($source, $allowedSources, true)) {
+    respond(400, ['success' => false, 'message' => 'Invalid form source']);
 }
 
-/**
- * Validate phone format (Nigerian numbers)
- */
-function isValidPhone($phone) {
-    $phone = preg_replace('/[^0-9+]/', '', $phone);
-    return strlen($phone) >= 10;
-}
+$data = [
+    'source'   => $source,
+    'name'     => clean($input['name'] ?? null, 100),
+    'email'    => clean($input['email'] ?? null, 150),
+    'phone'    => clean($input['phone'] ?? null, 30),
+    'subject'  => clean($input['subject'] ?? null, 200),
+    'message'  => clean($input['message'] ?? null, 5000, true),
+    'company'  => clean($input['company'] ?? null, 150),
+    'product'  => clean($input['product'] ?? null, 150),
+    'industry' => clean($input['industry'] ?? null, 100),   // legacy
+    'operation' => clean($input['operation'] ?? null, 150),
+    'timeline' => clean($input['timeline'] ?? null, 50),
+    'users'    => clean($input['users'] ?? null, 50),
+    'date'     => clean($input['date'] ?? null, 10),
+    'time'     => clean($input['time'] ?? null, 20),
+    'notes'    => clean($input['notes'] ?? null, 5000, true),
+];
 
-/**
- * Send email notification using Resend API
- */
-function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
-    $to = $config['to_email'];
-    $from = $config['resend_from'] ?? 'onboarding@resend.dev';
-    $apiKey = $config['resend_api_key'] ?? '';
-
-    if (empty($apiKey)) {
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Resend API key missing\n", FILE_APPEND | LOCK_EX);
-        return false;
-    }
-
-    $payload = json_encode([
-        'from' => $from,
-        'to' => [$to],
-        'subject' => $subject,
-        'html' => $htmlBody,
-    ]);
-
-    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Resend API attempt to: {$to}\n", FILE_APPEND | LOCK_EX);
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.resend.com/emails');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Authorization: Bearer ' . $apiKey,
-        'Content-Type: application/json',
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Resend response: HTTP {$httpCode} - {$response}\n", FILE_APPEND | LOCK_EX);
-
-    if ($error) {
-        file_put_contents(__DIR__ . '/submit-debug.log', date('Y-m-d H:i:s') . " - Resend curl error: {$error}\n", FILE_APPEND | LOCK_EX);
-        return false;
-    }
-
-    if ($httpCode >= 200 && $httpCode < 300) {
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * Send email notification using PHP's built-in mail() function
- */
-function sendEmailNotification($config, $subject, $htmlBody, $altBody) {
-    // Try SMTP first, fallback to mail()
-    $result = sendEmailViaSMTP($config, $subject, $htmlBody);
-    
-    if (!$result) {
-        error_log("SMTP and mail() both FAILED for submission notification to {$config['to_email']}");
-    } else {
-        error_log("Email sent successfully to {$config['to_email']}");
-    }
-    
-    return $result;
-}
-
-$data = sanitize($input);
-
-// Validate required fields based on source
-$source = $data['source'] ?? 'unknown';
+// ---- Validation ---------------------------------------------------------
 $errors = [];
 
-// Common required fields
-if (empty($data['name'])) {
+if ($data['name'] === null) {
     $errors[] = 'Name is required';
 }
-
-if (empty($data['email']) || !isValidEmail($data['email'])) {
+if ($data['email'] === null || filter_var($data['email'], FILTER_VALIDATE_EMAIL) === false) {
     $errors[] = 'Valid email is required';
 }
 
-// Source-specific validation
 switch ($source) {
     case 'contact':
-        if (empty($data['subject'])) {
-            $errors[] = 'Subject is required';
-        }
-        if (empty($data['message'])) {
-            $errors[] = 'Message is required';
-        }
+        if ($data['subject'] === null) $errors[] = 'Subject is required';
+        if ($data['message'] === null) $errors[] = 'Message is required';
         break;
 
     case 'book_demo':
-        if (empty($data['company'])) {
-            $errors[] = 'Company name is required';
-        }
-        if (empty($data['phone']) || !isValidPhone($data['phone'])) {
-            $errors[] = 'Valid phone number is required';
-        }
-        if (empty($data['date'])) {
-            $errors[] = 'Date is required';
-        }
-        if (empty($data['time'])) {
-            $errors[] = 'Time is required';
-        }
+        if ($data['company'] === null) $errors[] = 'Company name is required';
+        if ($data['phone'] === null || !isValidPhone($data['phone'])) $errors[] = 'Valid phone number is required';
+        if ($data['date'] === null || !isValidDate($data['date'])) $errors[] = 'Valid date is required (YYYY-MM-DD)';
+        if ($data['time'] === null) $errors[] = 'Time is required';
         break;
 
     case 'home_review':
-        if (empty($data['company'])) {
-            $errors[] = 'Company name is required';
-        }
-        if (empty($data['product'])) {
-            $errors[] = 'Product of interest is required';
-        }
+        if ($data['company'] === null) $errors[] = 'Company name is required';
+        if ($data['product'] === null) $errors[] = 'Product of interest is required';
+        if ($data['operation'] === null) $errors[] = 'Primary operation is required';
+        if ($data['timeline'] === null) $errors[] = 'Estimated project timeline is required';
         break;
 }
 
-if (!empty($errors)) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Validation errors',
-        'errors' => $errors
-    ]);
-    exit;
+if ($errors) {
+    respond(400, ['success' => false, 'message' => 'Validation errors', 'errors' => $errors]);
 }
 
-// Database storage
+// ---- Database -----------------------------------------------------------
 try {
     $pdo = new PDO(
-        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=latin1",
+        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
         $config['db_user'],
         $config['db_pass'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ]
     );
 
-    $stmt = $pdo->prepare("
+    $stmt = $pdo->prepare('
         INSERT INTO submissions
-            (source, name, email, phone, subject, message, company, product, industry, users, date, time, notes, created_at)
+            (source, name, email, phone, subject, message, company, product, operation, timeline, industry, users, date, time, notes, created_at)
         VALUES
-            (:source, :name, :email, :phone, :subject, :message, :company, :product, :industry, :users, :date, :time, :notes, NOW())
-    ");
-
-    $stmt->execute([
-        'source'    => $source,
-        'name'      => $data['name'] ?? null,
-        'email'     => $data['email'] ?? null,
-        'phone'     => $data['phone'] ?? null,
-        'subject'   => $data['subject'] ?? null,
-        'message'   => $data['message'] ?? null,
-        'company'   => $data['company'] ?? null,
-        'product'   => $data['product'] ?? null,
-        'industry'  => $data['industry'] ?? null,
-        'users'     => $data['users'] ?? null,
-        'date'      => $data['date'] ?? null,
-        'time'      => $data['time'] ?? null,
-        'notes'     => $data['notes'] ?? null,
-    ]);
-
-    $submissionId = $pdo->lastInsertId();
+            (:source, :name, :email, :phone, :subject, :message, :company, :product, :operation, :timeline, :industry, :users, :date, :time, :notes, NOW())
+    ');
+    $stmt->execute($data);
+    $submissionId = (int)$pdo->lastInsertId();
 } catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
-    exit;
+    error_log('Submission DB error: ' . $e->getMessage());
+    respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
 }
 
-// Email notification
+// ---- Email notification (failure must not block success) ----------------
 try {
-    $mailSubject = "New Form Submission: " . ucfirst($source) . " (ID: " . $submissionId . ")";
+    $htmlBody  = '<h2>New BigFix Form Submission</h2>';
+    $htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
+    $htmlBody .= '<p><strong>Submission ID:</strong> ' . $submissionId . '</p><hr>';
 
-    $htmlBody = "<h2>New BigFix Form Submission</h2>";
-    $htmlBody .= "<p><strong>Source:</strong> " . htmlspecialchars($source, ENT_QUOTES, 'UTF-8') . "</p>";
-    $htmlBody .= "<p><strong>Submission ID:</strong> " . $submissionId . "</p>";
-    $htmlBody .= "<hr>";
-
-    $formFields = ['name', 'email', 'phone', 'subject', 'company', 'product', 'industry', 'users', 'date', 'time'];
-    foreach ($formFields as $field) {
-        if (!empty($data[$field])) {
-            $htmlBody .= "<p><strong>" . ucfirst($field) . ":</strong> " . htmlspecialchars($data[$field], ENT_QUOTES, 'UTF-8') . "</p>";
+    foreach (['name', 'email', 'phone', 'subject', 'company', 'product', 'operation', 'timeline', 'industry', 'users', 'date', 'time'] as $f) {
+        if ($data[$f] !== null) {
+            $htmlBody .= '<p><strong>' . h(ucfirst($f)) . ':</strong> ' . h($data[$f]) . '</p>';
         }
     }
-
-    if (!empty($data['message'])) {
-        $htmlBody .= "<p><strong>Message:</strong></p><p>" . nl2br(htmlspecialchars($data['message'], ENT_QUOTES, 'UTF-8')) . "</p>";
+    foreach (['message' => 'Message', 'notes' => 'Notes'] as $f => $label) {
+        if ($data[$f] !== null) {
+            $htmlBody .= "<p><strong>{$label}:</strong></p><p>" . nl2br(h($data[$f])) . '</p>';
+        }
     }
+    $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
 
-    if (!empty($data['notes'])) {
-        $htmlBody .= "<p><strong>Notes:</strong></p><p>" . nl2br(htmlspecialchars($data['notes'], ENT_QUOTES, 'UTF-8')) . "</p>";
-    }
+    $subject = 'New Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
 
-    $htmlBody .= "<hr><p>Submitted on: " . date('Y-m-d H:i:s') . "</p>";
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host       = $config['smtp_host'];
+    $secure = (string)($config['smtp_secure'] ?? '');
+    $user   = (string)($config['smtp_user'] ?? '');
+    $mail->SMTPAuth   = $user !== '';              // no login for local catchers like Mailpit
+    $mail->Username   = $user;
+    $mail->Password   = (string)($config['smtp_pass'] ?? '');
+    $mail->SMTPSecure = $secure;                   // '', 'ssl' or 'tls'
+    $mail->SMTPAutoTLS = $secure !== '';           // plain SMTP when no encryption is configured
+    $mail->Port       = (int)$config['smtp_port'];
+    $mail->CharSet    = 'UTF-8';
+    $mail->Timeout    = 10;
 
-    $altBody = strip_tags($htmlBody);
+    $mail->setFrom($config['from_email'], $config['from_name']);
+    $mail->addAddress($config['to_email']);
+    $mail->addReplyTo($data['email'], $data['name'] ?? '');   // email already validated
 
-    sendEmailNotification($config, $mailSubject, $htmlBody, $altBody);
-} catch (Exception $e) {
-    error_log("Email error: " . $e->getMessage());
-    // Email failure shouldn't block the success response
+    $mail->isHTML(true);
+    $mail->Subject = $subject;
+    $mail->Body    = $htmlBody;
+    $mail->AltBody = trim(strip_tags(str_replace(['</p>', '<hr>'], "\n", $htmlBody)));
+    $mail->send();
+} catch (Throwable $e) {
+    error_log('Email error: ' . $e->getMessage());
 }
 
-http_response_code(200);
-echo json_encode([
+respond(200, [
     'success' => true,
     'message' => 'Submission received successfully',
-    'id' => $submissionId
+    'id'      => $submissionId,
 ]);

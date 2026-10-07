@@ -1,43 +1,58 @@
 /**
  * API utility for form submissions.
- * Sends form data to the PHP backend endpoint.
+ * Sends form data to the PHP backend endpoint (public/submit.php).
  */
+
+export type FormSource = "book_demo" | "contact" | "home_review";
 
 export interface SubmitResult {
   success: boolean;
   message: string;
-  id?: string;
+  /** Field-level validation messages returned by the server (HTTP 400). */
+  errors?: string[];
+  id?: number;
 }
 
-export const submitForm = async (
-  source: "book_demo" | "contact" | "home_review",
-  data: Record<string, string>,
-  timeout: number = 10000
-): Promise<SubmitResult> => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+interface ServerResponse {
+  success?: boolean;
+  message?: string;
+  errors?: string[];
+  id?: number;
+}
 
-    const response = await fetch("/submit.php", {
+/** Empty in production (same origin). In dev: VITE_API_URL=http://bigfix.test */
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || "";
+
+export const submitForm = async (
+  source: FormSource,
+  data: Record<string, string>,
+  timeout: number = 10000,
+): Promise<SubmitResult> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(`${API_BASE}/submit.php`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source, ...data }),
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
-
-    const result = await response.json().catch(() => ({
+    const result: ServerResponse = await response.json().catch(() => ({
       success: false,
       message: "Invalid server response",
     }));
 
     if (!response.ok || !result.success) {
+      const errors = Array.isArray(result.errors) ? result.errors : undefined;
       return {
         success: false,
-        message: result.message || "Submission failed. Please try again.",
+        message:
+          errors && errors.length > 0
+            ? errors.join(". ")
+            : result.message || "Submission failed. Please try again.",
+        errors,
       };
     }
 
@@ -57,5 +72,7 @@ export const submitForm = async (
       success: false,
       message: "Network error. Please check your connection.",
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
