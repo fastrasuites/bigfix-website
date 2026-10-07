@@ -27,7 +27,7 @@ jobs:
       - name: Copy PHP backend into build output
         run: |
           cp public/submit.php dist/submit.php
-          cp public/submit-config.sample.php dist/submit-config.sample.php
+          cp public/submit-config.example.php dist/submit-config.example.php
           cp -r sql dist/sql
 
       - name: Deploy to cPanel via FTP
