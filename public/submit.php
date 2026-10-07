@@ -164,6 +164,22 @@ try {
         ]
     );
 
+    // ---- Self-healing schema migration --------------------------------------
+    $stmt = $pdo->query("SHOW TABLES LIKE 'submissions'");
+    if ($stmt->fetchColumn()) {
+        $stmt = $pdo->query("SHOW COLUMNS FROM submissions");
+        $existing = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
+        $add = [];
+        foreach (['operation' => 'VARCHAR(150) NULL', 'timeline' => 'VARCHAR(50) NULL'] as $col => $type) {
+            if (!in_array($col, $existing, true)) {
+                $add[] = "ADD COLUMN $col $type";
+            }
+        }
+        if ($add) {
+            $pdo->exec('ALTER TABLE submissions ' . implode(', ', $add));
+        }
+    }
+
     $stmt = $pdo->prepare('
         INSERT INTO submissions
             (source, name, email, phone, subject, message, company, product, operation, timeline, industry, users, date, time, notes, created_at)
