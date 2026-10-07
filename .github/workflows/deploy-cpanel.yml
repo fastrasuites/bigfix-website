@@ -30,6 +30,16 @@ jobs:
           cp public/submit-config.example.php dist/submit-config.example.php
           cp -r sql dist/sql
 
+      - name: Create submit-config.php from secret
+        env:
+          SUBMIT_CONFIG_B64: ${{ secrets.SUBMIT_CONFIG_B64 }}
+        run: |
+          if [ -z "$SUBMIT_CONFIG_B64" ]; then
+            echo "::error::SUBMIT_CONFIG_B64 secret is not set. Add it in GitHub Settings > Secrets and re-run."
+            exit 1
+          fi
+          echo "$SUBMIT_CONFIG_B64" | base64 -d > dist/submit-config.php
+
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -44,5 +54,3 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
-            **/submit-config.php
-            **/.htaccess
