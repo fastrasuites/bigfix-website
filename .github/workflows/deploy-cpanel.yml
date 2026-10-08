@@ -69,14 +69,17 @@ jobs:
 
       - name: Verify production endpoint
         run: |
+          ok=0
           for base in https://www.bigfixtech.com https://bigfixtech.com; do
             code=$(curl -sSL -o /tmp/smoke-body.txt -w '%{http_code}' --max-time 30 "$base/submit.php" || true)
             echo "$base/submit.php -> HTTP ${code}"
             if [ "$code" = "405" ]; then
               echo "OK: submit.php is live and answering JSON (405 for GET)."
-              exit 0
+              ok=1
+              break
             fi
             if [ "$code" = "000" ]; then
+              echo "::warning::$base could not be reached - the deployment may be unreachable or still warming up."
               continue
             fi
             echo "::error::$base/submit.php returned HTTP $code (expected 405 - the endpoint executes PHP and rejects GET with JSON). The production backend is broken. Response body (first 500 bytes):"
@@ -84,5 +87,8 @@ jobs:
             echo
             exit 1
           done
-          echo "::warning::bigfixtech.com could not be reached from the GitHub runner; endpoint verification skipped."
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::BigFix production endpoint is not responding on any hostname (https://www.bigfixtech.com and https://bigfixtech.com). The deployment may have failed or the site is down."
+            exit 1
+          fi
 
