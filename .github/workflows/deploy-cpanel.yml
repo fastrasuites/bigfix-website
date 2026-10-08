@@ -35,8 +35,8 @@ jobs:
           SUBMIT_CONFIG_B64: ${{ secrets.SUBMIT_CONFIG_B64 }}
         run: |
           if [ -z "$SUBMIT_CONFIG_B64" ]; then
-            echo "::error::SUBMIT_CONFIG_B64 secret is not set. Add it in GitHub: Settings > Secrets and variables > Actions (base64 of the production submit-config.php - see docs/SETUP.md) - then re-run this workflow."
-            exit 1
+            echo "::warning::SUBMIT_CONFIG_B64 secret is not set - deploying WITHOUT refreshing submit-config.php; the config already on the server will be kept. Add the secret (base64 of the production submit-config.php, see docs/SETUP.md) to manage credentials from GitHub."
+            exit 0
           fi
           echo "$SUBMIT_CONFIG_B64" | base64 --decode > dist/submit-config.php || {
             echo "::error::SUBMIT_CONFIG_B64 is not valid base64. Re-create it from the raw submit-config.php: base64 -w0 submit-config.php (Linux/macOS) or [Convert]::ToBase64String([IO.File]::ReadAllBytes('submit-config.php')) (PowerShell)."
@@ -51,7 +51,6 @@ jobs:
             exit 1
           fi
           echo "submit-config.php decoded and validated ($(wc -c < dist/submit-config.php) bytes)."
-
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
