@@ -263,8 +263,58 @@ try {
     $smtpHostTrimmed = trim($smtpHost);
     $isLocalhost = ($smtpHostTrimmed === 'localhost' || $smtpHostTrimmed === '127.0.0.1');
 
-    // --- Try 1: SMTP with auth (if we have credentials) ---
-    if ($smtpUser !== '' && $smtpPass !== '') {
+    // --- Try 1: Direct IP to Zoho SMTP (bypass DNS hijack) ---
+    // On shared hosting, smtp.zoho.com DNS is redirected to local Exim.
+    // Connect directly to Zoho's real IP with auth + TLS.
+    // This is the primary path that actually delivers email to Zoho.
+    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
+        // Zoho SMTP IPs (resolved via public DNS 8.8.8.8)
+        $zohoIps = ['136.143.190.56'];
+        foreach ($zohoIps as $zohoIp) {
+            try {
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host         = $zohoIp;
+                $mail->Port         = $smtpPort ?: 587;
+                $mail->SMTPSecure   = $smtpSecure ?: 'tls';
+                $mail->SMTPAutoTLS  = false;
+                $mail->SMTPKeepAlive = false;
+                $mail->Timeout      = 5;
+                $mail->CharSet      = 'UTF-8';
+                $mail->SMTPAuth     = true;
+                $mail->Username     = $smtpUser;
+                $mail->Password     = $smtpPass;
+                $mail->SMTPOptions  = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
+                $mail->setFrom($fromAddr, $fromName);
+                $mail->addAddress($toAddr);
+                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlBody;
+                $mail->AltBody = $alt;
+                $mail->send();
+                $emailMode = 'smtp_zoho';
+                break;
+            } catch (Throwable $e) {
+                $ipErr = $e->getMessage();
+                if (isset($mail->ErrorInfo)) {
+                    $ipErr .= ' | ' . $mail->ErrorInfo;
+                }
+                error_log('Email direct-IP (Zoho) failed (submission ' . $submissionId . '): ' . $ipErr);
+                $emailError = substr($ipErr, 0, 200);
+                unset($mail);
+            }
+        }
+    }
+
+    // --- Try 2: SMTP with auth to smtp.zoho.com (in case DNS is not hijacked) ---
+    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
@@ -292,15 +342,14 @@ try {
             if (isset($mail->ErrorInfo)) {
                 $authErr .= ' | ' . $mail->ErrorInfo;
             }
-            error_log('Email SMTP auth attempt failed (submission ' . $submissionId . '): ' . $authErr);
+            error_log('Email SMTP auth failed (submission ' . $submissionId . '): ' . $authErr);
             $emailError = substr($authErr, 0, 200);
             unset($mail);
         }
     }
 
-    // --- Try 2: SMTP without auth (local relay) ---
-    // On shared hosting, smtp.zoho.com resolves to the local Exim relay.
-    // Try localhost:25 with no encryption and no auth.
+    // --- Try 3: SMTP without auth (local Exim relay) ---
+    // Last resort: the local Exim may queue the email for delivery.
     if ($emailMode === 'failed') {
         try {
             $mail = new PHPMailer(true);
@@ -321,7 +370,7 @@ try {
             $mail->Body    = $htmlBody;
             $mail->AltBody = $alt;
             $mail->send();
-            $emailMode = 'smtp';
+            $emailMode = 'smtp_local';
         } catch (Throwable $e) {
             $noAuthErr = $e->getMessage();
             if (isset($mail->ErrorInfo)) {
@@ -330,55 +379,6 @@ try {
             error_log('Email SMTP no-auth (localhost:25) failed (submission ' . $submissionId . '): ' . $noAuthErr);
             $emailError = substr($noAuthErr, 0, 200);
             unset($mail);
-        }
-    }
-
-    // --- Try 3: Direct IP to Zoho SMTP (bypass DNS hijack) ---
-    // On shared hosting, smtp.zoho.com DNS is redirected to local Exim.
-    // Connect directly to Zoho's real IP with auth + TLS.
-    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
-        $zohoIps = ['136.143.190.56'];  // resolved via public DNS (8.8.8.8)
-        foreach ($zohoIps as $zohoIp) {
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host         = $zohoIp;
-                $mail->Port         = $smtpPort ?: 587;
-                $mail->SMTPSecure   = $smtpSecure ?: 'tls';
-                $mail->SMTPAutoTLS  = false;
-                $mail->SMTPKeepAlive = false;
-                $mail->Timeout      = 5;
-                $mail->CharSet      = 'UTF-8';
-                $mail->SMTPAuth     = true;
-                $mail->Username     = $smtpUser;
-                $mail->Password     = $smtpPass;
-                $mail->SMTPOptions  = [
-                    'ssl' => [
-                        'verify_peer'       => true,
-                        'verify_peer_name'  => true,
-                        'peer_name'         => 'smtp.zoho.com',
-                        'allow_self_signed' => false,
-                    ],
-                ];
-                $mail->setFrom($fromAddr, $fromName);
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = $alt;
-                $mail->send();
-                $emailMode = 'smtp';
-                break;
-            } catch (Throwable $e) {
-                $ipErr = $e->getMessage();
-                if (isset($mail->ErrorInfo)) {
-                    $ipErr .= ' | ' . $mail->ErrorInfo;
-                }
-                error_log('Email SMTP direct-IP failed (submission ' . $submissionId . '): ' . $ipErr);
-                $emailError = substr($ipErr, 0, 200);
-                unset($mail);
-            }
         }
     }
 } catch (Throwable $e) {
