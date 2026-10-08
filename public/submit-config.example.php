@@ -10,12 +10,7 @@ return [
     'db_user' => 'bigfixte',
     'db_pass' => 'YOUR_DB_PASSWORD',
 
-    // Email via Zoho SMTP
-    'smtp_host'   => 'smtp.zoho.com',
-    'smtp_port'   => 587,
-    'smtp_secure' => 'tls',
-    'smtp_user'   => 'info@bigfixtech.com',
-    'smtp_pass'   => 'YOUR_SMTP_PASSWORD',
+    // Email notifications (sent via PHP mail() to info@bigfixtech.com)
     'from_email'  => 'info@bigfixtech.com',
     'from_name'   => 'BigFix Website',
     'to_email'    => 'info@bigfixtech.com',
