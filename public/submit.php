@@ -2,18 +2,10 @@
 declare(strict_types=1);
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
 require __DIR__ . '/phpmailer/Exception.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
-
-/**
- * Form submission endpoint for BigFix landing page.
- * Validates input, stores RAW (unescaped) data in MySQL, sends email notification.
- * Primary: Zoho SMTP via PHPMailer. Fallback: PHP mail().
- * Escaping happens at OUTPUT time, never before storage.
- */
 
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
@@ -32,7 +24,7 @@ if (!is_file($configFile)) {
 }
 $config = require $configFile;
 
-// ---- CORS: only allow your own site(s) ----------------------------------
+// ---- CORS ---------------------------------------------------------------
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $config['allowed_origins'] ?? [], true)) {
     header('Access-Control-Allow-Origin: ' . $origin);
@@ -256,57 +248,69 @@ $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
 $alt = trim(strip_tags(str_replace(['</p>', '<hr>', '<br>'], "\n", $htmlBody)));
 
 try {
-    // --- 1) Zoho SMTP via PHPMailer ------------------------------------
     $smtpHost = $resolve($config, 'smtp_host');
     $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
     $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
     $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
     $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
 
-    if ($smtpHost !== '' && $smtpUser !== '' && $smtpPass !== '') {
-        try {
-            $mail = new PHPMailer(true);
-            $mail->isSMTP();
-            $mail->Host         = $smtpHost;
-            $mail->SMTPAuth     = true;
-            $mail->Username     = $smtpUser;
-            $mail->Password     = $smtpPass;
-            $mail->SMTPSecure   = $smtpSecure;
-            $mail->SMTPAutoTLS  = false;
-            $mail->Port         = $smtpPort;
-            $mail->SMTPKeepAlive = false;
-            $mail->Timeout      = 8;
-            $mail->CharSet      = 'UTF-8';
-            $mail->setFrom($fromAddr, $fromName);
-            $mail->addAddress($toAddr);
-            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body    = $htmlBody;
-            $mail->AltBody = $alt;
-            $mail->send();
-            $emailMode = 'smtp';
-        } catch (Exception $e) {
-            $smtpError = $e->getMessage();
-            if (isset($mail->ErrorInfo)) {
-                $smtpError .= ' | ' . $mail->ErrorInfo;
-            }
-            error_log('Email SMTP error (submission ' . $submissionId . '): ' . $smtpError);
-            $emailError = substr($smtpError, 0, 200);
-        }
+    if ($smtpHost === '' || $smtpPort === 0) {
+        $smtpHost = 'localhost';
+        $smtpPort = 25;
+        $smtpSecure = '';
+    }
+
+    $smtpHostTrimmed = trim($smtpHost);
+    $isLocalhost = ($smtpHostTrimmed === 'localhost' || $smtpHostTrimmed === '127.0.0.1');
+
+    $mail = new PHPMailer(true);
+    $mail->isSMTP();
+    $mail->Host         = $smtpHost;
+    $mail->Port         = $smtpPort;
+    $mail->SMTPSecure   = $smtpSecure;
+    $mail->SMTPAutoTLS  = false;
+    $mail->SMTPKeepAlive = false;
+    $mail->Timeout      = 8;
+    $mail->CharSet      = 'UTF-8';
+
+    // Authenticate only if we have credentials AND the host is NOT localhost.
+    // On shared hosting, smtp.zoho.com may resolve to the local Exim relay
+    // which accepts unauthenticated mail from localhost.
+    if (!$isLocalhost && $smtpUser !== '' && $smtpPass !== '') {
+        $mail->SMTPAuth     = true;
+        $mail->Username     = $smtpUser;
+        $mail->Password     = $smtpPass;
+    } else {
+        $mail->SMTPAuth     = false;
+    }
+
+    $mail->setFrom($fromAddr, $fromName);
+    $mail->addAddress($toAddr);
+    $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+    $mail->isHTML(true);
+    $mail->Subject = $subject;
+    $mail->Body    = $htmlBody;
+    $mail->AltBody = $alt;
+
+    $sent = $mail->send();
+    if ($sent) {
+        $emailMode = $smtpUser !== '' && $smtpPass !== '' ? 'smtp' : 'mail';
+    } else {
+        $emailError = substr($mail->ErrorInfo ?? 'Unknown error', 0, 200);
+        error_log('Email SMTP failed (submission ' . $submissionId . '): ' . $emailError);
     }
 } catch (Throwable $e) {
-    error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
+    $emailError = substr($e->getMessage(), 0, 200);
+    error_log('Email SMTP error (submission ' . $submissionId . '): ' . $e->getMessage());
 }
 
-// --- 2) PHP mail() fallback ----------------------------------------------
-if ($emailMode === 'failed') {
+// ---- Fallback: PHP mail() (if available) --------------------------------
+if ($emailMode === 'failed' && function_exists('mail')) {
     try {
         $headers  = 'From: ' . $fromName . ' <' . $fromAddr . ">\r\n";
         $headers .= 'Reply-To: ' . $replyTo . "\r\n";
         $headers .= "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= 'X-Mailer: PHP/' . phpversion();
 
         if (@mail($toAddr, $subject, $htmlBody, $headers)) {
             $emailMode = 'mail';
