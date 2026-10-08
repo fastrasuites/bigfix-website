@@ -24,12 +24,12 @@ jobs:
       - name: Build project
         run: npm run build
 
-  - name: Copy PHP backend into build output
-    run: |
-      cp public/submit.php dist/submit.php
-      cp public/submit-config.example.php dist/submit-config.example.php
-      cp -r public/phpmailer dist/phpmailer
-      # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
+      - name: Copy PHP backend into build output
+        run: |
+          cp public/submit.php dist/submit.php
+          cp public/submit-config.example.php dist/submit-config.example.php
+          cp -r public/phpmailer dist/phpmailer
+          # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
 
       - name: Create submit-config.php from secret
         env:
@@ -52,6 +52,7 @@ jobs:
             exit 1
           fi
           echo "submit-config.php decoded and validated ($(wc -c < dist/submit-config.php) bytes)."
+
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -91,4 +92,3 @@ jobs:
             echo "::error::BigFix production endpoint is not responding on any hostname (https://www.bigfixtech.com and https://bigfixtech.com). The deployment may have failed or the site is down."
             exit 1
           fi
-
