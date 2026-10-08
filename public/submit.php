@@ -1,22 +1,16 @@
 <?php
 declare(strict_types=1);
 
-use PHPMailer\PHPMailer\PHPMailer;
-
-require __DIR__ . '/phpmailer/Exception.php';
-require __DIR__ . '/phpmailer/PHPMailer.php';
-require __DIR__ . '/phpmailer/SMTP.php';
-
 /**
  * Form submission endpoint for BigFix landing page.
- * Validates input, stores RAW (unescaped) data in MySQL, emails a notification via external SMTP (PHPMailer).
+ * Validates input, stores RAW (unescaped) data in MySQL, sends email notification via PHP mail().
  * Escaping happens at OUTPUT time (email body, dashboard), never before storage.
  */
 
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
-function respond(int $code, array $body): void   // void (not never): PHP 8.1+ only, cPanel may run older PHP
+function respond(int $code, array $body): void
 {
     http_response_code($code);
     echo json_encode($body);
@@ -54,7 +48,7 @@ function h(string $s): string
 }
 
 /** Trim, strip tags, remove control characters, cap length. Returns null if empty. */
-function clean($v, int $max, bool $multiline = false): ?string   // untyped $v (not mixed): PHP 8.0+ only
+function clean($v, int $max, bool $multiline = false): ?string
 {
     if (!is_string($v) && !is_int($v) && !is_float($v)) {
         return null;
@@ -88,7 +82,7 @@ if (!is_array($input)) {
     $input = $_POST;
 }
 
-// Honeypot: add a hidden <input name="website"> to your forms. Bots fill it, humans don't.
+// Honeypot: add a hidden <input name="website"> to your forms.
 if (!empty($input['website'])) {
     respond(200, ['success' => true, 'message' => 'Submission received successfully']);
 }
@@ -108,7 +102,7 @@ $data = [
     'message'  => clean($input['message'] ?? null, 5000, true),
     'company'  => clean($input['company'] ?? null, 150),
     'product'  => clean($input['product'] ?? null, 150),
-    'industry' => clean($input['industry'] ?? null, 100),   // legacy
+    'industry' => clean($input['industry'] ?? null, 100),
     'operation' => clean($input['operation'] ?? null, 150),
     'timeline' => clean($input['timeline'] ?? null, 50),
     'users'    => clean($input['users'] ?? null, 50),
@@ -164,7 +158,6 @@ try {
         ]
     );
 
-    // ---- Self-healing: create the table if it does not exist yet ----------
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS submissions (
             id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -183,6 +176,8 @@ try {
             operation  VARCHAR(150) NULL,
             timeline   VARCHAR(50)  NULL,
             industry   VARCHAR(100) NULL,
+            email_status VARCHAR(20)  NULL,
+            email_error  VARCHAR(500) NULL,
             created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY idx_source_created (source, created_at),
@@ -192,13 +187,12 @@ try {
     ");
 
 
-    // ---- Self-healing schema migration --------------------------------------
     $stmt = $pdo->query("SHOW TABLES LIKE 'submissions'");
     if ($stmt->fetchColumn()) {
         $stmt = $pdo->query("SHOW COLUMNS FROM submissions");
         $existing = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
         $add = [];
-        foreach (['operation' => 'VARCHAR(150) NULL', 'timeline' => 'VARCHAR(50) NULL'] as $col => $type) {
+        foreach (['operation' => 'VARCHAR(150) NULL', 'timeline' => 'VARCHAR(50) NULL', 'email_status' => 'VARCHAR(20) NULL', 'email_error' => 'VARCHAR(500) NULL'] as $col => $type) {
             if (!in_array($col, $existing, true)) {
                 $add[] = "ADD COLUMN $col $type";
             }
@@ -221,15 +215,15 @@ try {
     respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
 }
 
-// ---- Email notification (failure must not block success) ----------------
-// Tries, in order: the configured SMTP account, the Resend API (if the
-// config carries resend_api_key), then the server's local mail() - so a
-// notification still goes out even when one method is unavailable. The
-// method that succeeded ('smtp' | 'resend' | 'mail') or 'failed' is
-// returned in the JSON response; every failure detail is written to the
-// PHP error log (cPanel > Errors), never to the visitor.
+// ---- Email notification via PHP mail() -----------------------------------
 $emailMode = 'failed';
+$emailError = '';
 try {
+    $fromAddr = (string)($config['from_email'] ?? 'info@bigfixtech.com');
+    $toAddr   = (string)($config['to_email'] ?? $fromAddr);
+    $fromName = str_replace(["\r", "\n"], '', (string)($config['from_name'] ?? 'BigFix Website'));
+    $subject  = 'New BigFix Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
+
     $htmlBody  = '<h2>New BigFix Form Submission</h2>';
     $htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
     $htmlBody .= '<p><strong>Submission ID:</strong> ' . $submissionId . '</p><hr>';
@@ -246,167 +240,49 @@ try {
     }
     $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
 
-    $subject  = 'New Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
-    $fromAddr = trim((string)($config['from_email'] ?? ''));
-    $fromName = str_replace(["\r", "\n"], '', (string)($config['from_name'] ?? 'BigFix Website'));
-    $toAddr   = trim((string)($config['to_email'] ?? ''));
-    if ($toAddr === '' && $fromAddr !== '') {
-        $toAddr = $fromAddr;
-    }
-    $replyTo = (string)$data['email'];   // already validated above
-        // Resolve config keys, accepting common alternate spellings so a
-        // mistyped key name (e.g. smtp_password vs smtp_pass, to_email vs
-        // to) is detected and reported instead of silently failing.
-        $resolve = static function (array $c, string ...$keys): string {
-            foreach ($keys as $key) {
-                if (array_key_exists($key, $c) && trim((string)$c[$key]) !== '') {
-                    return (string)$c[$key];
-                }
-            }
-            return '';
-        };
-        $fromEmail = $resolve($config, 'from_email', 'from', 'from_addr');
-        $toEmail   = $resolve($config, 'to_email', 'to', 'to_addr', 'recipients');
-        if ($fromAddr === '' && $fromEmail !== '') { $fromAddr = $fromEmail; }
-        if ($toAddr   === '' && $toEmail   !== '') { $toAddr   = $toEmail; }
+    $alt = trim(strip_tags(str_replace(['</p>', '<hr>', '<br>'], "\n", $htmlBody)));
 
-    if ($fromAddr === '' || $toAddr === '') {
-        error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
+    $headers  = 'From: ' . $fromName . ' <' . $fromAddr . ">\r\n";
+    $headers .= 'Reply-To: ' . (string)$data['email'] . "\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: multipart/alternative; boundary=\"_bfboundary_\"\r\n";
+
+    $body  = "--_bfboundary_\r\n";
+    $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+    $body .= $alt . "\r\n\r\n";
+    $body .= "--_bfboundary_\r\n";
+    $body .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+    $body .= $htmlBody . "\r\n\r\n";
+    $body .= "--_bfboundary_--\r\n";
+
+    $sent = @mail($toAddr, $subject, $body, $headers);
+    if ($sent) {
+        $emailMode = 'mail';
     } else {
-        // --- 1) Configured SMTP account --------------------------------
-        // Accept common alternate key spellings so a mistyped key name
-        // (e.g. smtp_password instead of smtp_pass) is detected and
-        // reported instead of silently failing.
-        $resolve = static function (array $c, string ...$keys): string {
-            foreach ($keys as $key) {
-                if (array_key_exists($key, $c) && trim((string)$c[$key]) !== '') {
-                    return (string)$c[$key];
-                }
-            }
-            return '';
-        };
-        $smtpHost = $resolve($config, 'smtp_host');
-        $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
-        $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
-        $smtpPort = $resolve($config, 'smtp_port');
-        $smtpSecure = $resolve($config, 'smtp_secure');
-        if ($smtpHost === '' || $smtpPort === '') {
-            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_host and smtp_port are required');
-        } elseif ($smtpUser === '') {
-            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_user/smtp_username not configured');
-        } elseif ($smtpPass === '') {
-            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_pass/smtp_password not configured');
-        } else {
-            try {
-                $secure = (string)($config['smtp_secure'] ?? (string)$smtpSecure);
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host        = $smtpHost;
-                $mail->SMTPAuth    = $smtpUser !== '';
-                $mail->Username    = $smtpUser;
-                $mail->Password    = (string)$smtpPass;
-                $mail->SMTPSecure  = (string)$smtpSecure;                  // '', 'ssl' or 'tls'
-                $mail->SMTPAutoTLS = (string)$smtpSecure !== '';
-                $mail->Port        = (int)($smtpPort ?: ($smtpSecure === 'ssl' ? 465 : 587));
-                $mail->CharSet     = 'UTF-8';
-                $mail->Timeout     = 10;
-                $mail->setFrom($fromAddr, $fromName);
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = trim(strip_tags(str_replace(['</p>', '<hr>'], "\n", $htmlBody)));
-                $mail->send();
-                $emailMode = 'smtp';
-            } catch (Throwable $e) {
-                $msg = $e->getMessage();
-                error_log('Email SMTP error (submission ' . $submissionId . '): ' . $msg);
-                if (stripos($msg, 'certificate') !== false || stripos($msg, 'tls') !== false || stripos($msg, 'ssl') !== false) {
-                    error_log('Email SMTP hint (submission ' . $submissionId . '): TLS/SSL handshake failed — check smtp_secure/smtp_port and that OpenSSL is enabled on the server.');
-                } elseif (stripos($msg, 'authentication') !== false || stripos($msg, '535') !== false) {
-                    error_log('Email SMTP hint (submission ' . $submissionId . '): Auth failed — verify smtp_user/smtp_pass and whether Zoho requires an app-specific password.');
-                } elseif (stripos($msg, 'connect') !== false || stripos($msg, 'timeout') !== false) {
-                    error_log('Email SMTP hint (submission ' . $submissionId . '): Connection failed — outbound SMTP may be blocked by the host, or the host/port is unreachable.');
-                }
-            }
-        }
-
-        // --- 2) Resend API (config keys from the Resend era) ----------
-        if ($emailMode === 'failed') {
-            $apiKey = trim((string)($config['resend_api_key'] ?? ''));
-            if ($apiKey !== '') {
-                if (function_exists('curl_init')) {
-                    $resendFrom = trim((string)($config['resend_from'] ?? ''));
-                    if ($resendFrom === '') {
-                        $resendFrom = $fromAddr;
-                    }
-                    $payload = json_encode([
-                        'from'     => $fromName . ' <' . $resendFrom . '>',
-                        'to'       => [$toAddr],
-                        'reply_to' => $replyTo,
-                        'subject'  => $subject,
-                        'html'     => $htmlBody,
-                    ]);
-                    if ($payload !== false) {
-                        $ch = curl_init();
-                        curl_setopt_array($ch, [
-                            CURLOPT_URL            => 'https://api.resend.com/emails',
-                            CURLOPT_RETURNTRANSFER => true,
-                            CURLOPT_POST           => true,
-                            CURLOPT_HTTPHEADER     => [
-                                'Authorization: Bearer ' . $apiKey,
-                                'Content-Type: application/json',
-                            ],
-                            CURLOPT_POSTFIELDS     => $payload,
-                            CURLOPT_TIMEOUT        => 8,
-                        ]);
-                        $response = curl_exec($ch);
-                        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                        $curlErr  = (string)curl_error($ch);
-                        curl_close($ch);
-                        if ($curlErr === '' && $httpCode >= 200 && $httpCode < 300) {
-                            $emailMode = 'resend';
-                        } else {
-                            error_log('Email Resend error (submission ' . $submissionId . '): HTTP ' . $httpCode
-                                . ' ' . $curlErr . ' ' . substr((string)$response, 0, 300));
-                        }
-                    }
-                } else {
-                    error_log('Email: curl extension missing, cannot use Resend (submission ' . $submissionId . ')');
-                }
-            }
-        }
-
-        // --- 3) Local mail() - works out of the box on cPanel ----------
-        if ($emailMode === 'failed') {
-            try {
-                $headers  = 'From: ' . $fromName . ' <' . $fromAddr . '>' . "\r\n";
-                $headers .= 'Reply-To: ' . $replyTo . "\r\n";
-                $headers .= 'MIME-Version: 1.0' . "\r\n";
-                $headers .= 'Content-Type: text/html; charset=UTF-8' . "\r\n";
-                $envelope = '-f' . preg_replace('/[<>\r\n]+/', '', $fromAddr);
-                if (@mail($toAddr, $subject, $htmlBody, $headers, $envelope)) {
-                    $emailMode = 'mail';
-                } else {
-                    error_log('Email: mail() returned false (submission ' . $submissionId . ')');
-                }
-            } catch (Throwable $e) {
-                error_log('Email mail() error (submission ' . $submissionId . '): ' . $e->getMessage());
-            }
-        }
-
-        if ($emailMode === 'failed') {
-            error_log('Email: all delivery methods failed (submission ' . $submissionId . ')');
-        }
+        error_log('Email: mail() returned false for submission ' . $submissionId);
     }
 } catch (Throwable $e) {
-    error_log('Email error (submission ' . $submissionId . '): ' . $e->getMessage());
+    $emailError = $e->getMessage();
+    error_log('Email error (submission ' . $submissionId . '): ' . $emailError);
+}
+
+// Record the outcome
+try {
+    $upd = $pdo->prepare('UPDATE submissions SET email_status = :s, email_error = :e WHERE id = :id');
+    $upd->execute([
+        ':s'  => $emailMode,
+        ':e'  => $emailMode === 'failed' ? substr($emailError, 0, 500) : null,
+        ':id' => $submissionId,
+    ]);
+} catch (Throwable $e) {
+    error_log('Could not store email status (submission ' . $submissionId . '): ' . $e->getMessage());
 }
 
 respond(200, [
     'success' => true,
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
-    'email'   => $emailMode,   // 'smtp' | 'resend' | 'mail' | 'failed'
+    'email'   => $emailMode,
 ]);

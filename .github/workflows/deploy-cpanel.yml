@@ -28,7 +28,7 @@ jobs:
         run: |
           cp public/submit.php dist/submit.php
           cp public/submit-config.example.php dist/submit-config.example.php
-            cp -r public/phpmailer dist/phpmailer
+          # PHPMailer is no longer used - submit.php uses PHP mail() only
           # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
 
       - name: Create submit-config.php from secret
@@ -36,8 +36,9 @@ jobs:
           SUBMIT_CONFIG_B64: ${{ secrets.SUBMIT_CONFIG_B64 }}
         run: |
           if [ -z "$SUBMIT_CONFIG_B64" ]; then
-            echo "::warning::SUBMIT_CONFIG_B64 secret is not set - deploying WITHOUT refreshing submit-config.php; the config already on the server will be kept. Add the secret (base64 of the production submit-config.php, see docs/SETUP.md) to manage credentials from GitHub."
-            exit 0
+            echo "::error::SUBMIT_CONFIG_B64 secret is NOT SET. The production server will keep its existing submit-config.php if present, or return HTTP 500 if missing. Set the secret (base64 of submit-config.php) to manage credentials from GitHub."
+            echo "::error::To create the secret: on your server, run: php -r \"echo base64_encode(file_get_contents('submit-config.php'));\" — paste the output as SUBMIT_CONFIG_B64."
+            exit 1
           fi
           echo "$SUBMIT_CONFIG_B64" | base64 --decode > dist/submit-config.php || {
             echo "::error::SUBMIT_CONFIG_B64 is not valid base64. Re-create it from the raw submit-config.php: base64 -w0 submit-config.php (Linux/macOS) or [Convert]::ToBase64String([IO.File]::ReadAllBytes('submit-config.php')) (PowerShell)."
@@ -47,8 +48,8 @@ jobs:
             echo "::error::Decoded submit-config.php is empty or does not start with <?php. Re-create the SUBMIT_CONFIG_B64 secret from the raw file."
             exit 1
           fi
-          if ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'smtp_host'" dist/submit-config.php; then
-            echo "::error::Decoded submit-config.php is missing required keys (db_host / smtp_host). Re-create the secret from a complete config."
+          if ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php; then
+            echo "::error::Decoded submit-config.php is missing required keys (db_host / to_email). Re-create the secret from a complete config."
             exit 1
           fi
           echo "submit-config.php decoded and validated ($(wc -c < dist/submit-config.php) bytes)."
