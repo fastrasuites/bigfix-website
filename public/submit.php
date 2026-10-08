@@ -298,14 +298,16 @@ try {
         }
     }
 
-    // --- Try 2: SMTP without auth (local relay fallback) ---
+    // --- Try 2: SMTP without auth (local relay) ---
+    // On shared hosting, smtp.zoho.com resolves to the local Exim relay.
+    // Try localhost:25 with no encryption and no auth.
     if ($emailMode === 'failed') {
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host         = $smtpHost;
-            $mail->Port         = $smtpPort;
-            $mail->SMTPSecure   = $smtpSecure;
+            $mail->Host         = 'localhost';
+            $mail->Port         = 25;
+            $mail->SMTPSecure   = '';
             $mail->SMTPAutoTLS  = false;
             $mail->SMTPKeepAlive = false;
             $mail->Timeout      = 5;
@@ -325,7 +327,7 @@ try {
             if (isset($mail->ErrorInfo)) {
                 $noAuthErr .= ' | ' . $mail->ErrorInfo;
             }
-            error_log('Email SMTP no-auth attempt failed (submission ' . $submissionId . '): ' . $noAuthErr);
+            error_log('Email SMTP no-auth (localhost:25) failed (submission ' . $submissionId . '): ' . $noAuthErr);
             $emailError = substr($noAuthErr, 0, 200);
             unset($mail);
         }
