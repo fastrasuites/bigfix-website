@@ -263,45 +263,75 @@ try {
     $smtpHostTrimmed = trim($smtpHost);
     $isLocalhost = ($smtpHostTrimmed === 'localhost' || $smtpHostTrimmed === '127.0.0.1');
 
-    $mail = new PHPMailer(true);
-    $mail->isSMTP();
-    $mail->Host         = $smtpHost;
-    $mail->Port         = $smtpPort;
-    $mail->SMTPSecure   = $smtpSecure;
-    $mail->SMTPAutoTLS  = false;
-    $mail->SMTPKeepAlive = false;
-    $mail->Timeout      = 8;
-    $mail->CharSet      = 'UTF-8';
-
-    // Authenticate only if we have credentials AND the host is NOT localhost.
-    // On shared hosting, smtp.zoho.com may resolve to the local Exim relay
-    // which accepts unauthenticated mail from localhost.
-    if (!$isLocalhost && $smtpUser !== '' && $smtpPass !== '') {
-        $mail->SMTPAuth     = true;
-        $mail->Username     = $smtpUser;
-        $mail->Password     = $smtpPass;
-    } else {
-        $mail->SMTPAuth     = false;
+    // --- Try 1: SMTP with auth (if we have credentials) ---
+    if ($smtpUser !== '' && $smtpPass !== '') {
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host         = $smtpHost;
+            $mail->Port         = $smtpPort;
+            $mail->SMTPSecure   = $smtpSecure;
+            $mail->SMTPAutoTLS  = false;
+            $mail->SMTPKeepAlive = false;
+            $mail->Timeout      = 5;
+            $mail->CharSet      = 'UTF-8';
+            $mail->SMTPAuth     = true;
+            $mail->Username     = $smtpUser;
+            $mail->Password     = $smtpPass;
+            $mail->setFrom($fromAddr, $fromName);
+            $mail->addAddress($toAddr);
+            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = $alt;
+            $mail->send();
+            $emailMode = 'smtp';
+        } catch (Throwable $e) {
+            $authErr = $e->getMessage();
+            if (isset($mail->ErrorInfo)) {
+                $authErr .= ' | ' . $mail->ErrorInfo;
+            }
+            error_log('Email SMTP auth attempt failed (submission ' . $submissionId . '): ' . $authErr);
+            $emailError = substr($authErr, 0, 200);
+            unset($mail);
+        }
     }
 
-    $mail->setFrom($fromAddr, $fromName);
-    $mail->addAddress($toAddr);
-    $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-    $mail->isHTML(true);
-    $mail->Subject = $subject;
-    $mail->Body    = $htmlBody;
-    $mail->AltBody = $alt;
-
-    $sent = $mail->send();
-    if ($sent) {
-        $emailMode = $smtpUser !== '' && $smtpPass !== '' ? 'smtp' : 'mail';
-    } else {
-        $emailError = substr($mail->ErrorInfo ?? 'Unknown error', 0, 200);
-        error_log('Email SMTP failed (submission ' . $submissionId . '): ' . $emailError);
+    // --- Try 2: SMTP without auth (local relay fallback) ---
+    if ($emailMode === 'failed') {
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host         = $smtpHost;
+            $mail->Port         = $smtpPort;
+            $mail->SMTPSecure   = $smtpSecure;
+            $mail->SMTPAutoTLS  = false;
+            $mail->SMTPKeepAlive = false;
+            $mail->Timeout      = 5;
+            $mail->CharSet      = 'UTF-8';
+            $mail->SMTPAuth     = false;
+            $mail->setFrom($fromAddr, $fromName);
+            $mail->addAddress($toAddr);
+            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = $alt;
+            $mail->send();
+            $emailMode = 'smtp';
+        } catch (Throwable $e) {
+            $noAuthErr = $e->getMessage();
+            if (isset($mail->ErrorInfo)) {
+                $noAuthErr .= ' | ' . $mail->ErrorInfo;
+            }
+            error_log('Email SMTP no-auth attempt failed (submission ' . $submissionId . '): ' . $noAuthErr);
+            $emailError = substr($noAuthErr, 0, 200);
+            unset($mail);
+        }
     }
 } catch (Throwable $e) {
-    $emailError = substr($e->getMessage(), 0, 200);
-    error_log('Email SMTP error (submission ' . $submissionId . '): ' . $e->getMessage());
+    error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
 }
 
 // ---- Fallback: PHP mail() (if available) --------------------------------
