@@ -332,6 +332,55 @@ try {
             unset($mail);
         }
     }
+
+    // --- Try 3: Direct IP to Zoho SMTP (bypass DNS hijack) ---
+    // On shared hosting, smtp.zoho.com DNS is redirected to local Exim.
+    // Connect directly to Zoho's real IP with auth + TLS.
+    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
+        $zohoIps = ['136.143.190.56'];  // resolved via public DNS (8.8.8.8)
+        foreach ($zohoIps as $zohoIp) {
+            try {
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host         = $zohoIp;
+                $mail->Port         = $smtpPort ?: 587;
+                $mail->SMTPSecure   = $smtpSecure ?: 'tls';
+                $mail->SMTPAutoTLS  = false;
+                $mail->SMTPKeepAlive = false;
+                $mail->Timeout      = 5;
+                $mail->CharSet      = 'UTF-8';
+                $mail->SMTPAuth     = true;
+                $mail->Username     = $smtpUser;
+                $mail->Password     = $smtpPass;
+                $mail->SMTPOptions  = [
+                    'ssl' => [
+                        'verify_peer'       => true,
+                        'verify_peer_name'  => true,
+                        'peer_name'         => 'smtp.zoho.com',
+                        'allow_self_signed' => false,
+                    ],
+                ];
+                $mail->setFrom($fromAddr, $fromName);
+                $mail->addAddress($toAddr);
+                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlBody;
+                $mail->AltBody = $alt;
+                $mail->send();
+                $emailMode = 'smtp';
+                break;
+            } catch (Throwable $e) {
+                $ipErr = $e->getMessage();
+                if (isset($mail->ErrorInfo)) {
+                    $ipErr .= ' | ' . $mail->ErrorInfo;
+                }
+                error_log('Email SMTP direct-IP failed (submission ' . $submissionId . '): ' . $ipErr);
+                $emailError = substr($ipErr, 0, 200);
+                unset($mail);
+            }
+        }
+    }
 } catch (Throwable $e) {
     error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
 }
