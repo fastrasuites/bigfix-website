@@ -10,53 +10,76 @@ if ($p !== 'bigfixtest') {
 }
 
 $result = [];
+$result['php_functions'] = [
+    'curl_init' => function_exists('curl_init'),
+    'fsockopen' => function_exists('fsockopen'),
+    'stream_socket_client' => function_exists('stream_socket_client'),
+    'popen' => function_exists('popen'),
+    'proc_open' => function_exists('proc_open'),
+    'exec' => function_exists('exec'),
+    'shell_exec' => function_exists('shell_exec'),
+    'mail' => function_exists('mail'),
+];
 
-// Check if proc_open is available
-$result['proc_open_available'] = function_exists('proc_open');
-
-// Check sendmail binary exists
-$result['sendmail_exists'] = file_exists('/usr/sbin/sendmail');
-$result['exim_exists'] = file_exists('/usr/sbin/exim');
-
-// Try to send a simple test email via sendmail pipe
+// Test HTTPS connectivity via curl
 try {
-    $to = 'bigfixtech@gmail.com';
-    $from = 'info@bigfixtech.com';
-    $subject = 'Sendmail test';
-    $body = 'Test message from sendmail pipe - ' . date('Y-m-d H:i:s');
-
-    $headers = "From: $from\n";
-    $headers .= "To: $to\n";
-    $headers .= "Subject: $subject\n";
-    $headers .= "X-Mailer: PHP/" . phpversion() . "\n";
-
-    $emailContent = $headers . "\n" . $body . "\n";
-
-    $start = microtime(true);
-    $fp = @popen('/usr/sbin/sendmail -t -f ' . escapeshellarg($from), 'w');
-    $ok = false;
-    if ($fp) {
-        $written = fwrite($fp, $emailContent);
-        $ok = pclose($fp) === 0;
-    }
-    $result['sendmail_test'] = [
-        'started' => $fp !== false,
-        'written' => $written ?? 0,
-        'result' => $ok ? 'SUCCESS' : 'FAILED',
-        'ms' => round((microtime(true) - $start) * 1000, 1),
+    $ch = curl_init('https://www.google.com');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    $resp = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+    $result['https_test'] = [
+        'accessible' => $code > 0,
+        'http_code' => $code,
+        'error' => $err ?: null,
     ];
 } catch (\Throwable $e) {
-    $result['sendmail_test'] = ['error' => $e->getMessage()];
+    $result['https_test'] = ['error' => $e->getMessage()];
 }
 
-// Also try exim directly
+// Test HTTPS to Zoho
 try {
-    $result['exim_test'] = [
-        'exists' => file_exists('/usr/sbin/exim'),
-        'is_executable' => is_executable('/usr/sbin/exim'),
+    $ch = curl_init('https://www.zoho.com');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    $resp = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $err = curl_error($ch);
+    curl_close($ch);
+    $result['zoho_https_test'] = [
+        'accessible' => $code > 0,
+        'http_code' => $code,
+        'error' => $err ?: null,
     ];
 } catch (\Throwable $e) {
-    $result['exim_test'] = ['error' => $e->getMessage()];
+    $result['zoho_https_test'] = ['error' => $e->getMessage()];
+}
+
+// Test stream_socket_client to Zoho SMTP via IP with TLS
+try {
+    $start = microtime(true);
+    $sock = @stream_socket_client(
+        "tlsv1.2://136.143.190.56:587",
+        $errno,
+        $errstr,
+        5
+    );
+    $result['stream_ssl_zoho_ip'] = [
+        'connected' => $sock !== false,
+        'error' => $sock ? null : "$errno: $errstr",
+        'ms' => round((microtime(true) - $start) * 1000, 1),
+    ];
+    if ($sock) {
+        $greeting = trim(fgets($sock, 515) ?: '');
+        $result['stream_ssl_zoho_ip']['greeting'] = substr($greeting, 0, 100);
+        fclose($sock);
+    }
+} catch (\Throwable $e) {
+    $result['stream_ssl_zoho_ip'] = ['error' => $e->getMessage()];
 }
 
 echo json_encode($result, JSON_PRETTY_PRINT);
