@@ -274,7 +274,7 @@ try {
                 $mail->SMTPAutoTLS = $secure !== '';
                 $mail->Port        = (int)($config['smtp_port'] ?? ($secure === 'ssl' ? 465 : 587));
                 $mail->CharSet     = 'UTF-8';
-                $mail->Timeout     = 8;
+                $mail->Timeout     = 10;
                 $mail->setFrom($fromAddr, $fromName);
                 $mail->addAddress($toAddr);
                 $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
@@ -285,7 +285,15 @@ try {
                 $mail->send();
                 $emailMode = 'smtp';
             } catch (Throwable $e) {
-                error_log('Email SMTP error (submission ' . $submissionId . '): ' . $e->getMessage());
+                $msg = $e->getMessage();
+                error_log('Email SMTP error (submission ' . $submissionId . '): ' . $msg);
+                if (stripos($msg, 'certificate') !== false || stripos($msg, 'tls') !== false || stripos($msg, 'ssl') !== false) {
+                    error_log('Email SMTP hint (submission ' . $submissionId . '): TLS/SSL handshake failed — check smtp_secure/smtp_port and that OpenSSL is enabled on the server.');
+                } elseif (stripos($msg, 'authentication') !== false || stripos($msg, '535') !== false) {
+                    error_log('Email SMTP hint (submission ' . $submissionId . '): Auth failed — verify smtp_user/smtp_pass and whether Zoho requires an app-specific password.');
+                } elseif (stripos($msg, 'connect') !== false || stripos($msg, 'timeout') !== false) {
+                    error_log('Email SMTP hint (submission ' . $submissionId . '): Connection failed — outbound SMTP may be blocked by the host, or the host/port is unreachable.');
+                }
             }
         } else {
             error_log('Email: smtp_host not configured in submit-config.php (submission ' . $submissionId . ')');
@@ -344,7 +352,8 @@ try {
                 $headers .= 'Reply-To: ' . $replyTo . "\r\n";
                 $headers .= 'MIME-Version: 1.0' . "\r\n";
                 $headers .= 'Content-Type: text/html; charset=UTF-8' . "\r\n";
-                if (@mail($toAddr, $subject, $htmlBody, $headers)) {
+                $envelope = '-f' . preg_replace('/[<>\r\n]+/', '', $fromAddr);
+                if (@mail($toAddr, $subject, $htmlBody, $headers, $envelope)) {
                     $emailMode = 'mail';
                 } else {
                     error_log('Email: mail() returned false (submission ' . $submissionId . ')');
