@@ -254,25 +254,60 @@ try {
         $toAddr = $fromAddr;
     }
     $replyTo = (string)$data['email'];   // already validated above
+        // Resolve config keys, accepting common alternate spellings so a
+        // mistyped key name (e.g. smtp_password vs smtp_pass, to_email vs
+        // to) is detected and reported instead of silently failing.
+        $resolve = static function (array $c, string ...$keys): string {
+            foreach ($keys as $key) {
+                if (array_key_exists($key, $c) && trim((string)$c[$key]) !== '') {
+                    return (string)$c[$key];
+                }
+            }
+            return '';
+        };
+        $fromEmail = $resolve($config, 'from_email', 'from', 'from_addr');
+        $toEmail   = $resolve($config, 'to_email', 'to', 'to_addr', 'recipients');
+        if ($fromAddr === '' && $fromEmail !== '') { $fromAddr = $fromEmail; }
+        if ($toAddr   === '' && $toEmail   !== '') { $toAddr   = $toEmail; }
 
     if ($fromAddr === '' || $toAddr === '') {
         error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
     } else {
         // --- 1) Configured SMTP account --------------------------------
-        $smtpHost = trim((string)($config['smtp_host'] ?? ''));
-        $smtpUser = trim((string)($config['smtp_user'] ?? ''));
-        if ($smtpHost !== '') {
+        // Accept common alternate key spellings so a mistyped key name
+        // (e.g. smtp_password instead of smtp_pass) is detected and
+        // reported instead of silently failing.
+        $resolve = static function (array $c, string ...$keys): string {
+            foreach ($keys as $key) {
+                if (array_key_exists($key, $c) && trim((string)$c[$key]) !== '') {
+                    return (string)$c[$key];
+                }
+            }
+            return '';
+        };
+        $smtpHost = $resolve($config, 'smtp_host');
+        $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
+        $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
+        $smtpPort = $resolve($config, 'smtp_port');
+        $smtpSecure = $resolve($config, 'smtp_secure');
+        if ($smtpHost === '' || $smtpPort === '') {
+            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_host and smtp_port are required');
+        } elseif ($smtpUser === '') {
+            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_user/smtp_username not configured');
+        } elseif ($smtpPass === '') {
+            error_log('Email: SMTP skipped (submission ' . $submissionId . ') - smtp_pass/smtp_password not configured');
+        } else {
             try {
-                $secure = (string)($config['smtp_secure'] ?? '');
+                $secure = (string)($config['smtp_secure'] ?? (string)$smtpSecure);
                 $mail = new PHPMailer(true);
                 $mail->isSMTP();
                 $mail->Host        = $smtpHost;
                 $mail->SMTPAuth    = $smtpUser !== '';
                 $mail->Username    = $smtpUser;
-                $mail->Password    = (string)($config['smtp_pass'] ?? '');
-                $mail->SMTPSecure  = $secure;                  // '', 'ssl' or 'tls'
-                $mail->SMTPAutoTLS = $secure !== '';
-                $mail->Port        = (int)($config['smtp_port'] ?? ($secure === 'ssl' ? 465 : 587));
+                $mail->Password    = (string)$smtpPass;
+                $mail->SMTPSecure  = (string)$smtpSecure;                  // '', 'ssl' or 'tls'
+                $mail->SMTPAutoTLS = (string)$smtpSecure !== '';
+                $mail->Port        = (int)($smtpPort ?: ($smtpSecure === 'ssl' ? 465 : 587));
                 $mail->CharSet     = 'UTF-8';
                 $mail->Timeout     = 10;
                 $mail->setFrom($fromAddr, $fromName);
@@ -295,8 +330,6 @@ try {
                     error_log('Email SMTP hint (submission ' . $submissionId . '): Connection failed — outbound SMTP may be blocked by the host, or the host/port is unreachable.');
                 }
             }
-        } else {
-            error_log('Email: smtp_host not configured in submit-config.php (submission ' . $submissionId . ')');
         }
 
         // --- 2) Resend API (config keys from the Resend era) ----------
