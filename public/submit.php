@@ -222,6 +222,13 @@ try {
 }
 
 // ---- Email notification (failure must not block success) ----------------
+// Tries, in order: the configured SMTP account, the Resend API (if the
+// config carries resend_api_key), then the server's local mail() - so a
+// notification still goes out even when one method is unavailable. The
+// method that succeeded ('smtp' | 'resend' | 'mail') or 'failed' is
+// returned in the JSON response; every failure detail is written to the
+// PHP error log (cPanel > Errors), never to the visitor.
+$emailMode = 'failed';
 try {
     $htmlBody  = '<h2>New BigFix Form Submission</h2>';
     $htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
@@ -239,37 +246,125 @@ try {
     }
     $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
 
-    $subject = 'New Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
+    $subject  = 'New Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
+    $fromAddr = trim((string)($config['from_email'] ?? ''));
+    $fromName = str_replace(["\r", "\n"], '', (string)($config['from_name'] ?? 'BigFix Website'));
+    $toAddr   = trim((string)($config['to_email'] ?? ''));
+    if ($toAddr === '' && $fromAddr !== '') {
+        $toAddr = $fromAddr;
+    }
+    $replyTo = (string)$data['email'];   // already validated above
 
-    $mail = new PHPMailer(true);
-    $mail->isSMTP();
-    $mail->Host       = $config['smtp_host'];
-    $secure = (string)($config['smtp_secure'] ?? '');
-    $user   = (string)($config['smtp_user'] ?? '');
-    $mail->SMTPAuth   = $user !== '';              // no login for local catchers like Mailpit
-    $mail->Username   = $user;
-    $mail->Password   = (string)($config['smtp_pass'] ?? '');
-    $mail->SMTPSecure = $secure;                   // '', 'ssl' or 'tls'
-    $mail->SMTPAutoTLS = $secure !== '';           // plain SMTP when no encryption is configured
-    $mail->Port       = (int)$config['smtp_port'];
-    $mail->CharSet    = 'UTF-8';
-    $mail->Timeout    = 10;
+    if ($fromAddr === '' || $toAddr === '') {
+        error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
+    } else {
+        // --- 1) Configured SMTP account --------------------------------
+        $smtpHost = trim((string)($config['smtp_host'] ?? ''));
+        $smtpUser = trim((string)($config['smtp_user'] ?? ''));
+        if ($smtpHost !== '') {
+            try {
+                $secure = (string)($config['smtp_secure'] ?? '');
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host        = $smtpHost;
+                $mail->SMTPAuth    = $smtpUser !== '';
+                $mail->Username    = $smtpUser;
+                $mail->Password    = (string)($config['smtp_pass'] ?? '');
+                $mail->SMTPSecure  = $secure;                  // '', 'ssl' or 'tls'
+                $mail->SMTPAutoTLS = $secure !== '';
+                $mail->Port        = (int)($config['smtp_port'] ?? ($secure === 'ssl' ? 465 : 587));
+                $mail->CharSet     = 'UTF-8';
+                $mail->Timeout     = 8;
+                $mail->setFrom($fromAddr, $fromName);
+                $mail->addAddress($toAddr);
+                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlBody;
+                $mail->AltBody = trim(strip_tags(str_replace(['</p>', '<hr>'], "\n", $htmlBody)));
+                $mail->send();
+                $emailMode = 'smtp';
+            } catch (Throwable $e) {
+                error_log('Email SMTP error (submission ' . $submissionId . '): ' . $e->getMessage());
+            }
+        } else {
+            error_log('Email: smtp_host not configured in submit-config.php (submission ' . $submissionId . ')');
+        }
 
-    $mail->setFrom($config['from_email'], $config['from_name']);
-    $mail->addAddress($config['to_email']);
-    $mail->addReplyTo($data['email'], $data['name'] ?? '');   // email already validated
+        // --- 2) Resend API (config keys from the Resend era) ----------
+        if ($emailMode === 'failed') {
+            $apiKey = trim((string)($config['resend_api_key'] ?? ''));
+            if ($apiKey !== '') {
+                if (function_exists('curl_init')) {
+                    $resendFrom = trim((string)($config['resend_from'] ?? ''));
+                    if ($resendFrom === '') {
+                        $resendFrom = $fromAddr;
+                    }
+                    $payload = json_encode([
+                        'from'     => $fromName . ' <' . $resendFrom . '>',
+                        'to'       => [$toAddr],
+                        'reply_to' => $replyTo,
+                        'subject'  => $subject,
+                        'html'     => $htmlBody,
+                    ]);
+                    if ($payload !== false) {
+                        $ch = curl_init();
+                        curl_setopt_array($ch, [
+                            CURLOPT_URL            => 'https://api.resend.com/emails',
+                            CURLOPT_RETURNTRANSFER => true,
+                            CURLOPT_POST           => true,
+                            CURLOPT_HTTPHEADER     => [
+                                'Authorization: Bearer ' . $apiKey,
+                                'Content-Type: application/json',
+                            ],
+                            CURLOPT_POSTFIELDS     => $payload,
+                            CURLOPT_TIMEOUT        => 8,
+                        ]);
+                        $response = curl_exec($ch);
+                        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $curlErr  = (string)curl_error($ch);
+                        curl_close($ch);
+                        if ($curlErr === '' && $httpCode >= 200 && $httpCode < 300) {
+                            $emailMode = 'resend';
+                        } else {
+                            error_log('Email Resend error (submission ' . $submissionId . '): HTTP ' . $httpCode
+                                . ' ' . $curlErr . ' ' . substr((string)$response, 0, 300));
+                        }
+                    }
+                } else {
+                    error_log('Email: curl extension missing, cannot use Resend (submission ' . $submissionId . ')');
+                }
+            }
+        }
 
-    $mail->isHTML(true);
-    $mail->Subject = $subject;
-    $mail->Body    = $htmlBody;
-    $mail->AltBody = trim(strip_tags(str_replace(['</p>', '<hr>'], "\n", $htmlBody)));
-    $mail->send();
+        // --- 3) Local mail() - works out of the box on cPanel ----------
+        if ($emailMode === 'failed') {
+            try {
+                $headers  = 'From: ' . $fromName . ' <' . $fromAddr . '>' . "\r\n";
+                $headers .= 'Reply-To: ' . $replyTo . "\r\n";
+                $headers .= 'MIME-Version: 1.0' . "\r\n";
+                $headers .= 'Content-Type: text/html; charset=UTF-8' . "\r\n";
+                if (@mail($toAddr, $subject, $htmlBody, $headers)) {
+                    $emailMode = 'mail';
+                } else {
+                    error_log('Email: mail() returned false (submission ' . $submissionId . ')');
+                }
+            } catch (Throwable $e) {
+                error_log('Email mail() error (submission ' . $submissionId . '): ' . $e->getMessage());
+            }
+        }
+
+        if ($emailMode === 'failed') {
+            error_log('Email: all delivery methods failed (submission ' . $submissionId . ')');
+        }
+    }
 } catch (Throwable $e) {
-    error_log('Email error: ' . $e->getMessage());
+    error_log('Email error (submission ' . $submissionId . '): ' . $e->getMessage());
 }
 
 respond(200, [
     'success' => true,
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
+    'email'   => $emailMode,   // 'smtp' | 'resend' | 'mail' | 'failed'
 ]);

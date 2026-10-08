@@ -26,7 +26,7 @@ const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) || "";
 export const submitForm = async (
   source: FormSource,
   data: Record<string, string>,
-  timeout: number = 10000,
+  timeout: number = 15000,
 ): Promise<SubmitResult> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
