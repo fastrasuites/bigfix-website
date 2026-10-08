@@ -381,8 +381,57 @@ try {
             unset($mail);
         }
     }
-} catch (Throwable $e) {
-    error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
+    } catch (Throwable $e) {
+        error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
+}
+
+// ---- Fallback: ZeptoMail REST API via HTTPS (if curl is available) --------
+// On shared hosting, SMTP is often intercepted/blocked but HTTPS usually works.
+// ZeptoMail is Zoho's transactional email service — works over HTTPS.
+// Requires: zepto_api_key in submit-config.php
+if ($emailMode === 'failed' && !empty($config['zepto_api_key']) && function_exists('curl_init')) {
+    try {
+        $zeptoUrl = trim((string)($config['zepto_url'] ?? 'https://email.zoho.com/api/v2/email'));
+        $zeptoKey = (string)$config['zepto_api_key'];
+
+        $payload = json_encode([
+            'from'       => ['email' => $fromAddr, 'name' => $fromName],
+            'to'         => [['email' => $toAddr]],
+            'subject'    => $subject,
+            'html'       => $htmlBody,
+            'reply_to'   => ['email' => $replyTo, 'name' => (string)($data['name'] ?? '')],
+        ]);
+
+        if ($payload !== false) {
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $zeptoUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: ' . $zeptoKey,
+                    'Content-Type: application/json',
+                ],
+                CURLOPT_POSTFIELDS     => $payload,
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_CONNECTTIMEOUT => 5,
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr  = (string)curl_error($ch);
+            curl_close($ch);
+
+            if ($curlErr === '' && $httpCode >= 200 && $httpCode < 300) {
+                $emailMode = 'zepto_api';
+            } else {
+                error_log('Email ZeptoMail API error (submission ' . $submissionId . '): HTTP ' . $httpCode . ' ' . $curlErr . ' ' . substr((string)$response, 0, 300));
+                $emailError = 'HTTP ' . $httpCode;
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('Email ZeptoMail API exception (submission ' . $submissionId . '): ' . $e->getMessage());
+        $emailError = substr($e->getMessage(), 0, 200);
+    }
 }
 
 // ---- Fallback: PHP mail() (if available) --------------------------------
