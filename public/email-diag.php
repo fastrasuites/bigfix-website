@@ -9,62 +9,61 @@ if ($p !== 'bigfixtest') {
     exit;
 }
 
-$result = [];
+// Catch ALL errors and warnings
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
 
-// --- DNS ---
-$dnsOk = @checkdnsrr('smtp.zoho.com', 'MX');
-$result['dns_mx'] = $dnsOk;
-$records = @dns_get_record('smtp.zoho.com', DNS_A);
-$result['dns_smtp_a'] = $records !== false ? count($records) . ' records' : 'false';
+$result = ['tests' => []];
 
-// --- Socket tests ---
-$smtpHost = 'smtp.zoho.com';
-$testPorts = [25, 465, 587, 585, 25025];
-foreach ($testPorts as $port) {
+// Test 1: DNS
+try {
+    $records = dns_get_record('smtp.zoho.com', DNS_A);
+    $result['tests']['dns'] = 'ok - ' . count($records) . ' A records';
+} catch (\Throwable $e) {
+    $result['tests']['dns'] = 'ERROR: ' . $e->getMessage();
+}
+
+// Test 2: fsockopen to smtp.zoho.com:587
+try {
     $start = microtime(true);
     $errno = 0; $errstr = '';
-    $sock = @fsockopen($smtpHost, $port, $errno, $errstr, 5);
-    $result["smtp_{$smtpHost}_{$port}"] = [
-        'connected' => $sock !== false,
-        'error' => $errno ? "$errno: $errstr" : null,
-        'ms' => round((microtime(true) - $start) * 1000, 1),
-    ];
-    if ($sock) {
-        // Try to read greeting if connected
-        $greeting = '';
-        if (in_array($port, [25, 587])) {
-            $greeting = trim(fgets($sock, 515) ?: '');
-        }
-        if ($greeting) $result["smtp_{$smtpHost}_{$port}"]['greeting'] = $greeting;
-        fclose($sock);
-    }
+    $sock = @fsockopen('smtp.zoho.com', 587, $errno, $errstr, 3);
+    $result['tests']['smtp_587'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
+    if ($sock) fclose($sock);
+} catch (\Throwable $e) {
+    $result['tests']['smtp_587'] = 'ERROR: ' . $e->getMessage();
 }
 
-// --- Local SMTP ---
-$start = microtime(true);
-$errno = 0; $errstr = '';
-$sock = @fsockopen('127.0.0.1', 25, $errno, $errstr, 3);
-$result['local_smtp'] = [
-    'connected' => $sock !== false,
-    'error' => $errno ? "$errno: $errstr" : null,
-    'ms' => round((microtime(true) - $start) * 1000, 1),
-];
-if ($sock) {
-    $greeting = trim(fgets($sock, 515) ?: '');
-    if ($greeting) $result['local_smtp']['greeting'] = $greeting;
-    fclose($sock);
+// Test 3: fsockopen to smtp.zoho.com:465
+try {
+    $start = microtime(true);
+    $errno = 0; $errstr = '';
+    $sock = @fsockopen('smtp.zoho.com', 465, $errno, $errstr, 3);
+    $result['tests']['smtp_465'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
+    if ($sock) fclose($sock);
+} catch (\Throwable $e) {
+    $result['tests']['smtp_465'] = 'ERROR: ' . $e->getMessage();
 }
 
-// --- PHP mail() ---
-$start = microtime(true);
-$r = @mail('info@bigfixtech.com', 'Test', 'body', "From: info@bigfixtech.com\r\n", '-f info@bigfixtech.com');
-$result['php_mail'] = ['sent' => $r, 'ms' => round((microtime(true) - $start) * 1000, 1)];
+// Test 4: Local SMTP
+try {
+    $start = microtime(true);
+    $errno = 0; $errstr = '';
+    $sock = @fsockopen('127.0.0.1', 25, $errno, $errstr, 2);
+    $result['tests']['local_25'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
+    if ($sock) fclose($sock);
+} catch (\Throwable $e) {
+    $result['tests']['local_25'] = 'ERROR: ' . $e->getMessage();
+}
 
-// --- PHPMailer load test ---
-$result['phpmailer_files'] = [
-    'Exception.php' => file_exists(__DIR__ . '/phpmailer/Exception.php'),
-    'PHPMailer.php' => file_exists(__DIR__ . '/phpmailer/PHPMailer.php'),
-    'SMTP.php'      => file_exists(__DIR__ . '/phpmailer/SMTP.php'),
-];
+// Test 5: PHP mail()
+try {
+    $start = microtime(true);
+    $r = @mail('info@bigfixtech.com', 'Test', 'body', "From: info@bigfixtech.com\r\n", '-f info@bigfixtech.com');
+    $result['tests']['php_mail'] = $r ? 'sent in ' . round((microtime(true)-$start)*1000) . 'ms' : 'FAILED (returned false)';
+} catch (\Throwable $e) {
+    $result['tests']['php_mail'] = 'ERROR: ' . $e->getMessage();
+}
 
 echo json_encode($result, JSON_PRETTY_PRINT);
