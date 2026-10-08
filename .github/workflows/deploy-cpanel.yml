@@ -28,7 +28,6 @@ jobs:
         run: |
           cp public/submit.php dist/submit.php
           cp public/submit-config.example.php dist/submit-config.example.php
-          cp public/email-diag.php dist/email-diag.php
           cp -r public/phpmailer dist/phpmailer
           # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
 
