@@ -11,50 +11,83 @@ if ($p !== 'bigfixtest') {
 
 $result = [];
 
-// Test 1: Can we reach Zoho's REAL IP (not DNS-hijacked)?
-$zohoRealIp = '136.143.190.56';
-$start = microtime(true);
-$errno = 0; $errstr = '';
-$sock = @fsockopen($zohoRealIp, 587, $errno, $errstr, 5);
-$result['zoho_real_ip_587'] = [
-    'connected' => $sock !== false,
-    'error' => $sock ? null : "$errno: $errstr",
-    'ms' => round((microtime(true) - $start) * 1000, 1),
-];
-if ($sock) {
-    $greeting = trim(fgets($sock, 515) ?: '');
-    $result['zoho_real_ip_587']['greeting'] = substr($greeting, 0, 100);
-    fwrite($sock, "QUIT\r\n");
-    fclose($sock);
+// Check for sendmail binary
+$result['sendmail_paths'] = [];
+foreach (['/usr/sbin/sendmail', '/usr/bin/sendmail', '/usr/sbin/exim', '/usr/sbin/postfix'] as $path) {
+    $result['sendmail_paths'][$path] = file_exists($path);
 }
 
-// Test 2: Zoho IP port 465
-$start = microtime(true);
-$sock = @fsockopen($zohoRealIp, 465, $errno, $errstr, 5);
-$result['zoho_real_ip_465'] = [
-    'connected' => $sock !== false,
-    'error' => $sock ? null : "$errno: $errstr",
-    'ms' => round((microtime(true) - $start) * 1000, 1),
-];
-if ($sock) fclose($sock);
+// Test SMTP auth to local Exim (smtp.zoho.com:587 which resolves locally)
+try {
+    $start = microtime(true);
+    $errno = 0; $errstr = '';
+    $sock = @fsockopen('smtp.zoho.com', 587, $errno, $errstr, 8);
+    if ($sock) {
+        $greeting = trim(fgets($sock, 515) ?: '');
+        $result['smtp_test'] = ['greeting' => substr($greeting, 0, 80)];
 
-// Test 3: What IP does smtp.zoho.com resolve to ON THIS SERVER?
-$records = @dns_get_record('smtp.zoho.com', DNS_A);
-$result['smtp_zoho_com_resolves_to'] = $records !== false && count($records) > 0 ? $records[0]['ip'] : 'NO RECORDS';
+        fwrite($sock, "EHLO localhost\r\n");
+        $ehlo = '';
+        $t0 = microtime(true);
+        while (!feof($sock) && microtime(true) - $t0 < 5) {
+            $line = fgets($sock, 515);
+            if ($line === false) break;
+            $ehlo .= $line;
+            if (strpos(trim($line), '250 ') !== false) break;
+        }
+        $result['smtp_test']['ehlo_supports_starttls'] = strpos($ehlo, 'STARTTLS') !== false;
+        $result['smtp_test']['ehlo_supports_auth'] = strpos($ehlo, 'AUTH') !== false ? trim(substr(strstr($ehlo, 'AUTH'), 0, 50)) : false;
 
-// Test 4: Try connecting to smtp.zoho.com and check greeting
-$start = microtime(true);
-$sock = @fsockopen('smtp.zoho.com', 587, $errno, $errstr, 3);
-$result['smtp_zoho_com_587'] = [
-    'connected' => $sock !== false,
-    'error' => $sock ? null : "$errno: $errstr",
-    'ms' => round((microtime(true) - $start) * 1000, 1),
-];
-if ($sock) {
-    $greeting = trim(fgets($sock, 515) ?: '');
-    $result['smtp_zoho_com_587']['greeting'] = substr($greeting, 0, 100);
-    fwrite($sock, "QUIT\r\n");
-    fclose($sock);
+        // STARTTLS
+        fwrite($sock, "STARTTLS\r\n");
+        $tls = '';
+        $t0 = microtime(true);
+        while (!feof($sock) && microtime(true) - $t0 < 5) {
+            $line = fgets($sock, 515);
+            if ($line === false) break;
+            $tls .= $line;
+            if (strpos(trim($line), '220 ') !== false) break;
+        }
+        $result['smtp_test']['starttls'] = trim($tls);
+
+        // Enable TLS
+        $crypto = @stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        $result['smtp_test']['tls_enabled'] = $crypto === true;
+
+        // Re-EHLO after TLS
+        fwrite($sock, "EHLO localhost\r\n");
+        $ehlo2 = '';
+        $t0 = microtime(true);
+        while (!feof($sock) && microtime(true) - $t0 < 5) {
+            $line = fgets($sock, 515);
+            if ($line === false) break;
+            $ehlo2 .= $line;
+            if (strpos(trim($line), '250 ') !== false) break;
+        }
+        $result['smtp_test']['auth_after_tls'] = strpos($ehlo2, 'AUTH') !== false ? 'AUTH supported' : 'AUTH not supported';
+
+        // Try AUTH PLAIN with correct credentials
+        $user = 'info@bigfixtech.com';
+        $pass = 'Alw@ysthere@43212';
+        $authPlain = base64_encode("\0$user\0$pass");
+
+        fwrite($sock, "AUTH PLAIN $authPlain\r\n");
+        $authResp = '';
+        $t0 = microtime(true);
+        while (!feof($sock) && microtime(true) - $t0 < 5) {
+            $line = fgets($sock, 515);
+            if ($line === false) break;
+            $authResp .= $line;
+        }
+        $result['smtp_test']['auth_plain'] = trim(substr($authResp, 0, 200));
+
+        fwrite($sock, "QUIT\r\n");
+        fclose($sock);
+    } else {
+        $result['smtp_test'] = ['connected' => false, 'error' => "$errno: $errstr"];
+    }
+} catch (\Throwable $e) {
+    $result['smtp_test']['error'] = $e->getMessage();
 }
 
 echo json_encode($result, JSON_PRETTY_PRINT);
