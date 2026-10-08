@@ -103,3 +103,69 @@ For housekeeping, run once daily:
 - The PHP endpoint includes CORS headers for development; restrict `Access-Control-Allow-Origin` to your domain in production
 - All input is sanitized with `htmlspecialchars(strip_tags())` before database insertion
 - Consider adding rate-limiting/honeypot fields to prevent spam
+
+---
+
+## CI/CD deployment (GitHub Actions)
+
+Pushes to `master` run `.github/workflows/deploy-cpanel.yml`:
+build the Vite app → copy the PHP backend into `dist/` → inject
+`submit-config.php` from the `SUBMIT_CONFIG_B64` secret → upload `dist/`
+to `public_html/` via FTPS → smoke-test the live endpoint.
+
+### Required repository secrets
+
+GitHub → **Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret | Value |
+| --- | --- |
+| `FTP_SERVER` | cPanel server hostname (e.g. `bigfixtech.com`) |
+| `FTP_USERNAME` | cPanel FTP user |
+| `FTP_PASSWORD` | cPanel FTP password |
+| `SUBMIT_CONFIG_B64` | **Base64-encoded** contents of the production `submit-config.php` |
+
+If `SUBMIT_CONFIG_B64` is missing, the workflow fails at
+"Create submit-config.php from secret" and **nothing is deployed** —
+production keeps whatever old files it had. This exact failure caused the
+"Something went wrong. Please try again." form error in October 2026.
+
+### Creating `SUBMIT_CONFIG_B64`
+
+Linux / macOS (single line, no wrapping):
+
+```bash
+base64 -w0 submit-config.php
+```
+
+macOS: `base64 -i submit-config.php`
+
+Windows PowerShell:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes('C:\path\to\submit-config.php'))
+```
+
+Paste the output as the secret value. On every deploy the workflow decodes
+it into `dist/submit-config.php` and validates it (starts with `<?php`,
+contains `db_host` and `smtp_host`), so a bad secret fails the run **before**
+anything is uploaded to the server.
+
+### Re-running a failed deploy
+
+Actions → select the failed run → **Re-run failed jobs** (or push any new
+commit to `master`).
+
+### Post-deploy smoke test
+
+The last step GETs `https://www.bigfixtech.com/submit.php` and expects
+HTTP `405` with JSON ("Method not allowed") — proof that PHP executes the
+endpoint and the config file is present. Any other reachable HTTP status
+fails the run so a broken backend never goes unnoticed.
+
+### PHP version note
+
+`submit.php` avoids PHP 8.x-only syntax and runs on PHP 7.1+. If the
+endpoint still returns an empty response after a successful deploy, check
+cPanel → **MultiPHP Manager** (a PHP parse error there returns an empty
+HTTP 500 with `display_errors` off).
+

@@ -16,7 +16,7 @@ require __DIR__ . '/phpmailer/SMTP.php';
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
-function respond(int $code, array $body): never
+function respond(int $code, array $body): void   // void (not never): PHP 8.1+ only, cPanel may run older PHP
 {
     http_response_code($code);
     echo json_encode($body);
@@ -54,7 +54,7 @@ function h(string $s): string
 }
 
 /** Trim, strip tags, remove control characters, cap length. Returns null if empty. */
-function clean(mixed $v, int $max, bool $multiline = false): ?string
+function clean($v, int $max, bool $multiline = false): ?string   // untyped $v (not mixed): PHP 8.0+ only
 {
     if (!is_string($v) && !is_int($v) && !is_float($v)) {
         return null;
@@ -163,6 +163,34 @@ try {
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]
     );
+
+    // ---- Self-healing: create the table if it does not exist yet ----------
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS submissions (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            source     VARCHAR(30)  NOT NULL,
+            name       VARCHAR(100) NOT NULL,
+            email      VARCHAR(150) NOT NULL,
+            subject    VARCHAR(200) NULL,
+            message    TEXT         NULL,
+            phone      VARCHAR(30)  NULL,
+            date       DATE         NULL,
+            time       VARCHAR(20)  NULL,
+            users      VARCHAR(50)  NULL,
+            notes      TEXT         NULL,
+            company    VARCHAR(150) NULL,
+            product    VARCHAR(150) NULL,
+            operation  VARCHAR(150) NULL,
+            timeline   VARCHAR(50)  NULL,
+            industry   VARCHAR(100) NULL,
+            created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_source_created (source, created_at),
+            KEY idx_email (email),
+            KEY idx_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
 
     // ---- Self-healing schema migration --------------------------------------
     $stmt = $pdo->query("SHOW TABLES LIKE 'submissions'");
