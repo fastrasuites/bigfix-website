@@ -9,61 +9,87 @@ if ($p !== 'bigfixtest') {
     exit;
 }
 
-// Catch ALL errors and warnings
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+set_error_handler(function($errno, $errstr) {
+    throw new ErrorException($errstr, 0, $errno);
 });
 
-$result = ['tests' => []];
+$result = [];
 
-// Test 1: DNS
+// --- Check server config ---
 try {
-    $records = dns_get_record('smtp.zoho.com', DNS_A);
-    $result['tests']['dns'] = 'ok - ' . count($records) . ' A records';
+    $config = require __DIR__ . '/submit-config.php';
+    $result['config'] = [
+        'db_host' => $config['db_host'] ?? 'MISSING',
+        'smtp_host' => $config['smtp_host'] ?? 'MISSING',
+        'smtp_port' => $config['smtp_port'] ?? 'MISSING',
+        'smtp_secure' => $config['smtp_secure'] ?? 'MISSING',
+        'smtp_user' => $config['smtp_user'] ?? 'MISSING',
+        'smtp_pass_length' => isset($config['smtp_pass']) ? strlen($config['smtp_pass']) : 'MISSING',
+        'from_email' => $config['from_email'] ?? 'MISSING',
+        'to_email' => $config['to_email'] ?? 'MISSING',
+    ];
 } catch (\Throwable $e) {
-    $result['tests']['dns'] = 'ERROR: ' . $e->getMessage();
+    $result['config'] = 'ERROR: ' . $e->getMessage();
 }
 
-// Test 2: fsockopen to smtp.zoho.com:587
+// --- Test SMTP connection to smtp.zoho.com:587 ---
 try {
     $start = microtime(true);
     $errno = 0; $errstr = '';
-    $sock = @fsockopen('smtp.zoho.com', 587, $errno, $errstr, 3);
-    $result['tests']['smtp_587'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
-    if ($sock) fclose($sock);
+    $sock = @fsockopen('smtp.zoho.com', 587, $errno, $errstr, 5);
+    if ($sock) {
+        $greeting = trim(fgets($sock, 515) ?: '');
+        socket_set_timeout($sock, 5);
+        $result['smtp_test'] = [
+            'connected' => true,
+            'greeting' => $greeting,
+            'ms' => round((microtime(true) - $start) * 1000, 1),
+        ];
+
+        // Try EHLO
+        fwrite($sock, "EHLO localhost\r\n");
+        $ehloResp = '';
+        while (($line = fgets($sock, 515)) && !feof($sock)) {
+            $ehloResp .= $line;
+            if (strpos($line, ' ') === 0 || strpos(trim($line), '250 ') === 0) break;
+            if (strpos(trim($line), '250 ') === 0) break;
+        }
+        $result['smtp_test']['ehlo'] = trim($ehloResp);
+
+        // Try STARTTLS
+        fwrite($sock, "STARTTLS\r\n");
+        $tlsResp = '';
+        while (($line = fgets($sock, 515)) && !feof($sock)) {
+            $tlsResp .= $line;
+            if (strpos(trim($line), '220 ') === 0) break;
+        }
+        $result['smtp_test']['starttls'] = trim($tlsResp);
+        fclose($sock);
+    } else {
+        $result['smtp_test'] = ['connected' => false, 'error' => "$errno: $errstr"];
+    }
 } catch (\Throwable $e) {
-    $result['tests']['smtp_587'] = 'ERROR: ' . $e->getMessage();
+    $result['smtp_test'] = 'ERROR: ' . $e->getMessage();
 }
 
-// Test 3: fsockopen to smtp.zoho.com:465
+// --- Test local SMTP on port 25 ---
 try {
     $start = microtime(true);
     $errno = 0; $errstr = '';
-    $sock = @fsockopen('smtp.zoho.com', 465, $errno, $errstr, 3);
-    $result['tests']['smtp_465'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
-    if ($sock) fclose($sock);
+    $sock = @fsockopen('127.0.0.1', 25, $errno, $errstr, 3);
+    if ($sock) {
+        $greeting = trim(fgets($sock, 515) ?: '');
+        $result['local_smtp_test'] = [
+            'connected' => true,
+            'greeting' => $greeting,
+            'ms' => round((microtime(true) - $start) * 1000, 1),
+        ];
+        fclose($sock);
+    } else {
+        $result['local_smtp_test'] = ['connected' => false, 'error' => "$errno: $errstr"];
+    }
 } catch (\Throwable $e) {
-    $result['tests']['smtp_465'] = 'ERROR: ' . $e->getMessage();
-}
-
-// Test 4: Local SMTP
-try {
-    $start = microtime(true);
-    $errno = 0; $errstr = '';
-    $sock = @fsockopen('127.0.0.1', 25, $errno, $errstr, 2);
-    $result['tests']['local_25'] = $sock !== false ? 'connected in ' . round((microtime(true)-$start)*1000) . 'ms' : "FAILED: $errno $errstr";
-    if ($sock) fclose($sock);
-} catch (\Throwable $e) {
-    $result['tests']['local_25'] = 'ERROR: ' . $e->getMessage();
-}
-
-// Test 5: PHP mail()
-try {
-    $start = microtime(true);
-    $r = @mail('info@bigfixtech.com', 'Test', 'body', "From: info@bigfixtech.com\r\n", '-f info@bigfixtech.com');
-    $result['tests']['php_mail'] = $r ? 'sent in ' . round((microtime(true)-$start)*1000) . 'ms' : 'FAILED (returned false)';
-} catch (\Throwable $e) {
-    $result['tests']['php_mail'] = 'ERROR: ' . $e->getMessage();
+    $result['local_smtp_test'] = 'ERROR: ' . $e->getMessage();
 }
 
 echo json_encode($result, JSON_PRETTY_PRINT);
