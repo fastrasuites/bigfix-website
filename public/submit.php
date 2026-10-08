@@ -1,10 +1,18 @@
 <?php
 declare(strict_types=1);
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require __DIR__ . '/phpmailer/Exception.php';
+require __DIR__ . '/phpmailer/PHPMailer.php';
+require __DIR__ . '/phpmailer/SMTP.php';
+
 /**
  * Form submission endpoint for BigFix landing page.
- * Validates input, stores RAW (unescaped) data in MySQL, sends email notification via PHP mail().
- * Escaping happens at OUTPUT time (email body, dashboard), never before storage.
+ * Validates input, stores RAW (unescaped) data in MySQL, sends email notification.
+ * Primary: Zoho SMTP via PHPMailer. Fallback: PHP mail().
+ * Escaping happens at OUTPUT time, never before storage.
  */
 
 header('Content-Type: application/json');
@@ -47,7 +55,6 @@ function h(string $s): string
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
-/** Trim, strip tags, remove control characters, cap length. Returns null if empty. */
 function clean($v, int $max, bool $multiline = false): ?string
 {
     if (!is_string($v) && !is_int($v) && !is_float($v)) {
@@ -82,7 +89,6 @@ if (!is_array($input)) {
     $input = $_POST;
 }
 
-// Honeypot: add a hidden <input name="website"> to your forms.
 if (!empty($input['website'])) {
     respond(200, ['success' => true, 'message' => 'Submission received successfully']);
 }
@@ -126,14 +132,12 @@ switch ($source) {
         if ($data['subject'] === null) $errors[] = 'Subject is required';
         if ($data['message'] === null) $errors[] = 'Message is required';
         break;
-
     case 'book_demo':
         if ($data['company'] === null) $errors[] = 'Company name is required';
         if ($data['phone'] === null || !isValidPhone($data['phone'])) $errors[] = 'Valid phone number is required';
         if ($data['date'] === null || !isValidDate($data['date'])) $errors[] = 'Valid date is required (YYYY-MM-DD)';
         if ($data['time'] === null) $errors[] = 'Time is required';
         break;
-
     case 'home_review':
         if ($data['company'] === null) $errors[] = 'Company name is required';
         if ($data['product'] === null) $errors[] = 'Product of interest is required';
@@ -186,7 +190,6 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
-
     $stmt = $pdo->query("SHOW TABLES LIKE 'submissions'");
     if ($stmt->fetchColumn()) {
         $stmt = $pdo->query("SHOW COLUMNS FROM submissions");
@@ -215,57 +218,105 @@ try {
     respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
 }
 
-// ---- Email notification via PHP mail() -----------------------------------
+// ---- Email notification -------------------------------------------------
 $emailMode = 'failed';
 $emailError = '';
+
+$resolve = static function (array $c, string ...$keys): string {
+    foreach ($keys as $key) {
+        if (array_key_exists($key, $c) && trim((string)$c[$key]) !== '') {
+            return (string)$c[$key];
+        }
+    }
+    return '';
+};
+
+$fromAddr = $resolve($config, 'from_email', 'from', 'from_addr') ?: 'info@bigfixtech.com';
+$toAddr   = $resolve($config, 'to_email', 'to', 'to_addr') ?: $fromAddr;
+$fromName = str_replace(["\r", "\n"], '', (string)($config['from_name'] ?? 'BigFix Website'));
+$subject  = 'New BigFix Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
+$replyTo  = (string)$data['email'];
+
+$htmlBody  = '<h2>New BigFix Form Submission</h2>';
+$htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
+$htmlBody .= '<p><strong>Submission ID:</strong> ' . $submissionId . '</p><hr>';
+
+foreach (['name', 'email', 'phone', 'subject', 'company', 'product', 'operation', 'timeline', 'industry', 'users', 'date', 'time'] as $f) {
+    if ($data[$f] !== null) {
+        $htmlBody .= '<p><strong>' . h(ucfirst($f)) . ':</strong> ' . h($data[$f]) . '</p>';
+    }
+}
+foreach (['message' => 'Message', 'notes' => 'Notes'] as $f => $label) {
+    if ($data[$f] !== null) {
+        $htmlBody .= "<p><strong>{$label}:</strong></p><p>" . nl2br(h($data[$f])) . '</p>';
+    }
+}
+$htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
+
+$alt = trim(strip_tags(str_replace(['</p>', '<hr>', '<br>'], "\n", $htmlBody)));
+
 try {
-    $fromAddr = (string)($config['from_email'] ?? 'info@bigfixtech.com');
-    $toAddr   = (string)($config['to_email'] ?? $fromAddr);
-    $fromName = str_replace(["\r", "\n"], '', (string)($config['from_name'] ?? 'BigFix Website'));
-    $subject  = 'New BigFix Form Submission: ' . ucfirst(str_replace('_', ' ', $source)) . ' (ID: ' . $submissionId . ')';
+    // --- 1) Zoho SMTP via PHPMailer ------------------------------------
+    $smtpHost = $resolve($config, 'smtp_host');
+    $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
+    $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
+    $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
+    $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
 
-    $htmlBody  = '<h2>New BigFix Form Submission</h2>';
-    $htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
-    $htmlBody .= '<p><strong>Submission ID:</strong> ' . $submissionId . '</p><hr>';
-
-    foreach (['name', 'email', 'phone', 'subject', 'company', 'product', 'operation', 'timeline', 'industry', 'users', 'date', 'time'] as $f) {
-        if ($data[$f] !== null) {
-            $htmlBody .= '<p><strong>' . h(ucfirst($f)) . ':</strong> ' . h($data[$f]) . '</p>';
+    if ($smtpHost !== '' && $smtpUser !== '' && $smtpPass !== '') {
+        try {
+            $mail = new PHPMailer(true);
+            $mail->isSMTP();
+            $mail->Host         = $smtpHost;
+            $mail->SMTPAuth     = true;
+            $mail->Username     = $smtpUser;
+            $mail->Password     = $smtpPass;
+            $mail->SMTPSecure   = $smtpSecure;
+            $mail->SMTPAutoTLS  = false;
+            $mail->Port         = $smtpPort;
+            $mail->SMTPKeepAlive = false;
+            $mail->Timeout      = 8;
+            $mail->CharSet      = 'UTF-8';
+            $mail->setFrom($fromAddr, $fromName);
+            $mail->addAddress($toAddr);
+            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $htmlBody;
+            $mail->AltBody = $alt;
+            $mail->send();
+            $emailMode = 'smtp';
+        } catch (Exception $e) {
+            $smtpError = $e->getMessage();
+            if (isset($mail->ErrorInfo)) {
+                $smtpError .= ' | ' . $mail->ErrorInfo;
+            }
+            error_log('Email SMTP error (submission ' . $submissionId . '): ' . $smtpError);
+            $emailError = substr($smtpError, 0, 200);
         }
-    }
-    foreach (['message' => 'Message', 'notes' => 'Notes'] as $f => $label) {
-        if ($data[$f] !== null) {
-            $htmlBody .= "<p><strong>{$label}:</strong></p><p>" . nl2br(h($data[$f])) . '</p>';
-        }
-    }
-    $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
-
-    $alt = trim(strip_tags(str_replace(['</p>', '<hr>', '<br>'], "\n", $htmlBody)));
-
-    $headers  = 'From: ' . $fromName . ' <' . $fromAddr . ">\r\n";
-    $headers .= 'Reply-To: ' . (string)$data['email'] . "\r\n";
-    $headers .= "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: multipart/alternative; boundary=\"_bfboundary_\"\r\n";
-
-    $body  = "--_bfboundary_\r\n";
-    $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-    $body .= $alt . "\r\n\r\n";
-    $body .= "--_bfboundary_\r\n";
-    $body .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $body .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
-    $body .= $htmlBody . "\r\n\r\n";
-    $body .= "--_bfboundary_--\r\n";
-
-    $sent = @mail($toAddr, $subject, $body, $headers);
-    if ($sent) {
-        $emailMode = 'mail';
-    } else {
-        error_log('Email: mail() returned false for submission ' . $submissionId);
     }
 } catch (Throwable $e) {
-    $emailError = $e->getMessage();
-    error_log('Email error (submission ' . $submissionId . '): ' . $emailError);
+    error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
+}
+
+// --- 2) PHP mail() fallback ----------------------------------------------
+if ($emailMode === 'failed') {
+    try {
+        $headers  = 'From: ' . $fromName . ' <' . $fromAddr . ">\r\n";
+        $headers .= 'Reply-To: ' . $replyTo . "\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= 'X-Mailer: PHP/' . phpversion();
+
+        if (@mail($toAddr, $subject, $htmlBody, $headers)) {
+            $emailMode = 'mail';
+        } else {
+            error_log('Email: mail() returned false (submission ' . $submissionId . ')');
+        }
+    } catch (Throwable $e) {
+        error_log('Email mail() error (submission ' . $submissionId . '): ' . $e->getMessage());
+        $emailError = substr($e->getMessage(), 0, 200);
+    }
 }
 
 // Record the outcome
@@ -273,7 +324,7 @@ try {
     $upd = $pdo->prepare('UPDATE submissions SET email_status = :s, email_error = :e WHERE id = :id');
     $upd->execute([
         ':s'  => $emailMode,
-        ':e'  => $emailMode === 'failed' ? substr($emailError, 0, 500) : null,
+        ':e'  => $emailMode === 'failed' && $emailError !== '' ? $emailError : null,
         ':id' => $submissionId,
     ]);
 } catch (Throwable $e) {

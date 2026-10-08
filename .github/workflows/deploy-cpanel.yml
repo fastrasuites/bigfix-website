@@ -24,12 +24,12 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Copy PHP backend into build output
-        run: |
-          cp public/submit.php dist/submit.php
-          cp public/submit-config.example.php dist/submit-config.example.php
-          # PHPMailer is no longer used - submit.php uses PHP mail() only
-          # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
+  - name: Copy PHP backend into build output
+    run: |
+      cp public/submit.php dist/submit.php
+      cp public/submit-config.example.php dist/submit-config.example.php
+      cp -r public/phpmailer dist/phpmailer
+      # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
 
       - name: Create submit-config.php from secret
         env:
