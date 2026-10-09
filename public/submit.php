@@ -288,14 +288,17 @@ if ($fromAddr === '' || $toAddr === '') {
 
         $tryHosts = [];
         // Primary: configured host
-        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure];
+        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, true];
 
-        // Fallback: smtp.zoho.com (465 SSL and 587 TLS) for when local Exim rejects auth
+        // Fallback: smtp.zoho.com:587 TLS and :465 SSL (for when local Exim rejects auth)
         $lowerHost = strtolower((string)$smtpHost);
         if ($smtpUser !== '' && $smtpPass !== '' && strpos($lowerHost, 'smtp.zoho.com') === false) {
-            $tryHosts[] = ['smtp.zoho.com', 587, 'tls'];
-            $tryHosts[] = ['smtp.zoho.com', 465, 'ssl'];
+            $tryHosts[] = ['smtp.zoho.com', 587, 'tls', $smtpUser, $smtpPass, true];
+            $tryHosts[] = ['smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, true];
         }
+
+        // Fallback: localhost:25 no-auth (local Exim relay — routes via domain MX records)
+        $tryHosts[] = ['localhost', 25, '', '', '', false];
 
         foreach ($tryHosts as $idx => $h) {
             $debugLog = '';
@@ -306,9 +309,11 @@ if ($fromAddr === '' || $toAddr === '') {
                 $mail->Port       = $h[1];
                 $mail->SMTPSecure = $h[2];
                 $mail->SMTPAutoTLS = false;
-                $mail->SMTPAuth   = true;
-                $mail->Username   = $smtpUser;
-                $mail->Password   = $smtpPass;
+                $mail->SMTPAuth   = $h[5];
+                if ($h[5]) {
+                    $mail->Username   = $h[3];
+                    $mail->Password   = $h[4];
+                }
                 $mail->Timeout    = 15;
                 $mail->CharSet    = 'UTF-8';
 
