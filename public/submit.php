@@ -300,6 +300,10 @@ if ($fromAddr === '' || $toAddr === '') {
         // Fallback: localhost:25 no-auth (local Exim relay — routes via domain MX records)
         $tryHosts[] = ['localhost', 25, '', '', '', false];
 
+        // Store results from ALL attempts for debugging
+        $allDebugs = [];
+        $allErrors = [];
+
         foreach ($tryHosts as $idx => $h) {
             $debugLog = '';
             try {
@@ -326,7 +330,7 @@ if ($fromAddr === '' || $toAddr === '') {
                     ],
                 ];
 
-                // Always capture debug for failed attempts (to diagnose shared hosting issues)
+                // Always capture debug to see server banners
                 $mail->SMTPDebug = 2;
                 $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
                     $debugLog .= "[$level] $str\n";
@@ -344,7 +348,10 @@ if ($fromAddr === '' || $toAddr === '') {
                 $emailMode = $idx === 0 ? 'smtp' : 'smtp_zoho';
                 $emailError = '';
                 if ($idx > 0) {
-                    error_log('Email: primary SMTP failed, fallback to smtp.zoho.com succeeded (submission ' . $submissionId . ')');
+                    error_log('Email: primary SMTP failed, fallback to ' . $h[0] . ' succeeded (submission ' . $submissionId . ')');
+                }
+                if (!empty($debugLog)) {
+                    $allDebugs[] = "SUCCESS via {$h[0]}:{$h[1]}\n" . $debugLog;
                 }
                 break;
             } catch (Throwable $e) {
@@ -353,18 +360,20 @@ if ($fromAddr === '' || $toAddr === '') {
                     $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
                 }
                 error_log('Email SMTP error on ' . $h[0] . ':' . $h[1] . ' (submission ' . $submissionId . '): ' . $err);
-                // Capture the last host's debug for visibility
-                if ($idx === count($tryHosts) - 1 || $emailError === '') {
-                    $emailError = substr($err, 0, 200);
-                    if (!empty($debugLog)) {
-                        $emailError .= "\n--- SMTP Debug (" . $h[0] . ":" . $h[1] . ") ---\n" . substr($debugLog, 0, 800);
-                    }
-                } else {
-                    $emailError .= "\n[tried {$h[0]}:{$h[1]}: " . substr($err, 0, 100) . "]";
-                    if (!empty($debugLog)) {
-                        $emailError .= "\n--- Debug ---\n" . substr($debugLog, 0, 400);
-                    }
+                $allErrors[] = "[{$h[0]}:{$h[1]}] " . substr($err, 0, 100);
+                if (!empty($debugLog)) {
+                    $allDebugs[] = "FAILED {$h[0]}:{$h[1]}\n" . $debugLog;
                 }
+            }
+        }
+
+        if ($emailMode === 'failed') {
+            $emailError = substr($err ?? '', 0, 200);
+            if (!empty($allErrors)) {
+                $emailError = implode("\n", $allErrors);
+            }
+            if (!empty($allDebugs)) {
+                $emailError .= "\n--- Debug (last attempt) ---\n" . substr(end($allDebugs), 0, 800);
             }
         }
 
