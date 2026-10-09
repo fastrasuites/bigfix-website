@@ -294,6 +294,59 @@ if ($fromAddr === '' || $toAddr === '') {
         }
         error_log('Email SMTP error (submission ' . $submissionId . '): ' . $msg);
         $emailError = substr($msg, 0, 200);
+
+        // Fallback: try smtp.zoho.com:587 TLS if the configured host failed
+        // (mail.bigfixtech.com resolves to local Exim which rejects Zoho credentials)
+        if (
+            $smtpUser !== '' && $smtpPass !== ''
+            && !str_contains(strtolower((string)$smtpHost), 'smtp.zoho.com')
+            && strtolower((string)$smtpHost) !== 'smtp.zoho.com'
+        ) {
+            try {
+                $mail2 = new PHPMailer(true);
+                $mail2->isSMTP();
+                $mail2->Host           = 'smtp.zoho.com';
+                $mail2->Port           = 587;
+                $mail2->SMTPSecure     = 'tls';
+                $mail2->SMTPAutoTLS    = false;
+                $mail2->SMTPAuth       = true;
+                $mail2->Username       = $smtpUser;
+                $mail2->Password       = $smtpPass;
+                $mail2->Timeout        = 15;
+                $mail2->CharSet        = 'UTF-8';
+if (!empty($config['debug'])) {
+                $mail->SMTPDebug = 2;
+                $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                    $debugLog .= "[$level] $str\n";
+                };
+            }
+                $mail2->setFrom($fromAddr, $fromName);
+                $mail2->addAddress($toAddr);
+                $mail2->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                $mail2->isHTML(true);
+                $mail2->Subject = $subject;
+                $mail2->Body    = $htmlBody;
+                $mail2->AltBody = $alt;
+                $mail2->send();
+                $emailMode = 'smtp_zoho';
+                $emailError = '';
+                error_log('Email: configured SMTP failed, fallback to smtp.zoho.com succeeded (submission ' . $submissionId . ')');
+            } catch (Throwable $e2) {
+                $msg2 = $e2->getMessage();
+                if (isset($mail2->ErrorInfo)) {
+                    $msg2 .= ' | PHPMailer ErrorInfo: ' . $mail2->ErrorInfo;
+                }
+                error_log('Email: fallback to smtp.zoho.com also failed (submission ' . $submissionId . '): ' . $msg2);
+                $emailError = substr($msg2, 0, 200);
+                if (!empty($config['debug']) && !empty($debugLog)) {
+                    $emailError .= "\n--- SMTP Debug ---\n" . substr($debugLog, 0, 500);
+                }
+            }
+        } else {
+            if (!empty($config['debug']) && !empty($debugLog)) {
+                $emailError .= "\n--- SMTP Debug ---\n" . substr($debugLog, 0, 500);
+            }
+        }
     }
 }
 
@@ -314,4 +367,5 @@ respond(200, [
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
     'email'   => $emailMode,
+    'debug'   => ($emailMode === 'failed' && $emailError !== '') ? substr($emailError, 0, 500) : null,
 ]);
