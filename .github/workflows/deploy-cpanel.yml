@@ -57,8 +57,8 @@ jobs:
             rm -f dist/submit-config.php
           fi
 
-      - name: Remove submit-config.php from dist if not decoded (preserve server config)
-        if: !hashFiles('dist/submit-config.php')
+      - name: Note: no submit-config.php in dist (server will keep its existing config)
+        if: ${{ !hashFiles('dist/submit-config.php') }}
         run: echo "No submit-config.php in dist — server will keep its existing config."
 
       - name: Deploy to cPanel via FTP
