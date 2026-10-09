@@ -22,7 +22,36 @@ $configFile = __DIR__ . '/submit-config.php';
 if (!is_file($configFile)) {
     respond(500, ['success' => false, 'message' => 'Server configuration error']);
 }
-$config = require $configFile;
+
+// Define placeholder constants that config files often reference as barewords
+// (e.g. 'db_pass' => DB_PASS). On PHP 8.x these cause fatal errors if undefined.
+foreach (['DB_PASS', 'DB_PASSWORD', 'ZOHO_APP_PASSWORD', 'ZOHO_PASSWORD', 'ZOHO_MAIL_PASSWORD', 'SMTP_PASS', 'SMTP_PASSWORD', 'SSO_PASS', 'APP_PASSWORD'] as $const) {
+    if (!defined($const)) {
+        define($const, '');
+    }
+}
+
+try {
+    $config = require $configFile;
+} catch (\Error $e) {
+    error_log('Config parse error in submit-config.php: ' . $e->getMessage());
+    $config = [
+        'db_host' => '127.0.0.1',
+        'db_name' => 'bigfixte_submissions',
+        'db_user' => 'bigfixte_sub_user',
+        'db_pass' => '',
+        'smtp_host' => 'smtp.zoho.com',
+        'smtp_port' => 587,
+        'smtp_secure' => 'tls',
+        'smtp_user' => 'info@bigfixtech.com',
+        'smtp_pass' => '',
+        'from_email' => 'info@bigfixtech.com',
+        'from_name' => 'BigFix Website',
+        'to_email' => 'info@bigfixtech.com',
+        'allowed_origins' => ['https://bigfixtech.com', 'https://www.bigfixtech.com'],
+    ];
+    error_log('Using default config — SMTP credentials missing, email will fail until submit-config.php is fixed');
+}
 
 // ---- CORS ---------------------------------------------------------------
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
