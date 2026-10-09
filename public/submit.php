@@ -407,5 +407,5 @@ respond(200, [
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
     'email'   => $emailMode,
-    'debug'   => $emailMode === 'failed' ? $emailError : null,
+    'debug'   => !empty($allDebugs) ? substr(end($allDebugs), 0, 1000) : null,
 ]);
