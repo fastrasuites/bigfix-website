@@ -71,11 +71,9 @@ jobs:
           server-dir: public_html/
           local-dir: dist/
           dry-run: false
-          delete-remote-dir: false
           exclude: |
             **/.git*
             **/.git*/**
-            **/submit-config.php
 
       - name: Verify production endpoint
         run: |
