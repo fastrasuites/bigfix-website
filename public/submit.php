@@ -7,6 +7,93 @@ require __DIR__ . '/phpmailer/Exception.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 
+function sendViaRawSmtp(string $host, int $port, string $secure, string $user, string $pass, string $fromAddr, string $fromName, string $toAddr, string $subject, string $htmlBody, string $altBody): bool
+{
+    $scheme = $secure === 'ssl' ? 'ssl' : 'tls';
+    $prefix = $secure === 'ssl' ? 'ssl://' : 'tcp://';
+
+    $sock = @fsockopen($prefix . $host, $port, $errno, $errstr, 15);
+    if (!$sock) {
+        throw new RuntimeException("fsockopen failed ($errno) $errstr");
+    }
+    stream_set_timeout($sock, 15);
+
+    $banner = fgets($sock, 515);
+
+    fwrite($sock, "EHLO $host\r\n");
+    while ($line = fgets($sock, 515)) {
+        if (substr($line, 3, 1) === ' ') break;
+    }
+
+    if ($secure === 'tls') {
+        fwrite($sock, "STARTTLS\r\n");
+        $resp = fgets($sock, 515);
+        if (strpos($resp, '220') !== 0) {
+            fclose($sock);
+            throw new RuntimeException("STARTTLS rejected: $resp");
+        }
+        $crypto = stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        if ($crypto !== true) {
+            fclose($sock);
+            throw new RuntimeException("TLS handshake failed");
+        }
+    }
+
+    fwrite($sock, "AUTH LOGIN\r\n");
+    fgets($sock, 515);
+    fwrite($sock, base64_encode($user) . "\r\n");
+    $resp = fgets($sock, 515);
+    if (strpos($resp, '334') !== 0 && strpos($resp, '5') === 0) {
+        fclose($sock);
+        throw new RuntimeException("Username rejected: $resp");
+    }
+    fwrite($sock, base64_encode($pass) . "\r\n");
+    $resp = fgets($sock, 515);
+    if (strpos($resp, '235') !== 0) {
+        fclose($sock);
+        throw new RuntimeException("Auth failed: $resp");
+    }
+
+    fwrite($sock, "MAIL FROM:<{$fromAddr}>\r\n");
+    fgets($sock, 515);
+    fwrite($sock, "RCPT TO:<{$toAddr}>\r\n");
+    $resp = fgets($sock, 515);
+    if (strpos($resp, '250') !== 0) {
+        fclose($sock);
+        throw new RuntimeException("Recipient rejected: $resp");
+    }
+
+    fwrite($sock, "DATA\r\n");
+    fgets($sock, 515);
+
+    $eol = "\r\n";
+    $boundary = "=_bigfix_" . md5(uniqid());
+    $body = "From: {$fromName} <{$fromAddr}>" . $eol;
+    $body .= "To: {$toAddr}" . $eol;
+    $body .= "Subject: {$subject}" . $eol;
+    $body .= "MIME-Version: 1.0" . $eol;
+    $body .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"" . $eol . $eol;
+    $body .= "--{$boundary}{$eol}";
+    $body .= "Content-Type: text/plain; charset=UTF-8" . $eol;
+    $body .= "Content-Transfer-Encoding: 8bit" . $eol . $eol;
+    $body .= $altBody . $eol . $eol;
+    $body .= "--{$boundary}{$eol}";
+    $body .= "Content-Type: text/html; charset=UTF-8" . $eol;
+    $body .= "Content-Transfer-Encoding: 8bit" . $eol . $eol;
+    $body .= $htmlBody . $eol;
+    $body .= "--{$boundary}--" . $eol . ".{$eol}";
+
+    fwrite($sock, $body);
+    $resp = fgets($sock, 515);
+    fwrite($sock, "QUIT\r\n");
+    fclose($sock);
+
+    if (strpos($resp, '250') !== 0) {
+        throw new RuntimeException("DATA rejected: $resp");
+    }
+    return true;
+}
+
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
@@ -383,6 +470,22 @@ if ($fromAddr === '' || $toAddr === '') {
         } elseif ($emailMode === 'failed' && ($smtpUser === '' || $smtpPass === '')) {
             $emailError = 'smtp_user and smtp_pass are required in submit-config.php';
             error_log('Email: ' . $emailError . ' (submission ' . $submissionId . ')');
+        }
+
+        // Final fallback: raw fsockopen SMTP to smtp.zoho.com:465 SSL
+        // (bypasses PHPMailer stream context which may be intercepted on shared hosting)
+        if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
+            try {
+                $ok = sendViaRawSmtp('smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, $fromAddr, $fromName, $toAddr, $subject, $htmlBody, $alt);
+                if ($ok) {
+                    $emailMode = 'smtp_zoho_raw';
+                    $emailError = '';
+                    error_log('Email: raw fsockopen SMTP to smtp.zoho.com succeeded (submission ' . $submissionId . ')');
+                }
+            } catch (Throwable $e) {
+                error_log('Email: raw SMTP fallback failed (submission ' . $submissionId . '): ' . $e->getMessage());
+                $emailError = substr($e->getMessage(), 0, 200);
+            }
         }
     } catch (Throwable $e) {
         error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
