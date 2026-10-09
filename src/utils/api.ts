@@ -34,8 +34,8 @@ export const submitForm = async (
   try {
     const response = await fetch(`${API_BASE}/submit.php`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source, ...data }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ source, ...data }).toString(),
       signal: controller.signal,
     });
 
