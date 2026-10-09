@@ -290,13 +290,15 @@ if ($fromAddr === '' || $toAddr === '') {
         // Primary: configured host
         $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure];
 
-        // Fallback: smtp.zoho.com:587 TLS (works when local Exim rejects auth)
+        // Fallback: smtp.zoho.com (465 SSL and 587 TLS) for when local Exim rejects auth
         $lowerHost = strtolower((string)$smtpHost);
         if ($smtpUser !== '' && $smtpPass !== '' && strpos($lowerHost, 'smtp.zoho.com') === false) {
             $tryHosts[] = ['smtp.zoho.com', 587, 'tls'];
+            $tryHosts[] = ['smtp.zoho.com', 465, 'ssl'];
         }
 
         foreach ($tryHosts as $idx => $h) {
+            $debugLog = '';
             try {
                 $mail = new PHPMailer(true);
                 $mail->isSMTP();
@@ -319,6 +321,12 @@ if ($fromAddr === '' || $toAddr === '') {
                     ],
                 ];
 
+                // Always capture debug for failed attempts (to diagnose shared hosting issues)
+                $mail->SMTPDebug = 2;
+                $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                    $debugLog .= "[$level] $str\n";
+                };
+
                 $mail->setFrom($fromAddr, $fromName);
                 $mail->addAddress($toAddr);
                 $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
@@ -340,7 +348,18 @@ if ($fromAddr === '' || $toAddr === '') {
                     $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
                 }
                 error_log('Email SMTP error on ' . $h[0] . ':' . $h[1] . ' (submission ' . $submissionId . '): ' . $err);
-                $emailError = substr($err, 0, 200);
+                // Capture the last host's debug for visibility
+                if ($idx === count($tryHosts) - 1 || $emailError === '') {
+                    $emailError = substr($err, 0, 200);
+                    if (!empty($debugLog)) {
+                        $emailError .= "\n--- SMTP Debug (" . $h[0] . ":" . $h[1] . ") ---\n" . substr($debugLog, 0, 800);
+                    }
+                } else {
+                    $emailError .= "\n[tried {$h[0]}:{$h[1]}: " . substr($err, 0, 100) . "]";
+                    if (!empty($debugLog)) {
+                        $emailError .= "\n--- Debug ---\n" . substr($debugLog, 0, 400);
+                    }
+                }
             }
         }
 
