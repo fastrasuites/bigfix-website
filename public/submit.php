@@ -310,6 +310,15 @@ if ($fromAddr === '' || $toAddr === '') {
                 $mail->Timeout    = 15;
                 $mail->CharSet    = 'UTF-8';
 
+                // On shared hosting, OpenSSL CA bundle is often outdated — skip verification
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
+
                 $mail->setFrom($fromAddr, $fromName);
                 $mail->addAddress($toAddr);
                 $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
