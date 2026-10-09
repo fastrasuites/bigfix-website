@@ -47,7 +47,7 @@ jobs:
             echo "::error::Decoded submit-config.php is empty or does not start with <?php. Re-create the secret from the raw file."
             exit 1
           fi
-          if ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php; then
+          if ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php || ! grep -q "'smtp_pass'" dist/submit-config.php; then
             echo "::error::Decoded submit-config.php is missing required keys (db_host / to_email). Re-create the secret."
             exit 1
           fi

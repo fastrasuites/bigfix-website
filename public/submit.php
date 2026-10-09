@@ -210,7 +210,7 @@ try {
     respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
 }
 
-// ---- Email notification -------------------------------------------------
+// ---- Email notification via Zoho SMTP -------------------------------------------------
 $emailMode = 'failed';
 $emailError = '';
 
@@ -247,87 +247,35 @@ $htmlBody .= '<hr><p>Submitted on: ' . date('Y-m-d H:i:s') . '</p>';
 
 $alt = trim(strip_tags(str_replace(['</p>', '<hr>', '<br>'], "\n", $htmlBody)));
 
-try {
-    $smtpHost = $resolve($config, 'smtp_host');
-    $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
-    $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
-    $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
-    $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
+if ($fromAddr === '' || $toAddr === '') {
+    error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
+} else {
+    try {
+        $smtpHost = $resolve($config, 'smtp_host') ?: 'smtp.zoho.com';
+        $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
+        $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
+        $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
+        $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
 
-    if ($smtpHost === '' || $smtpPort === 0) {
-        $smtpHost = 'localhost';
-        $smtpPort = 25;
-        $smtpSecure = '';
-    }
-
-    $smtpHostTrimmed = trim($smtpHost);
-    $isLocalhost = ($smtpHostTrimmed === 'localhost' || $smtpHostTrimmed === '127.0.0.1');
-
-    // --- Try 1: Direct IP to Zoho SMTP (bypass DNS hijack) ---
-    // On shared hosting, smtp.zoho.com DNS is redirected to local Exim.
-    // Connect directly to Zoho's real IP with auth + TLS.
-    // This is the primary path that actually delivers email to Zoho.
-    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
-        // Zoho SMTP IPs (resolved via public DNS 8.8.8.8)
-        $zohoIps = ['136.143.190.56'];
-        foreach ($zohoIps as $zohoIp) {
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host         = $zohoIp;
-                $mail->Port         = $smtpPort ?: 587;
-                $mail->SMTPSecure   = $smtpSecure ?: 'tls';
-                $mail->SMTPAutoTLS  = false;
-                $mail->SMTPKeepAlive = false;
-                $mail->Timeout      = 5;
-                $mail->CharSet      = 'UTF-8';
-                $mail->SMTPAuth     = true;
-                $mail->Username     = $smtpUser;
-                $mail->Password     = $smtpPass;
-                $mail->SMTPOptions  = [
-                    'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
-                        'allow_self_signed' => true,
-                    ],
-                ];
-                $mail->setFrom($fromAddr, $fromName);
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = $alt;
-                $mail->send();
-                $emailMode = 'smtp_zoho';
-                break;
-            } catch (Throwable $e) {
-                $ipErr = $e->getMessage();
-                if (isset($mail->ErrorInfo)) {
-                    $ipErr .= ' | ' . $mail->ErrorInfo;
-                }
-                error_log('Email direct-IP (Zoho) failed (submission ' . $submissionId . '): ' . $ipErr);
-                $emailError = substr($ipErr, 0, 200);
-                unset($mail);
-            }
-        }
-    }
-
-    // --- Try 2: SMTP with auth to smtp.zoho.com (in case DNS is not hijacked) ---
-    if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
-        try {
+        if ($smtpHost === '' || $smtpPort === 0) {
+            $emailError = 'SMTP host and port are required in submit-config.php';
+            error_log('Email: ' . $emailError . ' (submission ' . $submissionId . ')');
+        } elseif ($smtpUser === '' || $smtpPass === '') {
+            $emailError = 'smtp_user and smtp_pass are required in submit-config.php';
+            error_log('Email: ' . $emailError . ' (submission ' . $submissionId . ')');
+        } else {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
-            $mail->Host         = $smtpHost;
-            $mail->Port         = $smtpPort;
-            $mail->SMTPSecure   = $smtpSecure;
-            $mail->SMTPAutoTLS  = false;
-            $mail->SMTPKeepAlive = false;
-            $mail->Timeout      = 5;
-            $mail->CharSet      = 'UTF-8';
-            $mail->SMTPAuth     = true;
-            $mail->Username     = $smtpUser;
-            $mail->Password     = $smtpPass;
+            $mail->Host           = $smtpHost;
+            $mail->Port           = $smtpPort;
+            $mail->SMTPSecure     = $smtpSecure;         // 'tls' or 'ssl'
+            $mail->SMTPAutoTLS    = false;
+            $mail->SMTPAuth       = true;
+            $mail->Username       = $smtpUser;
+            $mail->Password       = $smtpPass;
+            $mail->Timeout        = 10;
+            $mail->CharSet        = 'UTF-8';
+
             $mail->setFrom($fromAddr, $fromName);
             $mail->addAddress($toAddr);
             $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
@@ -335,121 +283,17 @@ try {
             $mail->Subject = $subject;
             $mail->Body    = $htmlBody;
             $mail->AltBody = $alt;
+
             $mail->send();
             $emailMode = 'smtp';
-        } catch (Throwable $e) {
-            $authErr = $e->getMessage();
-            if (isset($mail->ErrorInfo)) {
-                $authErr .= ' | ' . $mail->ErrorInfo;
-            }
-            error_log('Email SMTP auth failed (submission ' . $submissionId . '): ' . $authErr);
-            $emailError = substr($authErr, 0, 200);
-            unset($mail);
-        }
-    }
-
-    // --- Try 3: SMTP without auth (local Exim relay) ---
-    // Last resort: the local Exim may queue the email for delivery.
-    if ($emailMode === 'failed') {
-        try {
-            $mail = new PHPMailer(true);
-            $mail->isSMTP();
-            $mail->Host         = 'localhost';
-            $mail->Port         = 25;
-            $mail->SMTPSecure   = '';
-            $mail->SMTPAutoTLS  = false;
-            $mail->SMTPKeepAlive = false;
-            $mail->Timeout      = 5;
-            $mail->CharSet      = 'UTF-8';
-            $mail->SMTPAuth     = false;
-            $mail->setFrom($fromAddr, $fromName);
-            $mail->addAddress($toAddr);
-            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body    = $htmlBody;
-            $mail->AltBody = $alt;
-            $mail->send();
-            $emailMode = 'smtp_local';
-        } catch (Throwable $e) {
-            $noAuthErr = $e->getMessage();
-            if (isset($mail->ErrorInfo)) {
-                $noAuthErr .= ' | ' . $mail->ErrorInfo;
-            }
-            error_log('Email SMTP no-auth (localhost:25) failed (submission ' . $submissionId . '): ' . $noAuthErr);
-            $emailError = substr($noAuthErr, 0, 200);
-            unset($mail);
-        }
-    }
-    } catch (Throwable $e) {
-        error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
-}
-
-// ---- Fallback: ZeptoMail REST API via HTTPS (if curl is available) --------
-// On shared hosting, SMTP is often intercepted/blocked but HTTPS usually works.
-// ZeptoMail is Zoho's transactional email service — works over HTTPS.
-// Requires: zepto_api_key in submit-config.php
-if ($emailMode === 'failed' && !empty($config['zepto_api_key']) && function_exists('curl_init')) {
-    try {
-        $zeptoUrl = trim((string)($config['zepto_url'] ?? 'https://email.zoho.com/api/v2/email'));
-        $zeptoKey = (string)$config['zepto_api_key'];
-
-        $payload = json_encode([
-            'from'       => ['email' => $fromAddr, 'name' => $fromName],
-            'to'         => [['email' => $toAddr]],
-            'subject'    => $subject,
-            'html'       => $htmlBody,
-            'reply_to'   => ['email' => $replyTo, 'name' => (string)($data['name'] ?? '')],
-        ]);
-
-        if ($payload !== false) {
-            $ch = curl_init();
-            curl_setopt_array($ch, [
-                CURLOPT_URL            => $zeptoUrl,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST           => true,
-                CURLOPT_HTTPHEADER     => [
-                    'Authorization: ' . $zeptoKey,
-                    'Content-Type: application/json',
-                ],
-                CURLOPT_POSTFIELDS     => $payload,
-                CURLOPT_TIMEOUT        => 10,
-                CURLOPT_CONNECTTIMEOUT => 5,
-            ]);
-            $response = curl_exec($ch);
-            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlErr  = (string)curl_error($ch);
-            curl_close($ch);
-
-            if ($curlErr === '' && $httpCode >= 200 && $httpCode < 300) {
-                $emailMode = 'zepto_api';
-            } else {
-                error_log('Email ZeptoMail API error (submission ' . $submissionId . '): HTTP ' . $httpCode . ' ' . $curlErr . ' ' . substr((string)$response, 0, 300));
-                $emailError = 'HTTP ' . $httpCode;
-            }
         }
     } catch (Throwable $e) {
-        error_log('Email ZeptoMail API exception (submission ' . $submissionId . '): ' . $e->getMessage());
-        $emailError = substr($e->getMessage(), 0, 200);
-    }
-}
-
-// ---- Fallback: PHP mail() (if available) --------------------------------
-if ($emailMode === 'failed' && function_exists('mail')) {
-    try {
-        $headers  = 'From: ' . $fromName . ' <' . $fromAddr . ">\r\n";
-        $headers .= 'Reply-To: ' . $replyTo . "\r\n";
-        $headers .= "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-
-        if (@mail($toAddr, $subject, $htmlBody, $headers)) {
-            $emailMode = 'mail';
-        } else {
-            error_log('Email: mail() returned false (submission ' . $submissionId . ')');
+        $msg = $e->getMessage();
+        if (isset($mail->ErrorInfo)) {
+            $msg .= ' | PHPMailer ErrorInfo: ' . $mail->ErrorInfo;
         }
-    } catch (Throwable $e) {
-        error_log('Email mail() error (submission ' . $submissionId . '): ' . $e->getMessage());
-        $emailError = substr($e->getMessage(), 0, 200);
+        error_log('Email SMTP error (submission ' . $submissionId . '): ' . $msg);
+        $emailError = substr($msg, 0, 200);
     }
 }
 
