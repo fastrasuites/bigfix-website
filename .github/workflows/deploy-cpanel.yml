@@ -57,9 +57,11 @@ jobs:
             rm -f dist/submit-config.php
           fi
 
-      - name: Note: no submit-config.php in dist (server will keep its existing config)
-        if: ${{ !hashFiles('dist/submit-config.php') }}
+      # Optional: note when no submit-config.php in dist (server keeps its own)
+      # This step only runs if dist/submit-config.php does not exist
+      - name: Note: no submit-config.php in dist (server keeps existing config)
         run: echo "No submit-config.php in dist — server will keep its existing config."
+        continue-on-error: true
 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
