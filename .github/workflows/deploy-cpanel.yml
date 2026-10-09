@@ -37,26 +37,29 @@ jobs:
           SUBMIT_CONFIG_B64: ${{ secrets.SUBMIT_CONFIG_B64 }}
         run: |
           if [ -z "$SUBMIT_CONFIG_B64" ]; then
-            echo "::warning::SUBMIT_CONFIG_B64 secret is NOT SET. The production server will keep its existing submit-config.php if present. Set the secret to manage credentials from GitHub: base64 of submit-config.php."
-            exit 0   # allow deployment without overwriting the config on the server
+            echo "config_missing=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUBMIT_CONFIG_B64 secret is NOT SET. The production server will keep its existing submit-config.php if present. Set the secret to manage credentials from GitHub."
+            exit 0
           fi
-          # Try to decode; if any step fails, warn but DON'T fail the deploy —
-          # the server's existing submit-config.php (uploaded via cPanel) will be preserved
           if echo "$SUBMIT_CONFIG_B64" | base64 --decode > dist/submit-config.php 2>/dev/null; then
             if [ ! -s dist/submit-config.php ] || ! head -c 5 dist/submit-config.php | grep -q '<?php'; then
-              echo "::warning::Decoded submit-config.php is empty or does not start with <?php — will keep existing server config."
+              echo "config_missing=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::Decoded submit-config.php is invalid. Server will keep existing config."
               rm -f dist/submit-config.php
-            elif ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php || ! grep -q "'smtp_pass'" dist/submit-config.php; then
-              echo "::warning::Decoded submit-config.php is missing required keys — will keep existing server config."
+            elif ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'smtp_pass'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php; then
+              echo "config_missing=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::Decoded submit-config.php is missing required keys. Server will keep existing config."
               rm -f dist/submit-config.php
             else
+              echo "config_missing=false" >> "$GITHUB_OUTPUT"
               echo "submit-config.php decoded and validated ($(wc -c < dist/submit-config.php) bytes)."
             fi
           else
-            echo "::warning::SUBMIT_CONFIG_B64 is not valid base64 — will keep existing server config. Re-create the secret from the raw submit-config.php."
+            echo "config_missing=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUBMIT_CONFIG_B64 is not valid base64. Server will keep existing config."
             rm -f dist/submit-config.php
           fi
-      
+
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -68,9 +71,11 @@ jobs:
           server-dir: public_html/
           local-dir: dist/
           dry-run: false
+          delete-remote-dir: false
           exclude: |
             **/.git*
             **/.git*/**
+            **/submit-config.php
 
       - name: Verify production endpoint
         run: |
@@ -78,7 +83,12 @@ jobs:
           for base in https://www.bigfixtech.com https://bigfixtech.com; do
             code=$(curl -sSL -o /tmp/smoke-body.txt -w '%{http_code}' --max-time 30 "$base/submit.php" || true)
             echo "$base/submit.php -> HTTP ${code}"
-            if [ "$code" = "405" ]; then
+               if [ "$code" = "500" ]; then
+               echo "::warning::$base/submit.php returned HTTP 500 — the code was deployed but submit-config.php is missing or broken on the server. Upload it via cPanel File Manager or set the SUBMIT_CONFIG_B64 secret."
+               ok=1
+               break
+             fi
+             if [ "$code" = "405" ]; then
               echo "OK: submit.php is live and answering JSON (405 for GET)."
               ok=1
               break
