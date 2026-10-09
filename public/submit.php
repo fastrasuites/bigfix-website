@@ -287,8 +287,8 @@ if ($fromAddr === '' || $toAddr === '') {
         $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
 
         $tryHosts = [];
-        // Primary: configured host
-        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, true];
+        // Primary: configured host (auth only if credentials provided)
+        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, ($smtpUser !== '' && $smtpPass !== '')];
 
         // Fallback: smtp.zoho.com:587 TLS and :465 SSL (for when local Exim rejects auth)
         $lowerHost = strtolower((string)$smtpHost);
