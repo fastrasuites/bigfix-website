@@ -374,17 +374,20 @@ if ($fromAddr === '' || $toAddr === '') {
         $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
 
         $tryHosts = [];
+        $lowerHost = strtolower((string)$smtpHost);
+
         // Primary: configured host (auth only if credentials provided)
         $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, ($smtpUser !== '' && $smtpPass !== '')];
 
-        // Fallback: smtp.zoho.com:587 TLS and :465 SSL (for when local Exim rejects auth)
-        $lowerHost = strtolower((string)$smtpHost);
-        if ($smtpUser !== '' && $smtpPass !== '' && strpos($lowerHost, 'smtp.zoho.com') === false) {
-            $tryHosts[] = ['smtp.zoho.com', 587, 'tls', $smtpUser, $smtpPass, true];
+        // Fallback: smtp.zoho.com:465 SSL (alternate port if TLS is blocked on :587)
+        // Only add if the primary isn't already smtp.zoho.com:465 ssl
+        if ($smtpUser !== '' && $smtpPass !== '' &&
+            !(strpos($lowerHost, 'smtp.zoho.com') !== false && $smtpPort === 465 && $smtpSecure === 'ssl')) {
             $tryHosts[] = ['smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, true];
         }
 
-        // Fallback: localhost:25 no-auth (local Exim relay — routes via domain MX records)
+        // Fallback: localhost:25 no-auth (local Exim relay — routes via DNS MX to Zoho)
+        // This delivers via local Exim which relays to Zoho's MX servers
         $tryHosts[] = ['localhost', 25, '', '', '', false];
 
         // Store results from ALL attempts for debugging
