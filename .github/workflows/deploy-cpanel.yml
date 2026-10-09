@@ -1,65 +1,35 @@
 name: Deploy to cPanel
-
+ 
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
-
+ 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+ 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
-
+ 
       - name: Install dependencies
         run: npm ci
-
+ 
       - name: Build project
         run: npm run build
-
+ 
       - name: Copy PHP backend into build output
         run: |
           cp public/submit.php dist/submit.php
           cp public/submit-config.example.php dist/submit-config.example.php
           cp -r public/phpmailer dist/phpmailer
-          # sql/ is intentionally NOT deployed - publishing schema.sql under the web root is a security risk. Import it once via cPanel > phpMyAdmin.
-
-      - name: Create submit-config.php from secret
-        id: config
-        env:
-          SUBMIT_CONFIG_B64: ${{ secrets.SUBMIT_CONFIG_B64 }}
-        run: |
-          if [ -z "$SUBMIT_CONFIG_B64" ]; then
-            echo "config_missing=true" >> "$GITHUB_OUTPUT"
-            echo "::warning::SUBMIT_CONFIG_B64 secret is NOT SET. The production server will keep its existing submit-config.php if present. Set the secret to manage credentials from GitHub."
-            exit 0
-          fi
-          if echo "$SUBMIT_CONFIG_B64" | base64 --decode > dist/submit-config.php 2>/dev/null; then
-            if [ ! -s dist/submit-config.php ] || ! head -c 5 dist/submit-config.php | grep -q '<?php'; then
-              echo "config_missing=true" >> "$GITHUB_OUTPUT"
-              echo "::warning::Decoded submit-config.php is invalid. Server will keep existing config."
-              rm -f dist/submit-config.php
-            elif ! grep -q "'db_host'" dist/submit-config.php || ! grep -q "'smtp_pass'" dist/submit-config.php || ! grep -q "'to_email'" dist/submit-config.php; then
-              echo "config_missing=true" >> "$GITHUB_OUTPUT"
-              echo "::warning::Decoded submit-config.php is missing required keys. Server will keep existing config."
-              rm -f dist/submit-config.php
-            else
-              echo "config_missing=false" >> "$GITHUB_OUTPUT"
-              echo "submit-config.php decoded and validated ($(wc -c < dist/submit-config.php) bytes)."
-            fi
-          else
-            echo "config_missing=true" >> "$GITHUB_OUTPUT"
-            echo "::warning::SUBMIT_CONFIG_B64 is not valid base64. Server will keep existing config."
-            rm -f dist/submit-config.php
-          fi
-
+ 
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
@@ -74,19 +44,19 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
-
+ 
       - name: Verify production endpoint
         run: |
           ok=0
           for base in https://www.bigfixtech.com https://bigfixtech.com; do
             code=$(curl -sSL -o /tmp/smoke-body.txt -w '%{http_code}' --max-time 30 "$base/submit.php" || true)
             echo "$base/submit.php -> HTTP ${code}"
-               if [ "$code" = "500" ]; then
-               echo "::warning::$base/submit.php returned HTTP 500 — the code was deployed but submit-config.php is missing or broken on the server. Upload it via cPanel File Manager or set the SUBMIT_CONFIG_B64 secret."
-               ok=1
-               break
-             fi
-             if [ "$code" = "405" ]; then
+            if [ "$code" = "500" ]; then
+              echo "::warning::$base/submit.php returned HTTP 500 - submit-config.php may be missing on the server. Upload it manually via cPanel File Manager."
+              ok=1
+              break
+            fi
+            if [ "$code" = "405" ]; then
               echo "OK: submit.php is live and answering JSON (405 for GET)."
               ok=1
               break
@@ -101,6 +71,6 @@ jobs:
             exit 1
           done
           if [ "$ok" -ne 1 ]; then
-            echo "::error::BigFix production endpoint is not responding on any hostname (https://www.bigfixtech.com and https://bigfixtech.com). The deployment may have failed or the site is down."
+            echo "::error::BigFix production endpoint is not responding on any hostname."
             exit 1
           fi
