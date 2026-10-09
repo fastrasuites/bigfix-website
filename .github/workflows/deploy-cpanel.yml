@@ -56,13 +56,7 @@ jobs:
             echo "::warning::SUBMIT_CONFIG_B64 is not valid base64 — will keep existing server config. Re-create the secret from the raw submit-config.php."
             rm -f dist/submit-config.php
           fi
-
-      # Optional: note when no submit-config.php in dist (server keeps its own)
-      # This step only runs if dist/submit-config.php does not exist
-      - name: Note: no submit-config.php in dist (server keeps existing config)
-        run: echo "No submit-config.php in dist — server will keep its existing config."
-        continue-on-error: true
-
+      
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
