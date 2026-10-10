@@ -14,7 +14,7 @@ export default defineConfig({
     tailwindcss(),
     {
       name: 'copy-tracker',
-      writeBundle() {
+      closeBundle() {
         const src = resolve(__dirname, 'public/tracker.js');
         const destDir = resolve(__dirname, 'dist');
         const dest = resolve(destDir, 'tracker.js');
