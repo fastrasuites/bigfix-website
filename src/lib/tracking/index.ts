@@ -11,6 +11,9 @@
  * 
  * // In components
  * const { trackEvent, identify, trackSubmission } = useTracking();
+ * 
+ * // In forms
+ * const { trackSubmission } = useFormTracking();
  */
 
 // Types
@@ -25,7 +28,6 @@ export { TrackingProvider, useTracking } from './TrackingContext';
 
 // Hooks
 export { 
-  useTracking, 
   useFormTracking, 
   useEventTracking 
 } from './hooks';

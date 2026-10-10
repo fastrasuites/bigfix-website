@@ -8,10 +8,6 @@ import TrackingService from './TrackingService';
 import type {
   TrackEventData,
   IdentifyData,
-  TrackEventData,
-  IdentifyData,
-  TrackEventData,
-  IdentifyData,
 } from './types';
 
 interface TrackingContextValue {
@@ -32,7 +28,7 @@ interface TrackingContextValue {
   onExitIntentCaptured: (callback: (data: any) => void) => void;
 }
 
-const TrackingContext = createContext<TrackingContextValue | null>(null);
+export const TrackingContext = createContext<TrackingContextValue | null>(null);
 
 /**
  * TrackingProvider - Wrap your app with this to enable tracking
@@ -150,19 +146,6 @@ export function TrackingProvider({
         if (index > -1) exitIntentCallbacksRef.current.splice(index, 1);
       };
     }, []),
-
-    // Expose for ExitIntentPopup
-    triggerExitIntent: useCallback((type: string) => {
-      TrackingService.getInstance().triggerExitIntent(type);
-    }, []),
-
-    onExitIntentCaptured: useCallback((callback: (data: any) => void) => {
-      exitIntentCallbacksRef.current.push(callback);
-      return () => {
-        const index = exitIntentCallbacksRef.current.indexOf(callback);
-        if (index > -1) exitIntentCallbacksRef.current.splice(index, 1);
-      };
-    }, []),
   };
 
   return (
@@ -173,14 +156,22 @@ export function TrackingProvider({
 }
 
 /**
- * Hook to use tracking methods
+ * TrackingProvider - Wrap your app with this to enable tracking
  */
-export function useTracking() {
-  const context = useContext(TrackingContext);
-  if (!context) {
-    throw new Error('useTracking must be used within a TrackingProvider');
-  }
-  return context;
+interface TrackingProviderProps {
+  children: ReactNode;
+  config?: Partial<{
+    apiBase: string;
+    sessionCookieName: string;
+    sessionCookieMaxAge: number;
+    batchInterval: number;
+    maxBatchSize: number;
+    scrollThrottleMs: number;
+    scrollDepthThresholds: number[];
+    exitIntentThreshold: number;
+    scrollUpThreshold: number;
+    respectDNT: boolean;
+    debug: boolean;
+  }>;
+  autoInit?: boolean;
 }
-
-export default TrackingProvider;

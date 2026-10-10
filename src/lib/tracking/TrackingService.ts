@@ -418,7 +418,7 @@ export class TrackingService {
     }
   }
 
-  /**
+/**
    * Send batched events
    */
   private sendBatch(): void {
@@ -431,7 +431,6 @@ export class TrackingService {
     };
 
     const useBeacon = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-    const url = `${this.config.apiBase}/events.php`;
 
     if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
       const blob = new Blob([JSON.stringify({ session_id: this.getSessionId(), events })], { type: 'application/json' });
@@ -442,7 +441,8 @@ export class TrackingService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: this.getSessionId(), events }),
         keepalive: true,
-      }).catch(err => this.log('Send error:', err));
+      }).catch((err: Error) => this.log('Send error:', err));
+    }
   }
 
   /**
