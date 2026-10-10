@@ -477,7 +477,7 @@ if ($fromAddr === '' || $toAddr === '') {
                 $emailError = '';
                 error_log('Email: SMTP Exim relay succeeded (submission ' . $submissionId . ')');
                 $allDebugs[] = "SUCCESS via SMTP Exim ($smtpHost:$smtpPort)\n" . $debugLog;
-            } catch (Throwable $e) {
+} catch (Throwable $e) {
                 $err = $e->getMessage();
                 if (isset($mail->ErrorInfo)) {
                     $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
@@ -486,6 +486,74 @@ if ($fromAddr === '' || $toAddr === '') {
                 $allErrors[] = "[smtp_exim] " . substr($err, 0, 100);
                 if (!empty($debugLog)) {
                     $allDebugs[] = "FAILED SMTP Exim\n" . $debugLog;
+                }
+            }
+        }
+
+        // ============================================================
+        // METHOD 3: SMTP Exim with NON-LOCAL envelope sender (LAST RESORT)
+        // Force Exim to relay by using a non-local MAIL FROM address.
+        // If envelope sender domain is NOT in local_domains, Exim may relay via MX.
+        // ============================================================
+        if ($emailMode === 'failed') {
+            $smtpHost = $resolve($config, 'smtp_host') ?: 'localhost';
+            $smtpPort = (int)($resolve($config, 'smtp_port') ?: 25);
+
+            // Use server's hostname domain as envelope sender (likely NOT in local_domains)
+            // This may force Exim to treat email as external → relay via MX (Zoho)
+            $envelopeSender = 'noreply@qservers.net';  // QServers hostname domain
+            // Or try: 'noreply@' . gethostname() . '.local' — but qservers.net is known
+
+            try {
+                $mail = new PHPMailer(true);
+                $mail->isSMTP();
+                $mail->Host       = $smtpHost;
+                $mail->Port       = $smtpPort;
+                $mail->SMTPSecure = '';
+                $mail->SMTPAutoTLS = false;
+                $mail->SMTPAuth   = false;
+                $mail->Timeout    = 15;
+                $mail->CharSet    = 'UTF-8';
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
+
+                $debugLog = '';
+                $mail->SMTPDebug = 2;
+                $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                    $debugLog .= "[$level] $str\n";
+                };
+
+                // CRITICAL: Set non-local envelope sender (MAIL FROM)
+                // This may force Exim to relay via MX instead of local delivery
+                $mail->Sender = $envelopeSender;
+
+                $mail->setFrom($fromAddr, $fromName);  // From header (what user sees)
+                $mail->addAddress($toAddr);
+                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body    = $htmlBody;
+                $mail->AltBody = $alt;
+
+                $mail->send();
+                $emailMode = 'smtp_exim_relay';
+                $emailError = '';
+                error_log('Email: SMTP Exim with non-local envelope sender succeeded (submission ' . $submissionId . ')');
+                $allDebugs[] = "SUCCESS via SMTP Exim relay (envelope: $envelopeSender)\n" . $debugLog;
+            } catch (Throwable $e) {
+                $err = $e->getMessage();
+                if (isset($mail->ErrorInfo)) {
+                    $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
+                }
+                error_log('Email SMTP Exim relay failed (submission ' . $submissionId . '): ' . $err);
+                $allErrors[] = "[smtp_exim_relay] " . substr($err, 0, 100);
+                if (!empty($debugLog)) {
+                    $allDebugs[] = "FAILED SMTP Exim relay\n" . $debugLog;
                 }
             }
         }
