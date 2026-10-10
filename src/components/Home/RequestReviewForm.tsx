@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import SelectField from "../common/SelectField";
 import TextField from "../common/TextField";
 import { submitForm } from "../../utils/api";
+import { useFormTracking } from "../../hooks/useTracker";
 import type { SelectOption } from "../../types";
 
 const PRODUCT_OPTIONS: SelectOption[] = [
@@ -42,6 +43,7 @@ const RequestReviewForm = (): JSX.Element => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const { trackSubmission } = useFormTracking();
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -57,6 +59,13 @@ const RequestReviewForm = (): JSX.Element => {
     setIsSubmitting(false);
 
     if (result.success) {
+      // Track submission for identity linking
+      trackSubmission({
+        submission_id: result.id,
+        email: formData.email,
+        phone: formData.phone || undefined,
+      });
+
       setFormData({
         name: "",
         email: "",
