@@ -376,19 +376,18 @@ if ($fromAddr === '' || $toAddr === '') {
         $tryHosts = [];
         $lowerHost = strtolower((string)$smtpHost);
 
-        // Primary: configured host (auth only if credentials provided)
-        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, ($smtpUser !== '' && $smtpPass !== '')];
+        // Smart auth: never use auth for localhost:25 (local Exim doesn't need it)
+        $useAuth = ($smtpUser !== '' && $smtpPass !== '' &&
+                    !($lowerHost === 'localhost' && $smtpPort === 25));
 
-        // Fallback: smtp.zoho.com:465 SSL (alternate port if TLS is blocked on :587)
-        if ($smtpUser !== '' && $smtpPass !== '' &&
-            !(strpos($lowerHost, 'smtp.zoho.com') !== false && $smtpPort === 465 && $smtpSecure === 'ssl')) {
-            $tryHosts[] = ['smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, true];
+        // Primary: configured host from submit-config.php
+        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, $useAuth];
+
+        // If primary is localhost:25, that's it — no fallbacks needed (it worked before)
+        // If primary is smtp.zoho.com, add fallback to localhost:25 (no auth)
+        if ($lowerHost !== 'localhost' || $smtpPort !== 25) {
+            $tryHosts[] = ['localhost', 25, '', '', '', false];
         }
-
-        // NOTE: localhost:25 is NO LONGER in the PHPMailer chain — it delivers to
-        // the local cPanel mailbox instead of relaying to Zoho. It's now a LAST
-        // resort after raw fsockopen to smtp.zoho.com:465 (which bypasses the
-        // shared-hosting firewall that blocks PHPMailer's OpenSSL-based SMTP).
 
         // Store results from ALL attempts for debugging
         $allDebugs = [];
@@ -473,66 +472,6 @@ if ($fromAddr === '' || $toAddr === '') {
         } elseif ($emailMode === 'failed' && ($smtpUser === '' || $smtpPass === '')) {
             $emailError = 'smtp_user and smtp_pass are required in submit-config.php';
             error_log('Email: ' . $emailError . ' (submission ' . $submissionId . ')');
-        }
-
-        // Raw fsockopen fallback: smtp.zoho.com:465 SSL
-        // (bypasses PHPMailer stream context which may be intercepted on shared hosting)
-        if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
-            $rawError = '';
-            try {
-                $ok = sendViaRawSmtp('smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, $fromAddr, $fromName, $toAddr, $subject, $htmlBody, $alt);
-                if ($ok) {
-                    $emailMode = 'smtp_zoho_raw';
-                    $emailError = '';
-                    error_log('Email: raw fsockopen SMTP to smtp.zoho.com succeeded (submission ' . $submissionId . ')');
-                    $allDebugs[] = "SUCCESS via raw fsockopen smtp.zoho.com:465";
-                }
-            } catch (Throwable $e) {
-                $rawError = $e->getMessage();
-                error_log('Email: raw SMTP fallback failed (submission ' . $submissionId . '): ' . $rawError);
-                $emailError = substr($rawError, 0, 200);
-                $allErrors[] = "[raw:465] " . substr($rawError, 0, 100);
-                $allDebugs[] = "FAILED raw fsockopen smtp.zoho.com:465\n" . $rawError;
-            }
-        }
-
-        // LAST RESORT: localhost:25 via PHPMailer (no auth — local Exim relay)
-        // Only used if all Zoho SMTP attempts failed. This delivers to the local
-        // cPanel mailbox — not ideal, but better than losing the email entirely.
-        // To make this relay to Zoho, set cPanel Email Routing to "Remote Mail Exchanger".
-        if ($emailMode === 'failed') {
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host       = 'localhost';
-                $mail->Port       = 25;
-                $mail->SMTPSecure = '';
-                $mail->SMTPAuth   = false;
-                $mail->SMTPAutoTLS = false;
-                $mail->Timeout    = 15;
-                $mail->CharSet    = 'UTF-8';
-                $mail->SMTPOptions = [
-                    'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
-                        'allow_self_signed' => true,
-                    ],
-                ];
-                $mail->setFrom($fromAddr, $fromName);
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = $alt;
-                $mail->send();
-                $emailMode = 'local_exim';
-                $emailError = '';
-                error_log('Email: local Exim relay succeeded (submission ' . $submissionId . ') — configure cPanel Email Routing to "Remote" for Zoho delivery');
-            } catch (Throwable $e) {
-                $emailError = substr($e->getMessage(), 0, 200);
-                error_log('Email: local Exim relay also failed (submission ' . $submissionId . '): ' . $emailError);
-            }
         }
     } catch (Throwable $e) {
         error_log('Email SMTP setup error (submission ' . $submissionId . '): ' . $e->getMessage());
