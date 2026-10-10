@@ -478,16 +478,21 @@ if ($fromAddr === '' || $toAddr === '') {
         // Raw fsockopen fallback: smtp.zoho.com:465 SSL
         // (bypasses PHPMailer stream context which may be intercepted on shared hosting)
         if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
+            $rawError = '';
             try {
                 $ok = sendViaRawSmtp('smtp.zoho.com', 465, 'ssl', $smtpUser, $smtpPass, $fromAddr, $fromName, $toAddr, $subject, $htmlBody, $alt);
                 if ($ok) {
                     $emailMode = 'smtp_zoho_raw';
                     $emailError = '';
                     error_log('Email: raw fsockopen SMTP to smtp.zoho.com succeeded (submission ' . $submissionId . ')');
+                    $allDebugs[] = "SUCCESS via raw fsockopen smtp.zoho.com:465";
                 }
             } catch (Throwable $e) {
-                error_log('Email: raw SMTP fallback failed (submission ' . $submissionId . '): ' . $e->getMessage());
-                $emailError = substr($e->getMessage(), 0, 200);
+                $rawError = $e->getMessage();
+                error_log('Email: raw SMTP fallback failed (submission ' . $submissionId . '): ' . $rawError);
+                $emailError = substr($rawError, 0, 200);
+                $allErrors[] = "[raw:465] " . substr($rawError, 0, 100);
+                $allDebugs[] = "FAILED raw fsockopen smtp.zoho.com:465\n" . $rawError;
             }
         }
 
@@ -552,5 +557,5 @@ respond(200, [
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
     'email'   => $emailMode,
-    'debug'   => !empty($allDebugs) ? substr(end($allDebugs), 0, 1000) : null,
+    'debug'   => !empty($allDebugs) ? substr(implode("\n---\n", $allDebugs), 0, 2000) : null,
 ]);
