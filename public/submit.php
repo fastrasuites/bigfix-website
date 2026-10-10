@@ -7,91 +7,111 @@ require __DIR__ . '/phpmailer/Exception.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 
-function sendViaRawSmtp(string $host, int $port, string $secure, string $user, string $pass, string $fromAddr, string $fromName, string $toAddr, string $subject, string $htmlBody, string $altBody): bool
+/**
+ * Send email via HTTP API (Zoho ZeptoMail, SendGrid, Mailgun, etc.)
+ * Uses HTTPS (port 443) - NOT blocked by QServers firewall
+ * Bypasses SMTP entirely
+ */
+function sendViaHttpApi(array $config, string $fromAddr, string $fromName, string $toAddr, string $subject, string $htmlBody, string $altBody): array
 {
-    $scheme = $secure === 'ssl' ? 'ssl' : 'tls';
-    $prefix = $secure === 'ssl' ? 'ssl://' : 'tcp://';
+    $apiUrl = $config['email_api_url'] ?? '';
+    $apiKey = $config['email_api_key'] ?? '';
+    $apiType = $config['email_api_type'] ?? 'zeptomail';
 
-    $sock = @fsockopen($prefix . $host, $port, $errno, $errstr, 15);
-    if (!$sock) {
-        throw new RuntimeException("fsockopen failed ($errno) $errstr");
-    }
-    stream_set_timeout($sock, 15);
-
-    $banner = fgets($sock, 515);
-
-    fwrite($sock, "EHLO $host\r\n");
-    while ($line = fgets($sock, 515)) {
-        if (substr($line, 3, 1) === ' ') break;
+    if ($apiUrl === '' || $apiKey === '') {
+        return ['success' => false, 'error' => 'HTTP email API not configured'];
     }
 
-    if ($secure === 'tls') {
-        fwrite($sock, "STARTTLS\r\n");
-        $resp = fgets($sock, 515);
-        if (strpos($resp, '220') !== 0) {
-            fclose($sock);
-            throw new RuntimeException("STARTTLS rejected: $resp");
-        }
-        $crypto = stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-        if ($crypto !== true) {
-            fclose($sock);
-            throw new RuntimeException("TLS handshake failed");
-        }
+    $payload = [];
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: ' . ($apiType === 'zeptomail' ? 'Zoho-enczapikey ' : 'Bearer ') . $apiKey,
+    ];
+
+    switch ($apiType) {
+        case 'zeptomail':
+            // Zoho ZeptoMail API
+            // Docs: https://www.zeptomail.com/docs/api/send-mail/
+            $payload = [
+                'from' => [
+                    'address' => $fromAddr,
+                    'name' => $fromName,
+                ],
+                'to' => [
+                    [
+                        'email_address' => [
+                            'address' => $toAddr,
+                            'name' => $fromName,
+                        ],
+                    ],
+                ],
+                'subject' => $subject,
+                'htmlbody' => $htmlBody,
+                'textbody' => $altBody,
+            ];
+            break;
+
+        case 'sendgrid':
+            // SendGrid API
+            // Docs: https://docs.sendgrid.com/api-reference/mail-send/mail-send
+            $payload = [
+                'personalizations' => [[
+                    'to' => [['email' => $toAddr]],
+                    'subject' => $subject,
+                ]],
+                'from' => ['email' => $fromAddr, 'name' => $fromName],
+                'content' => [
+                    ['type' => 'text/plain', 'value' => $altBody],
+                    ['type' => 'text/html', 'value' => $htmlBody],
+                ],
+            ];
+            break;
+
+        case 'mailgun':
+            // Mailgun API (uses multipart/form-data, not JSON)
+            return ['success' => false, 'error' => 'Mailgun requires multipart - implement separately'];
+            break;
+
+        case 'brevo':
+            // Brevo (Sendinblue) API
+            // Docs: https://developers.brevo.com/reference/sendtransacemail
+            $payload = [
+                'sender' => ['email' => $fromAddr, 'name' => $fromName],
+                'to' => [['email' => $toAddr, 'name' => $fromName]],
+                'subject' => $subject,
+                'htmlContent' => $htmlBody,
+                'textContent' => $altBody,
+            ];
+            break;
+
+        default:
+            return ['success' => false, 'error' => "Unknown API type: $apiType"];
     }
 
-    fwrite($sock, "AUTH LOGIN\r\n");
-    fgets($sock, 515);
-    fwrite($sock, base64_encode($user) . "\r\n");
-    $resp = fgets($sock, 515);
-    if (strpos($resp, '334') !== 0 && strpos($resp, '5') === 0) {
-        fclose($sock);
-        throw new RuntimeException("Username rejected: $resp");
-    }
-    fwrite($sock, base64_encode($pass) . "\r\n");
-    $resp = fgets($sock, 515);
-    if (strpos($resp, '235') !== 0) {
-        fclose($sock);
-        throw new RuntimeException("Auth failed: $resp");
-    }
+    $ch = curl_init($apiUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload),
+        CURLOPT_HTTPHEADER     => $headers,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_SSL_VERIFYPEER => false,
+    ]);
 
-    fwrite($sock, "MAIL FROM:<{$fromAddr}>\r\n");
-    fgets($sock, 515);
-    fwrite($sock, "RCPT TO:<{$toAddr}>\r\n");
-    $resp = fgets($sock, 515);
-    if (strpos($resp, '250') !== 0) {
-        fclose($sock);
-        throw new RuntimeException("Recipient rejected: $resp");
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($error !== '') {
+        return ['success' => false, 'error' => "cURL error: $error"];
     }
 
-    fwrite($sock, "DATA\r\n");
-    fgets($sock, 515);
-
-    $eol = "\r\n";
-    $boundary = "=_bigfix_" . md5(uniqid());
-    $body = "From: {$fromName} <{$fromAddr}>" . $eol;
-    $body .= "To: {$toAddr}" . $eol;
-    $body .= "Subject: {$subject}" . $eol;
-    $body .= "MIME-Version: 1.0" . $eol;
-    $body .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"" . $eol . $eol;
-    $body .= "--{$boundary}{$eol}";
-    $body .= "Content-Type: text/plain; charset=UTF-8" . $eol;
-    $body .= "Content-Transfer-Encoding: 8bit" . $eol . $eol;
-    $body .= $altBody . $eol . $eol;
-    $body .= "--{$boundary}{$eol}";
-    $body .= "Content-Type: text/html; charset=UTF-8" . $eol;
-    $body .= "Content-Transfer-Encoding: 8bit" . $eol . $eol;
-    $body .= $htmlBody . $eol;
-    $body .= "--{$boundary}--" . $eol . ".{$eol}";
-
-    fwrite($sock, $body);
-    $resp = fgets($sock, 515);
-    fwrite($sock, "QUIT\r\n");
-    fclose($sock);
-
-    if (strpos($resp, '250') !== 0) {
-        throw new RuntimeException("DATA rejected: $resp");
+    if ($httpCode >= 200 && $httpCode < 300) {
+        return ['success' => true];
     }
-    return true;
+
+    return ['success' => false, 'error' => "HTTP $httpCode: " . substr($response, 0, 200)];
 }
 
 header('Content-Type: application/json');
@@ -367,50 +387,69 @@ if ($fromAddr === '' || $toAddr === '') {
     error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
 } else {
     try {
-        $smtpHost = $resolve($config, 'smtp_host') ?: 'smtp.zoho.com';
-        $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
-        $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
-        $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
-        $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
+        // ============================================================
+        // METHOD 1: HTTP API (PRIMARY) - Uses HTTPS port 443, NOT blocked
+        // ============================================================
+        $apiUrl  = $config['email_api_url'] ?? '';
+        $apiKey  = $config['email_api_key'] ?? '';
+        $apiType = $config['email_api_type'] ?? 'zeptomail';
 
-        $tryHosts = [];
-        $lowerHost = strtolower((string)$smtpHost);
-
-        // Smart auth: never use auth for localhost:25 (local Exim doesn't need it)
-        $useAuth = ($smtpUser !== '' && $smtpPass !== '' &&
-                    !($lowerHost === 'localhost' && $smtpPort === 25));
-
-        // Primary: configured host from submit-config.php
-        $tryHosts[] = [$smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass, $useAuth];
-
-        // If primary is localhost:25, that's it — no fallbacks needed (it worked before)
-        // If primary is smtp.zoho.com, add fallback to localhost:25 (no auth)
-        if ($lowerHost !== 'localhost' || $smtpPort !== 25) {
-            $tryHosts[] = ['localhost', 25, '', '', '', false];
-        }
-
-        // Store results from ALL attempts for debugging
+        $emailMode = 'failed';
+        $emailError = '';
         $allDebugs = [];
         $allErrors = [];
 
-        foreach ($tryHosts as $idx => $h) {
-            $debugLog = '';
+        if ($apiUrl !== '' && $apiKey !== '') {
+            try {
+                $result = sendViaHttpApi($config, $fromAddr, $fromName, $toAddr, $subject, $htmlBody, $alt);
+                if ($result['success']) {
+                    $emailMode = 'http_api_' . $apiType;
+                    $emailError = '';
+                    error_log('Email: HTTP API (' . $apiType . ') succeeded (submission ' . $submissionId . ')');
+                    $allDebugs[] = "SUCCESS via HTTP API ($apiType)";
+                } else {
+                    $emailError = $result['error'] ?? 'HTTP API failed';
+                    error_log('Email: HTTP API (' . $apiType . ') failed (submission ' . $submissionId . '): ' . $emailError);
+                    $allErrors[] = "[http_api:$apiType] " . substr($emailError, 0, 100);
+                    $allDebugs[] = "FAILED HTTP API ($apiType)\n" . $emailError;
+                }
+            } catch (Throwable $e) {
+                $emailError = substr($e->getMessage(), 0, 200);
+                error_log('Email: HTTP API exception (submission ' . $submissionId . '): ' . $emailError);
+                $allErrors[] = "[http_api:$apiType] " . substr($emailError, 0, 100);
+                $allDebugs[] = "FAILED HTTP API ($apiType)\n" . $emailError;
+            }
+        } else {
+            $allDebugs[] = "HTTP API not configured (email_api_url/email_api_key missing)";
+        }
+
+        // ============================================================
+        // METHOD 2: SMTP (FALLBACK) - localhost:25 Exim relay
+        // ============================================================
+        if ($emailMode === 'failed') {
+            $smtpHost = $resolve($config, 'smtp_host') ?: 'localhost';
+            $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
+            $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
+            $smtpPort = (int)($resolve($config, 'smtp_port') ?: 25);
+            $smtpSecure = $resolve($config, 'smtp_secure') ?: '';
+
+            $lowerHost = strtolower((string)$smtpHost);
+            $useAuth = ($smtpUser !== '' && $smtpPass !== '' && !($lowerHost === 'localhost' && $smtpPort === 25));
+
             try {
                 $mail = new PHPMailer(true);
                 $mail->isSMTP();
-                $mail->Host       = $h[0];
-                $mail->Port       = $h[1];
-                $mail->SMTPSecure = $h[2];
+                $mail->Host       = $smtpHost;
+                $mail->Port       = $smtpPort;
+                $mail->SMTPSecure = $smtpSecure;
                 $mail->SMTPAutoTLS = false;
-                $mail->SMTPAuth   = $h[5];
-                if ($h[5]) {
-                    $mail->Username   = $h[3];
-                    $mail->Password   = $h[4];
+                $mail->SMTPAuth   = $useAuth;
+                if ($useAuth) {
+                    $mail->Username   = $smtpUser;
+                    $mail->Password   = $smtpPass;
                 }
                 $mail->Timeout    = 15;
                 $mail->CharSet    = 'UTF-8';
-
-                // On shared hosting, OpenSSL CA bundle is often outdated — skip verification
                 $mail->SMTPOptions = [
                     'ssl' => [
                         'verify_peer'       => false,
@@ -419,7 +458,7 @@ if ($fromAddr === '' || $toAddr === '') {
                     ],
                 ];
 
-                // Always capture debug to see server banners
+                $debugLog = '';
                 $mail->SMTPDebug = 2;
                 $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
                     $debugLog .= "[$level] $str\n";
@@ -434,29 +473,24 @@ if ($fromAddr === '' || $toAddr === '') {
                 $mail->AltBody = $alt;
 
                 $mail->send();
-                $emailMode = $idx === 0 ? 'smtp' : 'smtp_zoho';
+                $emailMode = 'smtp_exim';
                 $emailError = '';
-                if ($idx > 0) {
-                    error_log('Email: primary SMTP failed, fallback to ' . $h[0] . ' succeeded (submission ' . $submissionId . ')');
-                }
-                if (!empty($debugLog)) {
-                    $allDebugs[] = "SUCCESS via {$h[0]}:{$h[1]}\n" . $debugLog;
-                }
-                break;
+                error_log('Email: SMTP Exim relay succeeded (submission ' . $submissionId . ')');
+                $allDebugs[] = "SUCCESS via SMTP Exim ($smtpHost:$smtpPort)\n" . $debugLog;
             } catch (Throwable $e) {
                 $err = $e->getMessage();
                 if (isset($mail->ErrorInfo)) {
                     $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
                 }
-                error_log('Email SMTP error on ' . $h[0] . ':' . $h[1] . ' (submission ' . $submissionId . '): ' . $err);
-                $allErrors[] = "[{$h[0]}:{$h[1]}] " . substr($err, 0, 100);
+                error_log('Email SMTP Exim error (submission ' . $submissionId . '): ' . $err);
+                $allErrors[] = "[smtp_exim] " . substr($err, 0, 100);
                 if (!empty($debugLog)) {
-                    $allDebugs[] = "FAILED {$h[0]}:{$h[1]}\n" . $debugLog;
+                    $allDebugs[] = "FAILED SMTP Exim\n" . $debugLog;
                 }
             }
         }
 
-        if ($emailMode === 'failed') {
+        if ($emailMode === 'failed' && ($smtpHost === '' || $smtpPort === 0)) {
             $emailError = substr($err ?? '', 0, 200);
             if (!empty($allErrors)) {
                 $emailError = implode("\n", $allErrors);
