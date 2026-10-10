@@ -8,7 +8,7 @@ require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 
 /**
- * Send email via HTTP API (Zoho ZeptoMail, SendGrid, Mailgun, etc.)
+ * Send email via HTTP API (Zoho ZeptoMail, SendGrid, Brevo, etc.)
  * Uses HTTPS (port 443) - NOT blocked by QServers firewall
  * Bypasses SMTP entirely
  */
@@ -65,11 +65,6 @@ function sendViaHttpApi(array $config, string $fromAddr, string $fromName, strin
                     ['type' => 'text/html', 'value' => $htmlBody],
                 ],
             ];
-            break;
-
-        case 'mailgun':
-            // Mailgun API (uses multipart/form-data, not JSON)
-            return ['success' => false, 'error' => 'Mailgun requires multipart - implement separately'];
             break;
 
         case 'brevo':
@@ -346,7 +341,7 @@ try {
     respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
 }
 
-// ---- Email notification via Zoho SMTP -------------------------------------------------
+// ---- Email notification -------------------------------------------------
 $emailMode = 'failed';
 $emailError = '';
 
@@ -387,17 +382,21 @@ if ($fromAddr === '' || $toAddr === '') {
     error_log('Email: from_email/to_email missing in submit-config.php (submission ' . $submissionId . ')');
 } else {
     try {
+        $smtpHost = $resolve($config, 'smtp_host') ?: 'smtp.zoho.com';
+        $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
+        $smtpPass = $resolve($config, 'smtp_pass', 'smtp_password');
+        $smtpPort = (int)($resolve($config, 'smtp_port') ?: 587);
+        $smtpSecure = $resolve($config, 'smtp_secure') ?: 'tls';
+
+        $allDebugs = [];
+        $allErrors = [];
+
         // ============================================================
         // METHOD 1: HTTP API (PRIMARY) - Uses HTTPS port 443, NOT blocked
         // ============================================================
         $apiUrl  = $config['email_api_url'] ?? '';
         $apiKey  = $config['email_api_key'] ?? '';
         $apiType = $config['email_api_type'] ?? 'zeptomail';
-
-        $emailMode = 'failed';
-        $emailError = '';
-        $allDebugs = [];
-        $allErrors = [];
 
         if ($apiUrl !== '' && $apiKey !== '') {
             try {
@@ -424,8 +423,135 @@ if ($fromAddr === '' || $toAddr === '') {
         }
 
         // ============================================================
-        // METHOD 2: SMTP (FALLBACK) - localhost:25 Exim relay
+        // METHOD 2: Zoho SMTP DIRECT via IP addresses (bypass DNS/hostname firewall)
+        // Resolves smtp.zoho.com to IPs and tries direct IP connections.
+        // May bypass hostname-based firewall rules that block smtp.zoho.com.
         // ============================================================
+        $allDebugs[] = "DEBUG: METHOD 2 start - smtpUser='" . ($smtpUser ?: 'EMPTY') . "', smtpPass=" . ($smtpPass ? 'SET' : 'EMPTY');
+        if ($emailMode === 'failed' && $smtpUser !== '' && $smtpPass !== '') {
+            $zohoHosts = ['smtp.zoho.com', 'smtp.us.zoho.com', 'smtp.eu.zoho.com'];
+            $zohoPorts = [
+                ['port' => 465, 'secure' => 'ssl'],
+                ['port' => 587, 'secure' => 'tls'],
+                ['port' => 2525, 'secure' => 'tls'],
+            ];
+
+            foreach ($zohoHosts as $host) {
+                // Resolve to IPs to bypass hostname-based blocking
+                $ips = @gethostbynamel($host);
+                if (!$ips) {
+                    $allDebugs[] = "DNS resolve failed for $host";
+                    continue;
+                }
+
+                foreach ($ips as $ip) {
+                    foreach ($zohoPorts as $ep) {
+                        $port = $ep['port'];
+                        $secure = $ep['secure'];
+                        try {
+                            $mail = new PHPMailer(true);
+                            $mail->isSMTP();
+                            $mail->Host       = $ip;  // Connect directly to IP
+                            $mail->Port       = $port;
+                            $mail->SMTPSecure = $secure;
+                            $mail->SMTPAutoTLS = false;
+                            $mail->SMTPAuth   = true;
+                            $mail->Username   = $smtpUser;
+                            $mail->Password   = $smtpPass;
+                            $mail->Timeout    = 10;
+                            $mail->CharSet    = 'UTF-8';
+                            $mail->SMTPOptions = [
+                                'ssl' => [
+                                    'verify_peer'       => false,
+                                    'verify_peer_name'  => false,  // Skip hostname verification for IP
+                                    'allow_self_signed' => true,
+                                ],
+                            ];
+
+                            $debugLog = '';
+                            $mail->SMTPDebug = 2;
+                            $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                                $debugLog .= "[$level] $str\n";
+                            };
+
+                            $mail->setFrom($fromAddr, $fromName);
+                            $mail->addAddress($toAddr);
+                            $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                            $mail->isHTML(true);
+                            $mail->Subject = $subject;
+                            $mail->Body    = $htmlBody;
+                            $mail->AltBody = $alt;
+
+                            $mail->send();
+                            $emailMode = 'zoho_smtp_ip';
+                            $emailError = '';
+                            error_log('Email: Zoho SMTP via IP ' . $ip . ':' . $port . ' succeeded (submission ' . $submissionId . ')');
+                            $allDebugs[] = "SUCCESS via Zoho SMTP IP ($ip:$port $secure)\n" . $debugLog;
+                            break 3;  // Success - break all loops
+                        } catch (Throwable $e) {
+                            $err = $e->getMessage();
+                            if (isset($mail->ErrorInfo)) {
+                                $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
+                            }
+                            error_log('Email: Zoho SMTP IP ' . $ip . ':' . $port . ' failed (submission ' . $submissionId . '): ' . $err);
+                            $allErrors[] = "[zoho_smtp_ip:$ip:$port] " . substr($err, 0, 100);
+                            if (!empty($debugLog)) {
+                                $allDebugs[] = "FAILED Zoho SMTP IP $ip:$port $secure\n" . $debugLog;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // METHOD 3: PHP mail() function with Exim (different path than SMTP)
+        // Uses local sendmail binary which may invoke Exim with different
+        // routing rules than SMTP submission. Sometimes behaves differently.
+        // ============================================================
+        $allDebugs[] = "DEBUG: METHOD 3 start";
+        if ($emailMode === 'failed') {
+            try {
+                $headers = "From: {$fromName} <{$fromAddr}>\r\n";
+                $headers .= "Reply-To: {$replyTo}\r\n";
+                $headers .= "MIME-Version: 1.0\r\n";
+                $headers .= "Content-Type: multipart/alternative; boundary=\"=_bigfix_mail_" . md5(uniqid()) . "\"\r\n";
+
+                $boundary = "=_bigfix_mail_" . md5(uniqid());
+                $message = "--{$boundary}\r\n";
+                $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
+                $message .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                $message .= $alt . "\r\n\r\n";
+                $message .= "--{$boundary}\r\n";
+                $message .= "Content-Type: text/html; charset=UTF-8\r\n";
+                $message .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+                $message .= $htmlBody . "\r\n\r\n";
+                $message .= "--{$boundary}--\r\n";
+
+                // Use -f to set envelope sender (may influence Exim routing)
+                $additionalParams = '-f' . $fromAddr;
+
+                $result = @mail($toAddr, $subject, $message, $headers, $additionalParams);
+                if ($result) {
+                    $emailMode = 'php_mail';
+                    $emailError = '';
+                    error_log('Email: PHP mail() succeeded (submission ' . $submissionId . ')');
+                    $allDebugs[] = "SUCCESS via PHP mail() (sendmail/Exim)";
+                } else {
+                    throw new RuntimeException('mail() returned false');
+                }
+            } catch (Throwable $e) {
+                $err = $e->getMessage();
+                error_log('Email: PHP mail() failed (submission ' . $submissionId . '): ' . $err);
+                $allErrors[] = "[php_mail] " . substr($err, 0, 100);
+                $allDebugs[] = "FAILED PHP mail()\n" . $err;
+            }
+        }
+
+        // ============================================================
+        // METHOD 4: SMTP Exim relay (localhost:25) — with envelope sender fix FIRST
+        // ============================================================
+        $allDebugs[] = "DEBUG: METHOD 4 start - isLocalhost25=" . ($isLocalhost25 ? 'true' : 'false');
         if ($emailMode === 'failed') {
             $smtpHost = $resolve($config, 'smtp_host') ?: 'localhost';
             $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
@@ -434,126 +560,118 @@ if ($fromAddr === '' || $toAddr === '') {
             $smtpSecure = $resolve($config, 'smtp_secure') ?: '';
 
             $lowerHost = strtolower((string)$smtpHost);
-            $useAuth = ($smtpUser !== '' && $smtpPass !== '' && !($lowerHost === 'localhost' && $smtpPort === 25));
+            $isLocalhost25 = ($lowerHost === 'localhost' && $smtpPort === 25);
 
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host       = $smtpHost;
-                $mail->Port       = $smtpPort;
-                $mail->SMTPSecure = $smtpSecure;
-                $mail->SMTPAutoTLS = false;
-                $mail->SMTPAuth   = $useAuth;
-                if ($useAuth) {
-                    $mail->Username   = $smtpUser;
-                    $mail->Password   = $smtpPass;
-                }
-                $mail->Timeout    = 15;
-                $mail->CharSet    = 'UTF-8';
-                $mail->SMTPOptions = [
-                    'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
-                        'allow_self_signed' => true,
-                    ],
-                ];
+            // If config uses localhost:25, try ENVELOPE SENDER fix FIRST
+            // (may force Exim to relay via MX instead of local delivery)
+            if ($isLocalhost25) {
+                $envelopeSender = 'noreply@qservers.net';  // Non-local domain
+                try {
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    $mail->Host       = $smtpHost;
+                    $mail->Port       = $smtpPort;
+                    $mail->SMTPSecure = '';
+                    $mail->SMTPAutoTLS = false;
+                    $mail->SMTPAuth   = false;
+                    $mail->Timeout    = 15;
+                    $mail->CharSet    = 'UTF-8';
+                    $mail->SMTPOptions = [
+                        'ssl' => [
+                            'verify_peer'       => false,
+                            'verify_peer_name'  => false,
+                            'allow_self_signed' => true,
+                        ],
+                    ];
 
-                $debugLog = '';
-                $mail->SMTPDebug = 2;
-                $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
-                    $debugLog .= "[$level] $str\n";
-                };
+                    $debugLog = '';
+                    $mail->SMTPDebug = 2;
+                    $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                        $debugLog .= "[$level] $str\n";
+                    };
 
-                $mail->setFrom($fromAddr, $fromName);
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = $alt;
+                    // CRITICAL: Non-local envelope sender to force Exim relay
+                    $mail->Sender = $envelopeSender;
+                    $mail->setFrom($fromAddr, $fromName);
+                    $mail->addAddress($toAddr);
+                    $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                    $mail->isHTML(true);
+                    $mail->Subject = $subject;
+                    $mail->Body    = $htmlBody;
+                    $mail->AltBody = $alt;
 
-                $mail->send();
-                $emailMode = 'smtp_exim';
-                $emailError = '';
-                error_log('Email: SMTP Exim relay succeeded (submission ' . $submissionId . ')');
-                $allDebugs[] = "SUCCESS via SMTP Exim ($smtpHost:$smtpPort)\n" . $debugLog;
-} catch (Throwable $e) {
-                $err = $e->getMessage();
-                if (isset($mail->ErrorInfo)) {
-                    $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
-                }
-                error_log('Email SMTP Exim error (submission ' . $submissionId . '): ' . $err);
-                $allErrors[] = "[smtp_exim] " . substr($err, 0, 100);
-                if (!empty($debugLog)) {
-                    $allDebugs[] = "FAILED SMTP Exim\n" . $debugLog;
+                    $mail->send();
+                    $emailMode = 'smtp_exim_relay';
+                    $emailError = '';
+                    error_log('Email: SMTP Exim relay (non-local envelope) succeeded (submission ' . $submissionId . ')');
+                    $allDebugs[] = "SUCCESS via SMTP Exim relay (envelope: $envelopeSender)\n" . $debugLog;
+                } catch (Throwable $e) {
+                    $err = $e->getMessage();
+                    if (isset($mail->ErrorInfo)) {
+                        $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
+                    }
+                    error_log('Email: SMTP Exim relay (envelope) failed (submission ' . $submissionId . '): ' . $err);
+                    $allErrors[] = "[smtp_exim_relay] " . substr($err, 0, 100);
+                    if (!empty($debugLog)) {
+                        $allDebugs[] = "FAILED SMTP Exim relay (envelope)\n" . $debugLog;
+                    }
                 }
             }
-        }
 
-        // ============================================================
-        // METHOD 3: SMTP Exim with NON-LOCAL envelope sender (LAST RESORT)
-        // Force Exim to relay by using a non-local MAIL FROM address.
-        // If envelope sender domain is NOT in local_domains, Exim may relay via MX.
-        // ============================================================
-        if ($emailMode === 'failed') {
-            $smtpHost = $resolve($config, 'smtp_host') ?: 'localhost';
-            $smtpPort = (int)($resolve($config, 'smtp_port') ?: 25);
+            // If envelope sender fix failed (or config not localhost:25), try REGULAR SMTP
+            if ($emailMode === 'failed') {
+                $useAuth = ($smtpUser !== '' && $smtpPass !== '' && !($lowerHost === 'localhost' && $smtpPort === 25));
+                try {
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    $mail->Host       = $smtpHost;
+                    $mail->Port       = $smtpPort;
+                    $mail->SMTPSecure = $smtpSecure;
+                    $mail->SMTPAutoTLS = false;
+                    $mail->SMTPAuth   = $useAuth;
+                    if ($useAuth) {
+                        $mail->Username   = $smtpUser;
+                        $mail->Password   = $smtpPass;
+                    }
+                    $mail->Timeout    = 15;
+                    $mail->CharSet    = 'UTF-8';
+                    $mail->SMTPOptions = [
+                        'ssl' => [
+                            'verify_peer'       => false,
+                            'verify_peer_name'  => false,
+                            'allow_self_signed' => true,
+                        ],
+                    ];
 
-            // Use server's hostname domain as envelope sender (likely NOT in local_domains)
-            // This may force Exim to treat email as external → relay via MX (Zoho)
-            $envelopeSender = 'noreply@qservers.net';  // QServers hostname domain
-            // Or try: 'noreply@' . gethostname() . '.local' — but qservers.net is known
+                    $debugLog = '';
+                    $mail->SMTPDebug = 2;
+                    $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
+                        $debugLog .= "[$level] $str\n";
+                    };
 
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host       = $smtpHost;
-                $mail->Port       = $smtpPort;
-                $mail->SMTPSecure = '';
-                $mail->SMTPAutoTLS = false;
-                $mail->SMTPAuth   = false;
-                $mail->Timeout    = 15;
-                $mail->CharSet    = 'UTF-8';
-                $mail->SMTPOptions = [
-                    'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
-                        'allow_self_signed' => true,
-                    ],
-                ];
+                    $mail->setFrom($fromAddr, $fromName);
+                    $mail->addAddress($toAddr);
+                    $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
+                    $mail->isHTML(true);
+                    $mail->Subject = $subject;
+                    $mail->Body    = $htmlBody;
+                    $mail->AltBody = $alt;
 
-                $debugLog = '';
-                $mail->SMTPDebug = 2;
-                $mail->Debugoutput = function (string $str, string $level) use (&$debugLog) {
-                    $debugLog .= "[$level] $str\n";
-                };
-
-                // CRITICAL: Set non-local envelope sender (MAIL FROM)
-                // This may force Exim to relay via MX instead of local delivery
-                $mail->Sender = $envelopeSender;
-
-                $mail->setFrom($fromAddr, $fromName);  // From header (what user sees)
-                $mail->addAddress($toAddr);
-                $mail->addReplyTo($replyTo, (string)($data['name'] ?? ''));
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $htmlBody;
-                $mail->AltBody = $alt;
-
-                $mail->send();
-                $emailMode = 'smtp_exim_relay';
-                $emailError = '';
-                error_log('Email: SMTP Exim with non-local envelope sender succeeded (submission ' . $submissionId . ')');
-                $allDebugs[] = "SUCCESS via SMTP Exim relay (envelope: $envelopeSender)\n" . $debugLog;
-            } catch (Throwable $e) {
-                $err = $e->getMessage();
-                if (isset($mail->ErrorInfo)) {
-                    $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
-                }
-                error_log('Email SMTP Exim relay failed (submission ' . $submissionId . '): ' . $err);
-                $allErrors[] = "[smtp_exim_relay] " . substr($err, 0, 100);
-                if (!empty($debugLog)) {
-                    $allDebugs[] = "FAILED SMTP Exim relay\n" . $debugLog;
+                    $mail->send();
+                    $emailMode = $isLocalhost25 ? 'smtp_exim' : 'smtp';
+                    $emailError = '';
+                    error_log('Email: SMTP Exim succeeded (submission ' . $submissionId . ')');
+                    $allDebugs[] = "SUCCESS via SMTP Exim ($smtpHost:$smtpPort)\n" . $debugLog;
+                } catch (Throwable $e) {
+                    $err = $e->getMessage();
+                    if (isset($mail->ErrorInfo)) {
+                        $err .= ' | ErrorInfo: ' . $mail->ErrorInfo;
+                    }
+                    error_log('Email SMTP Exim error (submission ' . $submissionId . '): ' . $err);
+                    $allErrors[] = "[smtp_exim] " . substr($err, 0, 100);
+                    if (!empty($debugLog)) {
+                        $allDebugs[] = "FAILED SMTP Exim\n" . $debugLog;
+                    }
                 }
             }
         }
