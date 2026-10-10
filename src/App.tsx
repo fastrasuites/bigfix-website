@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { TrackingProvider, useTracking } from "@/lib/tracking";
 import Home from "./pages/Home";
 import AboutUs from "./pages/AboutUs";
 import Career from "./pages/Career";
@@ -11,42 +12,38 @@ import ContactUs from "./pages/ContactUs";
 import ScrollToTop from "./components/ScrollToTop";
 import ExitIntentPopup from "./components/ExitIntentPopup";
 
-// Initialize tracker on app mount
-function TrackerInitializer(): null {
+// Track page views on route change
+function RouteTracker(): null {
+  const { trackPageView } = useTracking();
+  const location = useLocation();
+
   useEffect(() => {
-    // Dynamic import to avoid SSR issues
-    import('./tracker').catch(() => {});
-  }, []);
+    trackPageView();
+  }, [location.pathname, trackPageView]);
+
   return null;
 }
 
 function App(): JSX.Element {
-  const location = useLocation();
-
-  // Track page views on route change
-  useEffect(() => {
-    if (window.BigFixTracker?.trackPageView) {
-      window.BigFixTracker.trackPageView();
-    }
-  }, [location.pathname]);
-
   return (
-    <Router>
-      <TrackerInitializer />
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/career" element={<Career />} />
-        <Route path="/book-demo" element={<BookDemo />} />
-        <Route path="/software-development" element={<SoftwareDevelopment />} />
-        <Route path="/cloud-storage" element={<CloudStorage />} />
-        <Route path="/it-consultancy" element={<ITConsultancy />} />
-        <Route path="/contact" element={<ContactUs />} />
-      </Routes>
-      {/* Exit Intent Popup - only on pricing page */}
-      <ExitIntentPopup triggerPages={['/pricing']} />
-    </Router>
+    <TrackingProvider autoInit={true}>
+      <Router>
+        <RouteTracker />
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/career" element={<Career />} />
+          <Route path="/book-demo" element={<BookDemo />} />
+          <Route path="/software-development" element={<SoftwareDevelopment />} />
+          <Route path="/cloud-storage" element={<CloudStorage />} />
+          <Route path="/it-consultancy" element={<ITConsultancy />} />
+          <Route path="/contact" element={<ContactUs />} />
+        </Routes>
+        {/* Exit Intent Popup - only on pricing page */}
+        <ExitIntentPopup triggerPages={['/pricing']} />
+      </Router>
+    </TrackingProvider>
   );
 }
 
