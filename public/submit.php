@@ -79,6 +79,18 @@ function sendViaHttpApi(array $config, string $fromAddr, string $fromName, strin
             ];
             break;
 
+        case 'resend':
+            // Resend API
+            // Docs: https://resend.com/docs/api-reference/emails/send-email
+            $payload = [
+                'from' => "{$fromName} <{$fromAddr}>",
+                'to' => [$toAddr],
+                'subject' => $subject,
+                'html' => $htmlBody,
+                'text' => $altBody,
+            ];
+            break;
+
         default:
             return ['success' => false, 'error' => "Unknown API type: $apiType"];
     }
