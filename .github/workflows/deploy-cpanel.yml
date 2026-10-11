@@ -41,6 +41,12 @@ jobs:
           cp api/migrations/003_absolute_tracking.sql dist/api/migrations/003_absolute_tracking.sql
           cp api/migrations/MigrationRunner.php dist/api/migrations/MigrationRunner.php
           touch dist/api/cache/.gitkeep dist/api/data/.gitkeep
+          # Create submit-config.php from GitHub secret (base64-encoded)
+          if [ -n "${{ secrets.SUBMIT_CONFIG_B64 }}" ]; then
+            echo '${{ secrets.SUBMIT_CONFIG_B64 }}' | base64 -d > dist/submit-config.php
+          else
+            echo "::warning::SUBMIT_CONFIG_B64 secret not set - submit-config.php will be missing on production. Upload manually via cPanel File Manager."
+          fi
           # Copy existing tracking endpoints from public/api/tracking if they exist
           if [ -d public/api/tracking ]; then
             cp -r public/api/tracking/* dist/api/tracking/
@@ -90,3 +96,26 @@ jobs:
             echo "::error::BigFix production endpoint is not responding on any hostname."
             exit 1
           fi
+
+      - name: Verify tracking endpoint
+        run: |
+          for base in https://www.bigfixtech.com https://bigfixtech.com; do
+            code=$(curl -sSL -o /tmp/tracking-body.txt -w '%{http_code}' --max-time 30 -X POST \
+              -H 'Content-Type: application/json' \
+              -d '{"landing_page":"https://bigfixtech.com/"}' \
+              "$base/api/tracking/session/init.php" || true)
+            echo "$base/api/tracking/session/init.php -> HTTP ${code}"
+            if [ "$code" = "200" ]; then
+              echo "OK: Tracking session init endpoint is live."
+              cat /tmp/tracking-body.txt
+              break
+            fi
+            if [ "$code" = "500" ]; then
+              echo "::warning::Tracking endpoint returned HTTP 500 - check submit-config.php and database tables."
+              cat /tmp/tracking-body.txt | head -c 500
+            fi
+            if [ "$ok" = "0" ]; then
+              echo "::error::Tracking endpoint failed on all hostnames."
+              exit 1
+            fi
+          done
