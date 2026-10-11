@@ -348,6 +348,60 @@ try {
     ');
     $stmt->execute($data);
     $submissionId = (int)$pdo->lastInsertId();
+
+    // Link tracking session to submission
+    $sessionId = $input['session_id'] ?? $_COOKIE['tracking_sid'] ?? null;
+    if ($sessionId !== null && $sessionId !== '') {
+        // Validate UUID format
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sessionId)) {
+            // Capture tracking snapshot: session data + last 5 events
+            $snapshot = ['session_id' => $sessionId];
+
+            // Get session data
+            $sessionStmt = $pdo->prepare('
+                SELECT id, country_code, region, city, isp, org, company_name, is_b2b, b2b_confidence,
+                       landing_page, referrer, utm_source, utm_medium, utm_campaign,
+                       first_seen, last_seen, page_count, total_time
+                FROM tracking_sessions WHERE id = ?
+            ');
+            $sessionStmt->execute([$sessionId]);
+            $sessionData = $sessionStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($sessionData) {
+                $snapshot['session'] = $sessionData;
+
+                // Get last 5 events
+                $eventsStmt = $pdo->prepare('
+                    SELECT event_type, page_url, page_title, scroll_depth, time_on_page,
+                           element_selector, element_text, event_data, created_at
+                    FROM tracking_events
+                    WHERE session_id = ?
+                    ORDER BY created_at DESC
+                    LIMIT 5
+                ');
+                $eventsStmt->execute([$sessionId]);
+                $snapshot['recent_events'] = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // Update tracking_sessions with submission_id
+                $pdo->prepare('
+                    UPDATE tracking_sessions
+                    SET submission_id = ?, identified_email = ?, is_converted = TRUE,
+                        converted_at = NOW()
+                    WHERE id = ?
+                ')->execute([$submissionId, $data['email'], $sessionId]);
+            }
+
+            // Update submissions table with session info (if columns exist)
+            $stmt = $pdo->query("SHOW COLUMNS FROM submissions LIKE 'session_id'");
+            if ($stmt->fetch()) {
+                $updateStmt = $pdo->prepare('
+                    UPDATE submissions SET session_id = ?, visitor_id = ?, tracking_snapshot = ?
+                    WHERE id = ?
+                ');
+                $updateStmt->execute([$sessionId, $sessionId, json_encode($snapshot, JSON_UNESCAPED_SLASHES), $submissionId]);
+            }
+        }
+    }
 } catch (PDOException $e) {
     error_log('Submission DB error: ' . $e->getMessage());
     respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
@@ -375,6 +429,19 @@ $replyTo  = (string)$data['email'];
 $htmlBody  = '<h2>New BigFix Form Submission</h2>';
 $htmlBody .= '<p><strong>Source:</strong> ' . h($source) . '</p>';
 $htmlBody .= '<p><strong>Submission ID:</strong> ' . $submissionId . '</p><hr>';
+
+// Add B2B tracking badge if session is B2B
+$companyName = $snapshot['session']['company_name'] ?? '';
+$isB2B = $snapshot['session']['is_b2b'] ?? 0;
+if ($isB2B || !empty($companyName)) {
+    $badgeColor = $isB2B ? '#ef4444' : '#3b82f6';
+    $badgeText = $isB2B ? 'B2B Visitor' : 'Tracked Visitor';
+    $badgeTitle = $isB2B ? 'B2B Visitor Detected' : 'Tracked Visitor';
+    $htmlBody .= '<p><strong>Tracking:</strong> <span style="background:' . $badgeColor . ';color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;">' . $badgeText . '</span></p>';
+    if (!empty($companyName)) {
+        $htmlBody .= '<p><strong>Company:</strong> ' . h($companyName) . '</p>';
+    }
+}
 
 foreach (['name', 'email', 'phone', 'subject', 'company', 'product', 'operation', 'timeline', 'industry', 'users', 'date', 'time'] as $f) {
     if ($data[$f] !== null) {

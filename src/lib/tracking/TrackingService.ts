@@ -1,72 +1,52 @@
 /**
  * BigFix Tracking Service - Core tracking logic
  * Singleton service that handles all tracking operations
- * Can be used both in React components and vanilla JS
+ * @deprecated Use Tracker from '@/lib/tracker/Tracker' instead
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import type {
-  TrackEvent,
-  TrackEventData,
   EventType,
-  SessionInitResult,
-  EventsResult,
-  IdentifyData,
-  IdentifyResult,
-  ExitIntentData,
-  ExitIntentResult,
-  CleanupResult,
-  EnrichmentResult,
+  TrackEventData,
   UTMData,
   PageData,
   SessionInitResult,
   EventsResult,
+  IdentifyData,
   IdentifyResult,
   ExitIntentResult,
-  CleanupResult,
-  EnrichmentResult,
-  EnrichmentData,
-  GeoData,
   TrackingConfig,
+  TrackingState,
 } from './types';
 
-/**
- * Default configuration
- */
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: TrackingConfig = {
   apiBase: '/api/tracking',
   sessionCookieName: 'tracking_sid',
-  sessionCookieMaxAge: 31536000, // 1 year
-  batchInterval: 5000, // 5 seconds
+  sessionCookieMaxAge: 31536000,
+  batchInterval: 5000,
   maxBatchSize: 50,
   scrollThrottleMs: 500,
   scrollDepthThresholds: [25, 50, 75, 90, 100],
-  exitIntentThreshold: 20, // pixels from top for mouseleave
-  scrollUpThreshold: 100, // pixels scrolled up for mobile
+  exitIntentThreshold: 20,
+  scrollUpThreshold: 100,
   respectDNT: true,
   debug: false,
 };
 
-/**
- * TrackingService - Singleton class for all tracking operations
- * Handles session management, event batching, API communication
- */
+type TrackEvent = {
+  type: EventType;
+  url: string;
+  title: string;
+  referrer: string;
+  data: TrackEventData;
+  time_on_page: number;
+  scroll_depth: number;
+};
+
 export class TrackingService {
   private static instance: TrackingService;
-  private config: typeof DEFAULT_CONFIG;
-  private state: {
-    sessionId: string | null;
-    eventQueue: any[];
-    batchTimer: ReturnType<typeof setTimeout> | null;
-    scrollDepthReached: Set<number>;
-    lastScrollY: number;
-    lastScrollTime: number;
-    pageStartTime: number;
-    pageviewSent: boolean;
-    isInitialized: boolean;
-    consentGiven: boolean;
-    exitIntentTriggered: boolean;
-    exitIntentPopupShown: boolean;
-  };
+  private config: TrackingConfig;
+  private state: TrackingState;
 
   private constructor() {
     this.config = { ...DEFAULT_CONFIG };
@@ -76,7 +56,7 @@ export class TrackingService {
       batchTimer: null,
       scrollDepthReached: new Set(),
       lastScrollY: 0,
-      lastScrollTime: Date.now(),
+      lastScrollTime: 0,
       pageStartTime: Date.now(),
       pageviewSent: false,
       isInitialized: false,
@@ -93,58 +73,36 @@ export class TrackingService {
     return TrackingService.instance;
   }
 
-  /**
-   * Configure the tracking service
-   */
-  configure(config: Partial<typeof DEFAULT_CONFIG>): void {
+  configure(config: Partial<TrackingConfig>): void {
     this.config = { ...this.config, ...config };
   }
 
-  /**
-   * Get current configuration
-   */
-  getConfig(): typeof DEFAULT_CONFIG {
+  getConfig(): TrackingConfig {
     return { ...this.config };
   }
 
-  /**
-   * Get current state (for debugging)
-   */
-  getState() {
+  getState(): TrackingState {
     return { ...this.state };
   }
 
-  /**
-   * Generate UUID v4
-   */
   private generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    return uuidv4();
   }
 
-  /**
-   * Cookie helpers
-   */
   private getCookie(name: string): string | null {
     if (typeof document === 'undefined') return null;
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : null;
+    return match ? decodeURIComponent(match[2]) : null;
   }
 
   private setCookie(name: string, value: string, maxAge: number): void {
     if (typeof document === 'undefined') return;
-    document.cookie = `${name}=${value}; max-age=${maxAge}; path=/; secure; samesite=lax`;
+    document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAge}; path=/; secure; samesite=lax`;
   }
 
-  /**
-   * Get or create session ID
-   */
   getSessionId(): string {
     if (this.state.sessionId) return this.state.sessionId;
-    
+
     const cookieId = this.getCookie(this.config.sessionCookieName);
     if (cookieId) {
       this.state.sessionId = cookieId;
@@ -156,15 +114,7 @@ export class TrackingService {
     return this.state.sessionId;
   }
 
-  /**
-   * Get UTM parameters from URL
-   */
-  private getUTMParams(): URLSearchParams {
-    if (typeof window === 'undefined') return new URLSearchParams();
-    return new URLSearchParams(window.location.search);
-  }
-
-  private getUTMData() {
+  private getUTMData(): UTMData {
     if (typeof window === 'undefined') {
       return { utm_source: null, utm_medium: null, utm_campaign: null, utm_content: null, utm_term: null };
     }
@@ -178,7 +128,7 @@ export class TrackingService {
     };
   }
 
-  private getPageData() {
+  private getPageData(): PageData {
     if (typeof window === 'undefined') {
       return { url: '', title: '', referrer: '' };
     }
@@ -189,10 +139,15 @@ export class TrackingService {
     };
   }
 
-  /**
-   * Build event object
-   */
-  private buildEvent(type: string, data: Record<string, any> = {}): any {
+  private getScrollDepth(): number {
+    if (typeof window === 'undefined') return 0;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight <= 0) return 0;
+    return Math.min(100, Math.round((scrollTop / docHeight) * 100));
+  }
+
+  private buildEvent(type: EventType, data: Record<string, unknown> = {}): TrackEvent {
     const pageData = this.getPageData();
     const utmData = this.getUTMData();
     return {
@@ -206,248 +161,47 @@ export class TrackingService {
     };
   }
 
-  private getScrollDepth(): number {
-    if (typeof window === 'undefined') return 0;
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (docHeight <= 0) return 0;
-    return Math.min(100, Math.round((scrollTop / docHeight) * 100));
-  }
-
-  /**
-   * Event queue management
-   */
-  private enqueueEvent(event: any): void {
+  private enqueueEvent(event: TrackEvent): void {
     if (this.state.eventQueue.length >= this.config.maxBatchSize) {
-      this.log('Queue full, dropping oldest event');
       this.state.eventQueue.shift();
     }
     this.state.eventQueue.push(event);
   }
 
-  private sendBatch(): void {
-    if (this.state.eventQueue.length === 0) return;
+  private async sendBatch(): Promise<EventsResult> {
+    if (this.state.eventQueue.length === 0) return { success: true, accepted: 0, dropped: 0 };
 
     const events = this.state.eventQueue.splice(0, this.config.maxBatchSize);
     const sessionId = this.getSessionId();
 
     const payload = {
-      session_id: this.getSessionId(),
-      events,
+      session_id: sessionId,
+      events: events.map(e => ({
+        type: e.type,
+        url: e.url,
+        title: e.title,
+        referrer: e.referrer,
+        data: e.data,
+        time_on_page: e.time_on_page,
+        scroll_depth: e.scroll_depth,
+      })),
     };
-
-    const useBeacon = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-    const url = `${this.config.apiBase}/events.php`;
-
-    if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-      navigator.sendBeacon(`${this.config.apiBase}/events.php`, blob);
-    } else {
-      fetch(`${this.config.apiBase}/events.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      }).catch(err => this.log('Send error:', err));
-    }
-  }
-
-  private scheduleBatch(): void {
-    if (this.state.batchTimer) clearTimeout(this.state.batchTimer);
-    this.state.batchTimer = setTimeout(() => {
-      this.sendBatch();
-      this.scheduleBatch();
-    }, this.config.batchInterval);
-  }
-
-  /**
-   * Logging
-   */
-  private log(...args: any[]): void {
-    if (this.config.debug) console.log('[TrackingService]', ...args);
-  }
-
-  /**
-   * Session initialization
-   */
-  async initSession(): Promise<{ sessionId: string }> {
-    const utmParams = new URLSearchParams(this.getUTMData());
-    const url = `${this.config.apiBase}/session/init.php?${this.getUTMParams().toString()}`;
-
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.success && data.session_id) {
-        this.state.sessionId = data.session_id;
-        if (typeof document !== 'undefined') {
-          document.cookie = `${this.config.sessionCookieName}=${data.session_id}; max-age=${this.config.sessionCookieMaxAge}; path=/; secure; samesite=lax`;
-        }
-        this.log('Session initialized:', data.session_id);
-        return { sessionId: data.session_id };
-      }
-      throw new Error(data.error || 'Session init failed');
-    } catch (err) {
-      this.log('Session init error:', err);
-      // Fallback to local session ID
-      const sessionId = this.getSessionId();
-      return { sessionId };
-    }
-  }
-
-  /**
-   * Send batched events
-   */
-  async sendEvents(): Promise<{ accepted: number; dropped: number }> {
-    if (this.state.eventQueue.length === 0) return { accepted: 0, dropped: 0 };
-
-    const events = this.state.eventQueue.splice(0, this.config.maxBatchSize);
-    const sessionId = this.getSessionId();
 
     try {
       const response = await fetch(`${this.config.apiBase}/events.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: this.getSessionId(), events }),
+        credentials: 'include',
+        body: JSON.stringify(payload),
         keepalive: true,
       });
-
-      const data = await response.json();
-      return { accepted: data.accepted || 0, dropped: data.dropped || 0 };
-    } catch (err) {
-      this.log('Send events error:', err);
-      // Re-queue events on failure
-      this.state.eventQueue.unshift(...this.state.eventQueue.splice(0, this.config.maxBatchSize));
-      return { accepted: 0, dropped: this.config.maxBatchSize };
+      return await response.json() as EventsResult;
+    } catch {
+      this.state.eventQueue.unshift(...events);
+      return { success: false, accepted: 0, dropped: events.length };
     }
   }
 
-  /**
-   * Enqueue event
-   */
-  trackEvent(type: string, data: Record<string, any> = {}): void {
-    const event = this.buildEvent(type, data);
-    this.enqueueEvent(event);
-  }
-
-  /**
-   * Build event with page/UTM data
-   */
-  private buildEvent(type: string, data: Record<string, any> = {}): any {
-    if (typeof window === 'undefined') {
-      return { type, url: '', title: '', referrer: '', data: {}, time_on_page: 0, scroll_depth: 0 };
-    }
-
-    const pageData = this.getPageData();
-    const utmData = this.getUTMData();
-    return {
-      type,
-      url: pageData.url,
-      title: pageData.title,
-      referrer: pageData.referrer,
-      data: { ...utmData, ...data },
-      time_on_page: Math.round((Date.now() - this.state.pageStartTime) / 1000),
-      scroll_depth: this.getScrollDepth(),
-    };
-  }
-
-  /**
-   * Get scroll depth
-   */
-  private getScrollDepth(): number {
-    if (typeof window === 'undefined') return 0;
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (docHeight <= 0) return 0;
-    return Math.min(100, Math.round((scrollTop / docHeight) * 100));
-  }
-
-  /**
-   * Identify user (link session to submission/user)
-   */
-  async identify(data: {
-    submission_id?: number | null;
-    user_id?: number | null;
-    email: string;
-    phone?: string;
-  }): Promise<any> {
-    const sessionId = this.getSessionId();
-
-    try {
-      const response = await fetch(`${this.config.apiBase}/identify.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: this.getSessionId(),
-          submission_id: data.submission_id || null,
-          user_id: data.user_id || null,
-          email: data.email,
-          phone: data.phone || '',
-        }),
-      });
-
-      return await response.json();
-    } catch (err) {
-      this.log('Identify error:', err);
-      return { success: false, error: 'Identify failed' };
-    }
-  }
-
-  /**
-   * Capture exit intent
-   */
-  async captureExitIntent(email: string, phone: string, exitType: string): Promise<any> {
-    const sessionId = this.getSessionId();
-
-    try {
-      const response = await fetch(`${this.config.apiBase}/exit-intent.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: this.getSessionId(),
-          email,
-          phone,
-          exit_type: exitType,
-        }),
-      });
-
-      return await response.json();
-    } catch (err) {
-      this.log('Exit intent capture error:', err);
-      return { success: false, error: 'Exit intent capture failed' };
-    }
-  }
-
-/**
-   * Send batched events
-   */
-  private sendBatch(): void {
-    if (this.state.eventQueue.length === 0) return;
-
-    const events = this.state.eventQueue.splice(0, this.config.maxBatchSize);
-    const payload = {
-      session_id: this.getSessionId(),
-      events,
-    };
-
-    const useBeacon = typeof document !== 'undefined' && document.visibilityState === 'hidden';
-
-    if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      const blob = new Blob([JSON.stringify({ session_id: this.getSessionId(), events })], { type: 'application/json' });
-      navigator.sendBeacon(`${this.config.apiBase}/events.php`, blob);
-    } else {
-      fetch(`${this.config.apiBase}/events.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: this.getSessionId(), events }),
-        keepalive: true,
-      }).catch((err: Error) => this.log('Send error:', err));
-    }
-  }
-
-  /**
-   * Schedule batch sending
-   */
   private scheduleBatch(): void {
     if (this.state.batchTimer) clearTimeout(this.state.batchTimer);
     this.state.batchTimer = setTimeout(() => {
@@ -456,142 +210,165 @@ export class TrackingService {
     }, this.config.batchInterval);
   }
 
-  /**
-   * Get scroll depth
-   */
-  private getScrollDepth(): number {
-    if (typeof window === 'undefined') return 0;
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    if (docHeight <= 0) return 0;
-    return Math.min(100, Math.round((scrollTop / docHeight) * 100));
+  private log(...args: unknown[]): void {
+    if (this.config.debug) console.log('[TrackingService]', ...args);
   }
 
-  /**
-   * Initialize tracking
-   */
+  async initSession(): Promise<SessionInitResult> {
+    const utm = this.getUTMData();
+    const params = new URLSearchParams();
+    for (const [key, val] of Object.entries(utm)) {
+      if (val !== null) params.set(key, val);
+    }
+    const url = `${this.config.apiBase}/session/init.php?${params.toString()}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          landing_page: this.getPageData().url,
+          referrer: document.referrer,
+          user_agent: navigator.userAgent,
+        }),
+      });
+      const data = await response.json() as SessionInitResult;
+
+      if (data.success && data.session_id) {
+        this.state.sessionId = data.session_id;
+        this.setCookie(this.config.sessionCookieName, data.session_id, this.config.sessionCookieMaxAge);
+      }
+      return data;
+    } catch {
+      return { success: true, session_id: this.getSessionId() };
+    }
+  }
+
+  async sendEvents(): Promise<EventsResult> {
+    if (this.state.eventQueue.length === 0) return { success: true, accepted: 0, dropped: 0 };
+
+    const events = this.state.eventQueue.splice(0, this.config.maxBatchSize);
+
+    try {
+      const response = await fetch(`${this.config.apiBase}/events.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ session_id: this.getSessionId(), events: events.map(e => ({
+          type: e.type,
+          url: e.url,
+          title: e.title,
+          referrer: e.referrer,
+          data: e.data,
+          time_on_page: e.time_on_page,
+          scroll_depth: e.scroll_depth,
+        })) }),
+        keepalive: true,
+      });
+
+      return (await response.json()) as EventsResult;
+    } catch (err) {
+      this.log('Send events error:', err);
+      return { success: false, accepted: 0, dropped: this.config.maxBatchSize };
+    }
+  }
+
+  trackEvent(type: EventType, data: Record<string, unknown> = {}): void {
+    const event = this.buildEvent(type, data);
+    this.enqueueEvent(event);
+  }
+
   async initialize(): Promise<void> {
     if (this.state.isInitialized) return;
 
     if (typeof window === 'undefined') return;
 
-    // Check DNT
-    if (this.config.respectDNT && (navigator.doNotTrack === '1' || (window as any).doNotTrack === '1')) {
+    const doNotTrack = navigator.doNotTrack || (window as Window & { doNotTrack?: string }).doNotTrack;
+    if (this.config.respectDNT && doNotTrack === '1') {
       this.log('Do Not Track enabled, tracking disabled');
       return;
     }
 
-    // Initialize session
     await this.initSession();
 
-    // Start batch timer
     this.scheduleBatch();
-
-    // Set up event listeners
     this.setupEventListeners();
 
     this.state.isInitialized = true;
     this.log('Tracking service initialized');
   }
 
-  /**
-   * Setup event listeners
-   */
   private setupEventListeners(): void {
     if (typeof window === 'undefined') return;
 
-    // Page visibility change
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         this.sendBatch();
       }
     });
 
-    // Before unload
     window.addEventListener('beforeunload', () => {
       this.sendBatch();
     });
 
-    // Page load - initial pageview
     this.trackPageView();
 
-    // SPA navigation
-    if (window.history && window.history.pushState) {
-      const originalPushState = history.pushState.bind(history);
-      history.pushState = (...args) => {
-        originalPushState.apply(history, args);
-        this.handleRouteChange();
-      };
+    const originalPushState = history.pushState.bind(history);
+    history.pushState = (...args: unknown[]) => {
+      originalPushState.apply(history, args as [unknown, string, string]);
+      this.handleRouteChange();
+    };
 
-      const originalReplaceState = history.replaceState.bind(history);
-      history.replaceState = (...args) => {
-        originalReplaceState.apply(history, args);
-        this.handleRouteChange();
-      };
+    const originalReplaceState = history.replaceState.bind(history);
+    history.replaceState = (...args: unknown[]) => {
+      originalReplaceState.apply(history, args as [unknown, string, string]);
+      this.handleRouteChange();
+    };
 
-      window.addEventListener('popstate', () => this.handleRouteChange());
-    }
+    window.addEventListener('popstate', () => this.handleRouteChange());
   }
 
   private handleRouteChange(): void {
     this.state.pageviewSent = false;
     this.state.pageStartTime = Date.now();
-    this.state.scrollDepthReached.clear();
+    this.state.scrollDepthReached?.clear();
     this.trackPageView();
   }
 
-  /**
-   * Track page view
-   */
-  trackPageView(data?: Record<string, any>): void {
+  trackPageView(data: Record<string, unknown> = {}): void {
     if (this.state.pageviewSent) return;
     this.state.pageviewSent = true;
     this.state.pageStartTime = Date.now();
-    this.state.scrollDepthReached.clear();
+    this.state.scrollDepthReached?.clear();
     this.state.lastScrollY = window.scrollY || 0;
     this.state.lastScrollTime = Date.now();
 
     this.trackEvent('pageview', {
-      screen_width: window.screen.width,
-      screen_height: window.screen.height,
+      screen_width: screen.width,
+      screen_height: screen.height,
       viewport_width: window.innerWidth,
       viewport_height: window.innerHeight,
       ...data,
     });
   }
 
-  /**
-   * Track click event
-   */
-  trackClick(data: Record<string, any>): void {
+  trackClick(data: Record<string, unknown>): void {
     this.trackEvent('click', data);
   }
 
-  /**
-   * Track scroll event
-   */
-  trackScroll(data: Record<string, any>): void {
+  trackScroll(data: Record<string, unknown>): void {
     this.trackEvent('scroll', data);
   }
 
-  /**
-   * Generic event tracking
-   */
-  trackEvent(type: string, data: Record<string, any> = {}): void {
-    const event = this.buildEvent(type, data);
-    this.enqueueEvent(event);
-  }
-
-  /**
-   * Identify user (link session to submission/user)
-   */
-  async identify(data: { submission_id?: number | null; user_id?: number | null; email: string; phone?: string }): Promise<any> {
-    const sessionId = this.getSessionId();
+  async identify(data: IdentifyData): Promise<IdentifyResult> {
+    const sessionId = data.session_id || this.getSessionId();
 
     try {
       const response = await fetch(`${this.config.apiBase}/identify.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           session_id: sessionId,
           submission_id: data.submission_id || null,
@@ -601,50 +378,38 @@ export class TrackingService {
         }),
       });
 
-      return await response.json();
+      return (await response.json()) as IdentifyResult;
     } catch (err) {
       this.log('Identify error:', err);
-      return { success: false, error: 'Identify failed' };
+      return { success: false, error: 'Identify failed', rows_updated: 0 };
     }
   }
 
-  /**
-   * Trigger exit intent
-   */
   triggerExitIntent(type: string): void {
     if (this.state.exitIntentTriggered) return;
     this.state.exitIntentTriggered = true;
 
-    this.trackEvent('exit_intent', { exit_type: type });
+    this.trackEvent('exit_intent_triggered', { exit_type: type });
 
-    // Notify server
     fetch(`${this.config.apiBase}/exit-intent.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ session_id: this.getSessionId(), exit_type: type }),
       keepalive: true,
     }).catch(() => {});
-
-    // Trigger exit intent popup if available
-    if (typeof window !== 'undefined' && (window as any).ExitIntentPopup) {
-      (window as any).ExitIntentPopup.show();
-    }
   }
 
-  /**
-   * Manual exit intent trigger
-   */
-  captureExitIntent(email: string, phone: string, exitType: string): Promise<any> {
-    return this.captureExitIntent(email, '', exitType);
+  captureExitIntent(_email: string, _phone: string, exitType: string): Promise<ExitIntentResult> {
+    this.trackEvent('exit_intent' as EventType, { exit_type: exitType });
+    this.sendBatch();
+    return Promise.resolve({ success: true, rows_updated: 0 });
   }
 
-  /**
-   * Set consent
-   */
   setConsent(given: boolean): void {
     if (typeof document !== 'undefined') {
       localStorage.setItem('tracking_consent', given ? 'true' : 'false');
-      document.cookie = `tracking_consent=${given ? 'true' : 'false'}; max-age=31536000; path=/; secure; samesite=lax`;
+      this.setCookie('tracking_consent', given ? 'true' : 'false', this.config.sessionCookieMaxAge);
     }
   }
 
@@ -654,7 +419,7 @@ export class TrackingService {
     return consent === 'true' || consent === '1';
   }
 
-  getSessionId(): string | null {
+  getSessionIdOrNull(): string | null {
     return this.state.sessionId;
   }
 
@@ -662,14 +427,10 @@ export class TrackingService {
     return this.state.isInitialized;
   }
 
-  /**
-   * Check if tracking is allowed (DNT, consent)
-   */
   isTrackingAllowed(): boolean {
-    if (this.config.respectDNT && (navigator.doNotTrack === '1' || (window as any).doNotTrack === '1')) {
+    if (this.config.respectDNT && (navigator.doNotTrack === '1' || (window as Window & { doNotTrack?: string }).doNotTrack === '1')) {
       return false;
     }
-    // Check consent (implement based on your consent system)
     return true;
   }
 }

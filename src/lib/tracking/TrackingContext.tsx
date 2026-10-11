@@ -3,36 +3,30 @@
  * Provides tracking methods to all components
  */
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useCallback, ReactNode } from 'react';
 import TrackingService from './TrackingService';
-import type {
-  TrackEventData,
-  IdentifyData,
-} from './types';
+import type { EventType } from './types';
 
 interface TrackingContextValue {
-  trackEvent: (type: string, data?: Record<string, any>) => void;
-  trackPageView: (data?: Record<string, any>) => void;
-  trackClick: (data: Record<string, any>) => void;
-  trackScroll: (data: Record<string, any>) => void;
-  trackFormStart: (formName: string, data?: Record<string, any>) => void;
-  trackFormSubmit: (formName: string, data?: Record<string, any>) => void;
-  trackDownload: (fileName: string, data?: Record<string, any>) => void;
-  trackCTA: (ctaName: string, location: string, data?: Record<string, any>) => void;
-  identify: (data: { submission_id?: number; user_id?: number; email: string; phone?: string }) => Promise<any>;
+  trackEvent: (type: string, data?: Record<string, unknown>) => void;
+  trackPageView: (data?: Record<string, unknown>) => void;
+  trackClick: (data: Record<string, unknown>) => void;
+  trackScroll: (data: Record<string, unknown>) => void;
+  trackFormStart: (formName: string, data?: Record<string, unknown>) => void;
+  trackFormSubmit: (formName: string, data?: Record<string, unknown>) => void;
+  trackDownload: (fileName: string, data?: Record<string, unknown>) => void;
+  trackCTA: (ctaName: string, location: string, data?: Record<string, unknown>) => void;
+  identify: (data: { submission_id?: number; user_id?: number; email: string; phone?: string }) => Promise<Record<string, unknown>>;
   setConsent: (given: boolean) => void;
   getConsent: () => boolean;
   getSessionId: () => string | null;
   isReady: () => boolean;
   triggerExitIntent: (type: string) => void;
-  onExitIntentCaptured: (callback: (data: any) => void) => void;
+  onExitIntentCaptured: (callback: (data: Record<string, unknown>) => void) => () => void;
 }
 
 export const TrackingContext = createContext<TrackingContextValue | null>(null);
 
-/**
- * TrackingProvider - Wrap your app with this to enable tracking
- */
 interface TrackingProviderProps {
   children: ReactNode;
   config?: Partial<{
@@ -51,72 +45,71 @@ interface TrackingProviderProps {
   autoInit?: boolean;
 }
 
-export function TrackingProvider({ 
-  children, 
-  config = {}, 
-  autoInit = true 
+export function TrackingProvider({
+  children,
+  config = {},
+  autoInit = true,
 }: TrackingProviderProps) {
-  const [isReady, setIsReady] = useState(false);
   const serviceRef = useRef<TrackingService | null>(null);
-  const exitIntentCallbacksRef = useRef<((data: any) => void)[]>([]);
+  const exitIntentCallbacksRef = useRef<((data: Record<string, unknown>) => void)[]>([]);
 
-  // Initialize tracking service
   useEffect(() => {
     const service = TrackingService.getInstance();
     serviceRef.current = service;
-    
-    // Configure
+
     if (Object.keys(config).length > 0) {
       service.configure(config);
     }
 
     if (autoInit) {
-      service.initialize().then(() => {
-        setIsReady(true);
-      });
+      service.initialize();
     }
 
-    // Cleanup on unmount
     return () => {
       // Cleanup if needed
     };
   }, [config, autoInit]);
 
   const value: TrackingContextValue = {
-    trackEvent: useCallback((type: string, data?: Record<string, any>) => {
-      TrackingService.getInstance().trackEvent(type, data);
+    trackEvent: useCallback((type: string, data?: Record<string, unknown>) => {
+      TrackingService.getInstance().trackEvent(type as EventType, data);
     }, []),
 
-    trackPageView: useCallback((data?: Record<string, any>) => {
+    trackPageView: useCallback((data?: Record<string, unknown>) => {
       TrackingService.getInstance().trackPageView(data);
     }, []),
 
-    trackClick: useCallback((data: Record<string, any>) => {
+    trackClick: useCallback((data: Record<string, unknown>) => {
       TrackingService.getInstance().trackClick(data);
     }, []),
 
-    trackScroll: useCallback((data: Record<string, any>) => {
+    trackScroll: useCallback((data: Record<string, unknown>) => {
       TrackingService.getInstance().trackScroll(data);
     }, []),
 
-    trackFormStart: useCallback((formName: string, data?: Record<string, any>) => {
+    trackFormStart: useCallback((formName: string, data?: Record<string, unknown>) => {
       TrackingService.getInstance().trackEvent('form_start', { form_name: formName, ...data });
     }, []),
 
-    trackFormSubmit: useCallback((formName: string, data?: Record<string, any>) => {
+    trackFormSubmit: useCallback((formName: string, data?: Record<string, unknown>) => {
       TrackingService.getInstance().trackEvent('form_submit', { form_name: formName, ...data });
     }, []),
 
-    trackDownload: useCallback((fileName: string, data?: Record<string, any>) => {
+    trackDownload: useCallback((fileName: string, data?: Record<string, unknown>) => {
       TrackingService.getInstance().trackEvent('download', { file_name: fileName, ...data });
     }, []),
 
-    trackCTA: useCallback((ctaName: string, location: string, data?: Record<string, any>) => {
+    trackCTA: useCallback((ctaName: string, location: string, data?: Record<string, unknown>) => {
       TrackingService.getInstance().trackEvent('click', { cta_name: ctaName, location, ...data });
     }, []),
 
     identify: useCallback(async (data: { submission_id?: number; user_id?: number; email: string; phone?: string }) => {
-      return TrackingService.getInstance().identify(data);
+      const sessionId = TrackingService.getInstance().getSessionId();
+      const result = await TrackingService.getInstance().identify({
+        session_id: sessionId ?? '',
+        ...data,
+      });
+      return result as unknown as Record<string, unknown>;
     }, []),
 
     setConsent: useCallback((given: boolean) => {
@@ -139,7 +132,7 @@ export function TrackingProvider({
       TrackingService.getInstance().triggerExitIntent(type);
     }, []),
 
-    onExitIntentCaptured: useCallback((callback: (data: any) => void) => {
+    onExitIntentCaptured: useCallback((callback: (data: Record<string, unknown>) => void) => {
       exitIntentCallbacksRef.current.push(callback);
       return () => {
         const index = exitIntentCallbacksRef.current.indexOf(callback);
@@ -155,23 +148,18 @@ export function TrackingProvider({
   );
 }
 
-/**
- * TrackingProvider - Wrap your app with this to enable tracking
- */
-interface TrackingProviderProps {
-  children: ReactNode;
-  config?: Partial<{
-    apiBase: string;
-    sessionCookieName: string;
-    sessionCookieMaxAge: number;
-    batchInterval: number;
-    maxBatchSize: number;
-    scrollThrottleMs: number;
-    scrollDepthThresholds: number[];
-    exitIntentThreshold: number;
-    scrollUpThreshold: number;
-    respectDNT: boolean;
-    debug: boolean;
-  }>;
-  autoInit?: boolean;
-}
+export const useTracking = (): TrackingContextValue => {
+  const context = useContext(TrackingContext);
+  if (!context) {
+    throw new Error('useTracking must be used within a TrackingProvider');
+  }
+  return context;
+};
+
+export const useTrackingContext = (): TrackingContextValue => {
+  const context = useContext(TrackingContext);
+  if (!context) {
+    throw new Error('useTrackingContext must be used within a TrackingProvider');
+  }
+  return context;
+};

@@ -1,0 +1,3 @@
+# Tracking cache and data (runtime generated)
+cache/
+data/*.mmdb

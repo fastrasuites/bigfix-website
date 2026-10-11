@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 
 /**
  * useTracker - React hook for BigFix Tracker integration
@@ -6,7 +6,7 @@ import { useEffect, useCallback } from 'react';
  */
 
 interface TrackEventData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface IdentifyData {
@@ -20,7 +20,7 @@ declare global {
   interface Window {
     BigFixTracker: {
       init: () => void;
-      identify: (data: IdentifyData) => Promise<any>;
+      identify: (data: IdentifyData) => Promise<Record<string, unknown>>;
       trackEvent: (type: string, data?: TrackEventData) => void;
       trackPageView: () => void;
       trackClick: (data: TrackEventData) => void;
@@ -30,7 +30,7 @@ declare global {
       getSessionId: () => string | null;
       isReady: () => boolean;
       triggerExitIntent: (type: string) => void;
-      onExitIntentCaptured: (callback: (data: any) => void) => void;
+      onExitIntentCaptured: (callback: (data: Record<string, unknown>) => void) => void;
     };
   }
 }
@@ -131,27 +131,27 @@ export function useFormTracking() {
 export function useEventTracking() {
   const { trackEvent } = useTracker();
 
-  const trackPageView = useCallback((pageName: string, data?: Record<string, any>) => {
+   const trackPageView = useCallback((pageName: string, data?: Record<string, unknown>) => {
     trackEvent('pageview', { page_name: pageName, ...data });
   }, [trackEvent]);
 
-  const trackClick = useCallback((element: string, data?: Record<string, any>) => {
+  const trackClick = useCallback((element: string, data?: Record<string, unknown>) => {
     trackEvent('click', { element, ...data });
   }, [trackEvent]);
 
-  const trackFormStart = useCallback((formName: string, data?: Record<string, any>) => {
+  const trackFormStart = useCallback((formName: string, data?: Record<string, unknown>) => {
     trackEvent('form_start', { form_name: formName, ...data });
   }, [trackEvent]);
 
-  const trackFormSubmit = useCallback((formName: string, data?: Record<string, any>) => {
+  const trackFormSubmit = useCallback((formName: string, data?: Record<string, unknown>) => {
     trackEvent('form_submit', { form_name: formName, ...data });
   }, [trackEvent]);
 
-  const trackDownload = useCallback((fileName: string, data?: Record<string, any>) => {
+  const trackDownload = useCallback((fileName: string, data?: Record<string, unknown>) => {
     trackEvent('download', { file_name: fileName, ...data });
   }, [trackEvent]);
 
-  const trackCTA = useCallback((ctaName: string, location: string, data?: Record<string, any>) => {
+  const trackCTA = useCallback((ctaName: string, location: string, data?: Record<string, unknown>) => {
     trackEvent('click', { cta_name: ctaName, location, ...data });
   }, [trackEvent]);
 

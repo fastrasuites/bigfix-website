@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { TrackingProvider, useTracking } from "@/lib/tracking";
+import { tracker } from "./lib/tracker/Tracker";
+import useTracking from "./hooks/useTracking";
+import ExitIntentPopup from "./components/tracking/ExitIntentPopup";
 import Home from "./pages/Home";
 import AboutUs from "./pages/AboutUs";
 import Career from "./pages/Career";
@@ -10,40 +12,42 @@ import CloudStorage from "./pages/CloudStorage";
 import ITConsultancy from "./pages/ITConsultancy";
 import ContactUs from "./pages/ContactUs";
 import ScrollToTop from "./components/ScrollToTop";
-import ExitIntentPopup from "./components/ExitIntentPopup";
 
-// Track page views on route change
 function RouteTracker(): null {
-  const { trackPageView } = useTracking();
   const location = useLocation();
+  const tracker = useTracking();
 
   useEffect(() => {
-    trackPageView();
-  }, [location.pathname, trackPageView]);
+    if (tracker.isReady()) {
+      tracker.trackPageView(location.pathname);
+    }
+  }, [location.pathname, tracker]);
 
   return null;
 }
 
 function App(): JSX.Element {
+  useEffect(() => {
+    tracker.init();
+  }, []);
+
   return (
-    <TrackingProvider autoInit={true}>
-      <Router>
-        <RouteTracker />
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/career" element={<Career />} />
-          <Route path="/book-demo" element={<BookDemo />} />
-          <Route path="/software-development" element={<SoftwareDevelopment />} />
-          <Route path="/cloud-storage" element={<CloudStorage />} />
-          <Route path="/it-consultancy" element={<ITConsultancy />} />
-          <Route path="/contact" element={<ContactUs />} />
-        </Routes>
-        {/* Exit Intent Popup - only on pricing page */}
-        <ExitIntentPopup triggerPages={['/pricing']} />
-      </Router>
-    </TrackingProvider>
+    <Router>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/career" element={<Career />} />
+        <Route path="/book-demo" element={<BookDemo />} />
+        <Route path="/software-development" element={<SoftwareDevelopment />} />
+        <Route path="/cloud-storage" element={<CloudStorage />} />
+        <Route path="/it-consultancy" element={<ITConsultancy />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/pricing" element={<div className="min-h-screen">Pricing Page</div>} />
+      </Routes>
+      <RouteTracker />
+      <ExitIntentPopup triggerPage="/pricing" />
+    </Router>
   );
 }
 

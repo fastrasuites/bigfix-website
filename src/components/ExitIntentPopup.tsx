@@ -38,15 +38,11 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const exitIntentTriggered = useRef(false);
 
-  // Check if we should show popup
-  const shouldShow = useRef(false);
-
   // Check if current page matches trigger pages
-  const isTriggerPage = triggerPages.some(pattern => {
+  const isTriggerPageResult = triggerPages.some(pattern => {
     if (pattern.endsWith('*')) {
       return window.location.pathname.startsWith(pattern.slice(0, -1));
     }
@@ -70,14 +66,14 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
 
   // Initialize exit intent detection
   useEffect(() => {
-    if (!isTriggerPage()) return;
+    if (!isTriggerPageResult) return;
     if (checkCooldown()) return;
     if (checkCaptured()) return;
     if (exitIntentTriggered.current) return;
 
     // Delay before enabling exit intent
     timeoutRef.current = setTimeout(() => {
-      shouldShow.current = true;
+      // shouldShow.current = true; // Removed - isTriggerPageResult was already checked
       attachExitIntentListeners();
     }, delayMs);
 
@@ -85,7 +81,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       removeExitIntentListeners();
     };
-  }, [isTriggerPage, delayMs, cooldownDays]);
+  }, [isTriggerPageResult, delayMs, cooldownDays]);
 
   const attachExitIntentListeners = () => {
     if (exitIntentTriggered.current) return;

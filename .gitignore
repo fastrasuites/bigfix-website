@@ -26,3 +26,7 @@ dist-ssr
 # Sensitive configuration files
 **/submit-config.php
 *.env
+
+# Tracking cache and data (runtime generated)
+api/cache/
+api/data/*.mmdb

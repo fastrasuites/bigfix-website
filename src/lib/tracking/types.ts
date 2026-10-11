@@ -3,7 +3,7 @@
  * Centralized type definitions for the tracking system
  */
 
-export type EventType = 
+export type EventType =
   | 'pageview'
   | 'click'
   | 'scroll'
@@ -12,10 +12,16 @@ export type EventType =
   | 'form_abandon'
   | 'download'
   | 'exit_intent'
-  | 'exit_intent_submit';
+  | 'exit_intent_submit'
+  | 'exit_intent_triggered'
+  | 'view_pricing'
+  | 'view_demo'
+  | 'click_whatsapp'
+  | 'exit_intent_converted'
+  | 'gated_view';
 
 export interface TrackEventData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface PageViewData extends TrackEventData {
@@ -104,13 +110,6 @@ export interface IdentifyData {
   phone?: string;
 }
 
-export interface ExitIntentData {
-  session_id: string;
-  email: string;
-  phone?: string;
-  exit_type: 'mouseleave' | 'scroll_up' | 'back_button' | 'blur';
-}
-
 export interface EnrichmentData {
   country: string | null;
   country_code: string | null;
@@ -161,32 +160,6 @@ export interface ExitIntentResult {
   success: boolean;
   rows_updated: number;
   error?: string;
-}
-
-export interface CleanupResult {
-  success: boolean;
-  skipped?: boolean;
-  result?: string;
-  error?: string;
-}
-
-export interface EnrichmentResult {
-  success: boolean;
-  enriched?: boolean;
-  data?: EnrichmentData;
-  error?: string;
-  skipped?: boolean;
-  reason?: string;
-}
-
-export interface EnrichmentData {
-  country: string | null;
-  country_code: string | null;
-  region: string | null;
-  city: string | null;
-  isp: string | null;
-  org: string | null;
-  is_b2b: boolean;
 }
 
 export interface GeoData {
@@ -255,7 +228,7 @@ export interface TrackerConfig {
 
 export interface TrackerMethods {
   init: () => void;
-  identify: (data: IdentifyData) => Promise<any>;
+  identify: (data: IdentifyData) => Promise<Record<string, unknown>>;
   trackEvent: (type: EventType, data?: TrackEventData) => void;
   trackPageView: () => void;
   trackClick: (data: TrackEventData) => void;
@@ -265,7 +238,7 @@ export interface TrackerMethods {
   getSessionId: () => string | null;
   isReady: () => boolean;
   triggerExitIntent: (type: string) => void;
-  onExitIntentCaptured: (callback: (data: any) => void) => void;
+  onExitIntentCaptured: (callback: (data: Record<string, unknown>) => void) => void;
 }
 
 export interface TrackerContextValue {
@@ -277,15 +250,11 @@ export interface TrackerContextValue {
   trackFormSubmit: (formName: string, data?: TrackEventData) => void;
   trackDownload: (fileName: string, data?: TrackEventData) => void;
   trackCTA: (ctaName: string, location: string, data?: TrackEventData) => void;
-  identify: (data: IdentifyData) => Promise<any>;
+  identify: (data: IdentifyData) => Promise<Record<string, unknown>>;
   setConsent: (given: boolean) => void;
   getConsent: () => boolean;
   getSessionId: () => string | null;
   isReady: () => boolean;
   triggerExitIntent: (type: string) => void;
-  onExitIntentCaptured: (callback: (data: any) => void) => void;
-  trackEvent: (type: string, data?: TrackEventData) => void;
-  trackPageView: () => void;
-  trackClick: (data: TrackEventData) => void;
-  trackScroll: (data: TrackEventData) => void;
+  onExitIntentCaptured: (callback: (data: Record<string, unknown>) => void) => void;
 }

@@ -35,6 +35,7 @@ const RequestReviewForm = (): JSX.Element => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     company: "",
     product: "",
     industry: "",
@@ -61,7 +62,7 @@ const RequestReviewForm = (): JSX.Element => {
     if (result.success) {
       // Track submission for identity linking
       trackSubmission({
-        submission_id: result.id,
+        submission_id: result.id || 0,
         email: formData.email,
         phone: formData.phone || undefined,
       });
@@ -69,6 +70,7 @@ const RequestReviewForm = (): JSX.Element => {
       setFormData({
         name: "",
         email: "",
+        phone: "",
         company: "",
         product: "",
         industry: "",

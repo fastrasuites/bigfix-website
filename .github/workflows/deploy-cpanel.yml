@@ -29,6 +29,22 @@ jobs:
           cp public/submit.php dist/submit.php
           cp public/submit-config.example.php dist/submit-config.example.php
           cp -r public/phpmailer dist/phpmailer
+          # Copy tracking API files
+          mkdir -p dist/api/tracking/session dist/api/lib dist/api/migrations dist/api/data dist/api/cache
+          cp api/tracking/events.php dist/api/tracking/events.php
+          cp api/tracking/identify.php dist/api/tracking/identify.php
+          cp api/tracking/cleanup.php dist/api/tracking/cleanup.php
+          cp api/tracking/session/init.php dist/api/tracking/session/init.php
+          cp api/lib/IpEnricher.php dist/api/lib/IpEnricher.php
+          cp api/lib/DeviceDetector.php dist/api/lib/DeviceDetector.php
+          cp api/lib/TrackingService.php dist/api/lib/TrackingService.php
+          cp api/migrations/003_absolute_tracking.sql dist/api/migrations/003_absolute_tracking.sql
+          cp api/migrations/MigrationRunner.php dist/api/migrations/MigrationRunner.php
+          touch dist/api/cache/.gitkeep dist/api/data/.gitkeep
+          # Copy existing tracking endpoints from public/api/tracking if they exist
+          if [ -d public/api/tracking ]; then
+            cp -r public/api/tracking/* dist/api/tracking/
+          fi
  
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
