@@ -1,34 +1,43 @@
 <?php
-echo "PHP Version: " . PHP_VERSION . "\n";
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-// Test config
-$configFile = __DIR__ . '/../../../submit-config.php';
-echo "Config file path: $configFile\n";
-echo "Config exists: " . (is_file($configFile) ? 'YES' : 'NO') . "\n";
+$configFile = '/home/bigfixte/public_html/submit-config.php';
+$config = require $configFile;
 
-if (is_file($configFile)) {
-    $config = require $configFile;
-    echo "Config loaded: " . (isset($config['db_host']) ? 'YES' : 'NO') . "\n";
-    echo "DB Host: " . $config['db_host'] . "\n";
-    echo "DB Name: " . $config['db_name'] . "\n";
-}
+echo "Config loaded\n";
 
-// Test require_once
-echo "\n--- Testing require_once ---\n";
+// Test DB connection
 try {
-    require_once __DIR__ . '/../../lib/IpEnricher.php';
-    echo "IpEnricher loaded: YES\n";
+    $pdo = new PDO(
+        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+        $config['db_user'],
+        $config['db_pass'],
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+    echo "DB connected: YES\n";
+    
+    // Test if table exists
+    $stmt = $pdo->query("SHOW TABLES LIKE 'tracking_sessions'");
+    $tableExists = $stmt->fetchColumn();
+    echo "tracking_sessions table: " . ($tableExists ? 'EXISTS' : 'MISSING') . "\n";
+    
+    // Test INET6_ATON function (used in init.php)
+    $stmt = $pdo->query("SELECT INET6_ATON('127.0.0.1')");
+    $result = $stmt->fetchColumn();
+    echo "INET6_ATON works: " . ($result !== false ? 'YES' : 'NO') . "\n";
+    
 } catch (\Throwable $e) {
-    echo "IpEnricher error: " . $e->getMessage() . "\n";
+    echo "DB error: " . $e->getMessage() . "\n";
 }
 
-try {
-    require_once __DIR__ . '/../../lib/DeviceDetector.php';
-    echo "DeviceDetector loaded: YES\n";
-} catch (\Throwable $e) {
-    echo "DeviceDetector error: " . $e->getMessage() . "\n";
-}
+// Test MaxMind DB
+$mmdbPath = '/home/bigfixte/public_html/api/data/GeoLite2-City.mmdb';
+echo "MaxMind DB exists: " . (file_exists($mmdbPath) ? 'YES' : 'NO') . "\n";
 
-echo "\nPHP error check done.\n";
+// Test cache dir
+$cacheDir = '/home/bigfixte/public_html/api/cache/';
+echo "Cache dir exists: " . (is_dir($cacheDir) ? 'YES' : 'NO') . "\n";
+echo "Cache dir writable: " . (is_writable($cacheDir) ? 'YES' : 'NO') . "\n";
+
+echo "\nDone.\n";
