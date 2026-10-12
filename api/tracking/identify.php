@@ -17,12 +17,15 @@ ignore_user_abort(true);
 // Load config
 $configFile = __DIR__ . '/../../submit-config.php';
 if (!is_file($configFile)) {
+    $configFile = __DIR__ . '/../../../submit-config.php';
+}
+if (!is_file($configFile)) {
     // Fallback config for shared hosting - uses same DB as main site
     $config = [
         'db_host' => '127.0.0.1',
         'db_name' => 'bigfixte_submissions',
         'db_user' => 'bigfixte_sub_user',
-        'db_pass' => getenv('DB_PASS') ?: '',
+        'db_pass' => '}aM(lPXbzhSYd*A?',
         'allowed_origins' => [
             'https://bigfixtech.com',
             'https://www.bigfixtech.com',
