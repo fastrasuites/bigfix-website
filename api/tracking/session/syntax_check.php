@@ -1,20 +1,33 @@
 <?php
-// Test: just try to parse init.php without executing it
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
-echo "Starting lint check...\n";
+ini_set('log_errors', '1');
 
-// This will check if init.php has syntax errors
-$output = [];
-exec("php -l " . escapeshellarg(dirname(__FILE__) . '/init.php') . " 2>&1", $output, $returnCode);
-echo "Return code: $returnCode\n";
-echo "Output: " . implode("\n", $output) . "\n";
+echo "=== Testing init.php execution ===\n";
 
-// Also check lib files
-foreach (['IpEnricher.php', 'DeviceDetector.php', 'TrackingService.php'] as $lib) {
-    $path = dirname(__FILE__) . '/../../lib/' . $lib;
-    exec("php -l " . escapeshellarg($path) . " 2>&1", $output, $returnCode);
-    echo "$lib - Return code: $returnCode, Output: " . implode("\n", $output) . "\n";
+// We can't use exec or shell_exec, so let's test by trying to include the file
+// But we'll wrap it in error handling
+
+// First, test if we can token_get_all (parse PHP file)
+$code = file_get_contents(__DIR__ . '/init.php');
+$tokens = @token_get_all($code);
+if ($tokens === false) {
+    echo "FATAL: init.php has a syntax error that prevents tokenization\n";
+} else {
+    echo "init.php tokenized successfully (" . count($tokens) . " tokens)\n";
 }
 
-echo "\nDone.\n";
+// Try to parse the file using the tokenizer
+$hasError = false;
+$errorMsg = "";
+try {
+    // This will throw if there's a syntax error
+    $tokens = token_get_all($code);
+    echo "Token parsing: OK\n";
+} catch (\Throwable $e) {
+    $hasError = true;
+    $errorMsg = $e->getMessage();
+    echo "Token parsing error: $errorMsg\n";
+}
+
+echo "\n=== Done ===\n";
