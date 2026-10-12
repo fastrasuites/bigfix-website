@@ -1,10 +1,10 @@
 /**
- * ExitIntentPopup - Shows a popup when user tries to leave, after a delay, or when scrolling down on pricing page
+ * ExitIntentPopup - Shows a popup when user tries to leave, after a delay, or when scrolling down on key pages
  * 
  * Triggers:
  * - Mouse move to top of viewport (desktop)
  * - 45s timer after page load
- * - 70% scroll depth on /pricing route
+ * - 70% scroll depth on form pages (/book-demo, /contact)
  * - Back button via popstate
  * 
  * Cooldown: localStorage bf_popup_last_shown (24h)
@@ -29,11 +29,12 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POPUP_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 interface ExitIntentPopupProps {
-  triggerPage?: string;
+  /** Pages where scroll-based popup trigger is active (pages with forms) */
+  triggerPages?: string[];
 }
 
 export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
-  triggerPage = '/pricing',
+  triggerPages = ['/book-demo', '/contact', '/pricing'],
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -106,19 +107,26 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
   const handlePopState = useCallback(() => {
     if (isOpen || !checkCooldown() || isIdentified()) return;
 
-    if (currentPath.includes(triggerPage)) {
+    const shouldTrigger = triggerPages.some(page =>
+      currentPath.includes(page)
+    );
+    if (shouldTrigger) {
       setIsOpen(true);
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('bf_popup_last_shown', Date.now().toString());
       }
     }
-  }, [isOpen, checkCooldown, isIdentified, currentPath, triggerPage]);
+  }, [isOpen, checkCooldown, isIdentified, currentPath, triggerPages]);
 
-  // Scroll detection on pricing page (70% depth)
+  // Scroll detection on form pages (70% depth)
   const handleScroll = useCallback(() => {
     if (isOpen || !checkCooldown() || isIdentified()) return;
 
-    if (currentPath.includes(triggerPage)) {
+    const shouldCheckScroll = triggerPages.some(page =>
+      currentPath.includes(page)
+    );
+
+    if (shouldCheckScroll) {
       const scrollY = window.scrollY;
       const docHeight = document.documentElement.scrollHeight;
       const viewportHeight = window.innerHeight;
@@ -143,16 +151,15 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
         }, 500);
       }
     }
-  }, [isOpen, checkCooldown, isIdentified, currentPath, triggerPage]);
+  }, [isOpen, checkCooldown, isIdentified, currentPath, triggerPages]);
 
-  // Time-based trigger (45 seconds on any page)
+  // Time-based trigger (30 seconds on any page)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (
         !isOpen &&
         checkCooldown() &&
-        !isIdentified() &&
-        !currentPath.includes(triggerPage) // Don't trigger time-based on pricing page (scroll handles it)
+        !isIdentified()
       ) {
         tracker.trackEvent('exit_intent_triggered', {
           exit_type: 'timer',
@@ -163,10 +170,10 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
           localStorage.setItem('bf_popup_last_shown', Date.now().toString());
         }
       }
-    }, 45000); // 45 seconds
+    }, 30000); // 30 seconds
 
     return () => clearTimeout(timer);
-  }, [isOpen, checkCooldown, isIdentified, currentPath, triggerPage]);
+  }, [isOpen, checkCooldown, isIdentified]);
 
   // Setup global event listeners
   useEffect(() => {

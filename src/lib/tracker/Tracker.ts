@@ -376,7 +376,7 @@ export class Tracker {
       })),
     };
 
-    if (apiBase === '' || apiBase === '/api/tracking') {
+    if (apiBase === '') {
       // No API configured
       return { success: true, accepted: events.length, dropped: 0 };
     }
@@ -477,7 +477,7 @@ export class Tracker {
    */
   private async initSession(localSessionId: string): Promise<SessionInitResponse> {
     const apiBase = this.config.apiBase;
-    if (apiBase === '' || apiBase === '/api/tracking') {
+    if (apiBase === '') {
       return {
         success: true,
         session_id: localSessionId,
@@ -754,7 +754,7 @@ export class Tracker {
 
     // Send to backend identify endpoint
     const apiBase = this.config.apiBase;
-    if (apiBase === '' || apiBase === '/api/tracking') {
+    if (apiBase === '') {
       return { success: true, session_id: sessionId, email };
     }
 

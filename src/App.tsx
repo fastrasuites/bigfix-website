@@ -46,7 +46,7 @@ function App(): JSX.Element {
         <Route path="/pricing" element={<div className="min-h-screen">Pricing Page</div>} />
       </Routes>
       <RouteTracker />
-      <ExitIntentPopup triggerPage="/pricing" />
+      <ExitIntentPopup triggerPages={['/book-demo', '/contact', '/pricing']} />
     </Router>
   );
 }
