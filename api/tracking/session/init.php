@@ -22,13 +22,20 @@ ignore_user_abort(true);
 // Load dependencies
 $configFile = __DIR__ . '/../../../submit-config.php';
 if (!is_file($configFile)) {
-    header('Content-Type: application/json');
-    http_response_code(500);
-    echo json_encode(['error' => 'Server configuration error']);
-    exit;
+    // Fallback config for shared hosting - uses same DB as main site
+    $config = [
+        'db_host' => '127.0.0.1',
+        'db_name' => 'bigfixte_submissions',
+        'db_user' => 'bigfixte_sub_user',
+        'db_pass' => getenv('DB_PASS') ?: '',
+        'allowed_origins' => [
+            'https://bigfixtech.com',
+            'https://www.bigfixtech.com',
+        ],
+    ];
+} else {
+    $config = require $configFile;
 }
-
-$config = require $configFile;
 
 // Load library classes
 require_once __DIR__ . '/../../lib/IpEnricher.php';
