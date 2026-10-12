@@ -20,7 +20,9 @@ declare(strict_types=1);
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
-echo "DEBUG: init.php started - v2\n";
+use BigFix\Tracking\IpEnricher;
+use BigFix\Tracking\DeviceDetector;
+use BigFix\Tracking\TrackingService;
 
 ignore_user_abort(true);
 
@@ -47,20 +49,9 @@ if (!is_file($configFile)) {
 }
 
 // Load library classes with error handling
-try {
-    require_once __DIR__ . '/../../lib/IpEnricher.php';
-    require_once __DIR__ . '/../../lib/DeviceDetector.php';
-    require_once __DIR__ . '/../../lib/TrackingService.php';
-} catch (\Throwable $e) {
-    header('Content-Type: application/json');
-    http_response_code(500);
-    echo json_encode(['error' => 'Library load error: ' . $e->getMessage()]);
-    exit;
-}
-
-use BigFix\Tracking\IpEnricher;
-use BigFix\Tracking\DeviceDetector;
-use BigFix\Tracking\TrackingService;
+require_once __DIR__ . '/../../lib/IpEnricher.php';
+require_once __DIR__ . '/../../lib/DeviceDetector.php';
+require_once __DIR__ . '/../../lib/TrackingService.php';
 
 // CORS headers - restrict to allowed origins
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
