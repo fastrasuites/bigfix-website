@@ -44,10 +44,17 @@ if (!is_file($configFile)) {
     $config = require $configFile;
 }
 
-// Load library classes
-require_once __DIR__ . '/../../lib/IpEnricher.php';
-require_once __DIR__ . '/../../lib/DeviceDetector.php';
-require_once __DIR__ . '/../../lib/TrackingService.php';
+// Load library classes with error handling
+try {
+    require_once __DIR__ . '/../../lib/IpEnricher.php';
+    require_once __DIR__ . '/../../lib/DeviceDetector.php';
+    require_once __DIR__ . '/../../lib/TrackingService.php';
+} catch (\Throwable $e) {
+    header('Content-Type: application/json');
+    http_response_code(500);
+    echo json_encode(['error' => 'Library load error: ' . $e->getMessage()]);
+    exit;
+}
 
 use BigFix\Tracking\IpEnricher;
 use BigFix\Tracking\DeviceDetector;
