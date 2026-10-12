@@ -175,7 +175,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
     return () => clearTimeout(timer);
   }, [isOpen, checkCooldown, isIdentified]);
 
-  // Setup global event listeners
+   // Setup global event listeners
   useEffect(() => {
     if (!isOpen) {
       document.addEventListener('mousemove', handleMouseMove, { passive: true });
@@ -183,14 +183,38 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('scroll', handleScroll, { passive: true });
 
+    // Window/tab close attempt detection
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isOpen || !checkCooldown() || isIdentified()) return;
+
+      // Track the exit intent trigger
+      tracker.trackEvent('exit_intent_triggered', {
+        exit_type: 'beforeunload',
+        page: window.location.pathname,
+      });
+
+      // Set cooldown timestamp
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('bf_popup_last_shown', Date.now().toString());
+      }
+
+      // Note: Modern browsers require returnValue to show a native confirm dialog
+      // We cannot show our custom popup here due to browser security restrictions,
+      // but we track the attempt
+      e.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (mouseLeaveTimerRef.current) clearTimeout(mouseLeaveTimerRef.current);
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
     };
-  }, [handleMouseMove, handlePopState, handleScroll, isOpen]);
+  }, [handleMouseMove, handlePopState, handleScroll, isOpen, checkCooldown, isIdentified]);
 
   // Focus email input when popup opens
   useEffect(() => {
