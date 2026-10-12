@@ -1,33 +1,39 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
-ini_set('log_errors', '1');
 
-echo "=== Testing init.php execution ===\n";
+echo "=== Step 1: Load config ===\n";
+$configFile = __DIR__ . '/../../../submit-config.php';
+$config = require $configFile;
+echo "Config loaded OK\n";
 
-// We can't use exec or shell_exec, so let's test by trying to include the file
-// But we'll wrap it in error handling
+echo "\n=== Step 2: Load libs ===\n";
+require_once __DIR__ . '/../../lib/IpEnricher.php';
+require_once __DIR__ . '/../../lib/DeviceDetector.php';
+require_once __DIR__ . '/../../lib/TrackingService.php';
+echo "Libs loaded OK\n";
 
-// First, test if we can token_get_all (parse PHP file)
-$code = file_get_contents(__DIR__ . '/init.php');
-$tokens = @token_get_all($code);
-if ($tokens === false) {
-    echo "FATAL: init.php has a syntax error that prevents tokenization\n";
-} else {
-    echo "init.php tokenized successfully (" . count($tokens) . " tokens)\n";
-}
+echo "\n=== Step 3: Instantiate classes ===\n";
+$ipEnricher = new \BigFix\Tracking\IpEnricher();
+echo "IpEnricher OK\n";
+$deviceDetector = new \BigFix\Tracking\DeviceDetector();
+echo "DeviceDetector OK\n";
 
-// Try to parse the file using the tokenizer
-$hasError = false;
-$errorMsg = "";
-try {
-    // This will throw if there's a syntax error
-    $tokens = token_get_all($code);
-    echo "Token parsing: OK\n";
-} catch (\Throwable $e) {
-    $hasError = true;
-    $errorMsg = $e->getMessage();
-    echo "Token parsing error: $errorMsg\n";
-}
+echo "\n=== Step 4: Test enrich ===\n";
+$result = $ipEnricher->enrich('8.8.8.8');
+echo "Enrich result: " . json_encode($result) . "\n";
 
-echo "\n=== Done ===\n";
+echo "\n=== Step 5: Test detect ===\n";
+$result = $deviceDetector->detect('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+echo "Detect result: " . json_encode($result) . "\n";
+
+echo "\n=== Step 6: Test DB ===\n";
+$pdo = new PDO(
+    "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+    $config['db_user'],
+    $config['db_pass'],
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+);
+echo "DB connected OK\n";
+
+echo "\n=== All tests passed! ===\n";
