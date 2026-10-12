@@ -37,6 +37,7 @@ jobs:
           cp api/tracking/session/init.php dist/api/tracking/session/init.php
           cp api/tracking/session/test_info.php dist/api/tracking/session/test_info.php
           cp api/tracking/session/minimal_test.php dist/api/tracking/session/minimal_test.php
+          cp api/tracking/session/syntax_check.php dist/api/tracking/session/syntax_check.php
           cp api/lib/IpEnricher.php dist/api/lib/IpEnricher.php
           cp api/lib/DeviceDetector.php dist/api/lib/DeviceDetector.php
           cp api/lib/TrackingService.php dist/api/lib/TrackingService.php
