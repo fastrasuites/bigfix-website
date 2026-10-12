@@ -14,10 +14,13 @@ namespace BigFix\Tracking;
 /**
  * Result of IP enrichment
  */
-enum IpEnrichmentResult: string {
-  case SUCCESS = 'success';
-  case SKIPPED = 'skipped';
-  case FAILED = 'failed';
+/**
+ * IP enrichment result constants (compatible with PHP 7.4+)
+ */
+final class IpEnrichmentResult {
+    const SUCCESS = 'success';
+    const SKIPPED = 'skipped';
+    const FAILED = 'failed';
 }
 
 /**

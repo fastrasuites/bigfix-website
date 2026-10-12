@@ -14,11 +14,14 @@ namespace BigFix\Tracking;
 /**
  * Device detection result enum
  */
-enum DeviceDetectionResult: string {
-  case DESKTOP = 'desktop';
-  case MOBILE = 'mobile';
-  case TABLET = 'tablet';
-  case BOT = 'bot';
+/**
+ * Device detection result constants (compatible with PHP 7.4+)
+ */
+final class DeviceDetectionResult {
+    const DESKTOP = 'desktop';
+    const MOBILE = 'mobile';
+    const TABLET = 'tablet';
+    const BOT = 'bot';
 }
 
 /**
