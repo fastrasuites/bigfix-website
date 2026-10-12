@@ -86,6 +86,8 @@ if (!is_file($configFile)) {
 }
 
 // Load library classes with error handling
+echo "BEFORE REQUIRE";
+die('CHECKPOINT 0: Before require');
 require_once __DIR__ . '/../../lib/IpEnricher.php';
 die('CHECKPOINT 1: After IpEnricher');
 require_once __DIR__ . '/../../lib/DeviceDetector.php';
