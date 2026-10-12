@@ -17,12 +17,49 @@
  */
 declare(strict_types=1);
 
+// Force output flushing and disable output buffering
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+if (function_exists('apache_note')) {
+    @apache_note('PHP_DEBUGLIB', 'on');
+}
+
 ini_set('display_errors', '1');
+ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
 use BigFix\Tracking\IpEnricher;
 use BigFix\Tracking\DeviceDetector;
 use BigFix\Tracking\TrackingService;
+
+// Register error handler
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Error [' . $errno . ']',
+        'message' => $errstr,
+        'file' => $errfile,
+        'line' => $errline,
+    ]);
+    exit;
+});
+
+// Register shutdown handler for fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_PARSE])) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'error' => 'Fatal error',
+            'message' => $error['message'],
+            'file' => $error['file'],
+            'line' => $error['line'],
+        ]);
+    }
+});
 
 ignore_user_abort(true);
 
