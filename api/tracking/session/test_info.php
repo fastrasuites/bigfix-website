@@ -5,39 +5,57 @@ ini_set('display_errors', '1');
 $configFile = '/home/bigfixte/public_html/submit-config.php';
 $config = require $configFile;
 
-echo "Config loaded\n";
+echo "Step 1: Config loaded\n";
 
-// Test DB connection
-try {
-    $pdo = new PDO(
-        "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
-        $config['db_user'],
-        $config['db_pass'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
-    echo "DB connected: YES\n";
-    
-    // Test if table exists
-    $stmt = $pdo->query("SHOW TABLES LIKE 'tracking_sessions'");
-    $tableExists = $stmt->fetchColumn();
-    echo "tracking_sessions table: " . ($tableExists ? 'EXISTS' : 'MISSING') . "\n";
-    
-    // Test INET6_ATON function (used in init.php)
-    $stmt = $pdo->query("SELECT INET6_ATON('127.0.0.1')");
-    $result = $stmt->fetchColumn();
-    echo "INET6_ATON works: " . ($result !== false ? 'YES' : 'NO') . "\n";
-    
-} catch (\Throwable $e) {
-    echo "DB error: " . $e->getMessage() . "\n";
+require_once '/home/bigfixte/public_html/api/lib/IpEnricher.php';
+require_once '/home/bigfixte/public_html/api/lib/DeviceDetector.php';
+require_once '/home/bigfixte/public_html/api/lib/TrackingService.php';
+
+echo "Step 2: Libs loaded\n";
+
+use BigFix\Tracking\IpEnricher;
+use BigFix\Tracking\DeviceDetector;
+
+echo "Step 3: Classes imported\n";
+
+// Test IP enricher
+$ipEnricher = new IpEnricher();
+echo "Step 4: IpEnricher instantiated\n";
+
+$ipData = $ipEnricher->enrich('8.8.8.8');
+echo "Step 5: IP enriched - " . json_encode($ipData) . "\n";
+
+// Test Device detector
+$deviceDetector = new DeviceDetector();
+echo "Step 6: DeviceDetector instantiated\n";
+
+$deviceData = $deviceDetector->detect('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+echo "Step 7: Device detected - " . json_encode($deviceData) . "\n";
+
+// Test UUID generation
+function generateUUIDv4(): string {
+    $data = random_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40);
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80);
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 }
 
-// Test MaxMind DB
-$mmdbPath = '/home/bigfixte/public_html/api/data/GeoLite2-City.mmdb';
-echo "MaxMind DB exists: " . (file_exists($mmdbPath) ? 'YES' : 'NO') . "\n";
+$sessionId = generateUUIDv4();
+echo "Step 8: UUID generated - $sessionId\n";
 
-// Test cache dir
-$cacheDir = '/home/bigfixte/public_html/api/cache/';
-echo "Cache dir exists: " . (is_dir($cacheDir) ? 'YES' : 'NO') . "\n";
-echo "Cache dir writable: " . (is_writable($cacheDir) ? 'YES' : 'NO') . "\n";
+// Test DB insert
+$pdo = new PDO(
+    "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+    $config['db_user'],
+    $config['db_pass'],
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+);
 
-echo "\nDone.\n";
+echo "Step 9: DB connected\n";
+
+// Test simple insert
+$stmt = $pdo->prepare("INSERT INTO tracking_sessions (id, ip_address, user_agent, device_type) VALUES (?, INET6_ATON(?), ?, ?)");
+$stmt->execute([$sessionId, '8.8.8.8', 'test', 'desktop']);
+echo "Step 10: Insert successful\n";
+
+echo "\nAll tests passed!\n";
