@@ -220,7 +220,7 @@ export class TrackingService {
     for (const [key, val] of Object.entries(utm)) {
       if (val !== null) params.set(key, val);
     }
-    const url = `${this.config.apiBase}/session/init.php?${params.toString()}`;
+    const url = `${this.config.apiBase}/session/session.php?${params.toString()}`;
 
     try {
       const response = await fetch(url, {

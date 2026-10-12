@@ -498,7 +498,7 @@ export class Tracker {
     }
 
     try {
-      const response = await fetch(`${apiBase}/session/init.php?${params.toString()}`, {
+        const response = await fetch(`${apiBase}/session/session.php?${params.toString()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

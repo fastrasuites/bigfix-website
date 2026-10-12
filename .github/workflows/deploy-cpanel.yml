@@ -35,9 +35,7 @@ jobs:
           cp api/tracking/identify.php dist/api/tracking/identify.php
           cp api/tracking/cleanup.php dist/api/tracking/cleanup.php
           cp api/tracking/session/init.php dist/api/tracking/session/init.php
-          cp api/tracking/session/start.php dist/api/tracking/session/start.php
-          cp api/tracking/session/minimal_test.php dist/api/tracking/session/minimal_test.php
-          cp api/tracking/session/syntax_check.php dist/api/tracking/session/syntax_check.php
+          cp api/tracking/session/session.php dist/api/tracking/session/session.php
           cp api/lib/IpEnricher.php dist/api/lib/IpEnricher.php
           cp api/lib/DeviceDetector.php dist/api/lib/DeviceDetector.php
           cp api/lib/TrackingService.php dist/api/lib/TrackingService.php
@@ -106,8 +104,8 @@ jobs:
             code=$(curl -sSL -o /tmp/tracking-body.txt -w '%{http_code}' --max-time 30 -X POST \
               -H 'Content-Type: application/json' \
               -d '{"landing_page":"https://bigfixtech.com/"}' \
-              "$base/api/tracking/session/init.php" || true)
-            echo "$base/api/tracking/session/init.php -> HTTP ${code}"
+              "$base/api/tracking/session/session.php" || true)
+            echo "$base/api/tracking/session/session.php -> HTTP ${code}"
             if [ "$code" = "200" ]; then
               echo "OK: Tracking session init endpoint is live."
               cat /tmp/tracking-body.txt
