@@ -87,11 +87,9 @@ if (!is_file($configFile)) {
 
 // Load library classes with error handling
 require_once __DIR__ . '/../../lib/IpEnricher.php';
-echo "<!-- LOADED IPENRICHER -->";
+die('CHECKPOINT 1: After IpEnricher');
 require_once __DIR__ . '/../../lib/DeviceDetector.php';
-echo "<!-- LOADED DEVICEDETECTOR -->";
 require_once __DIR__ . '/../../lib/TrackingService.php';
-echo "<!-- LOADED TRACKINGSERVICE -->";
 
 // CORS headers - restrict to allowed origins
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
