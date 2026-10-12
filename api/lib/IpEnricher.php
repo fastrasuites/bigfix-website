@@ -34,7 +34,7 @@ class IpEnricher {
   private string $dbPath;
   private ?\MaxMind\Db\Reader $reader = null;
   private array $ipCache;
-  private int $lastRequestTime = 0;
+  private float $lastRequestTime = 0;
   private const CACHE_TTL = 86400; // 24 hours
   private const REQUESTS_PER_MIN = 40;
   private const MINIGap = 1.5; // seconds between requests to stay under 40/min
@@ -101,7 +101,7 @@ class IpEnricher {
    */
   public function enrich(string $ip): array {
     // Validate IP
-    if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_V4 | FILTER_FLAG_NO_PRIV_V6)) {
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
       return ['', '', '', 0.0, 0.0, '', '', '', false, 0];
     }
 
