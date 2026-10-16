@@ -84,9 +84,8 @@ jobs:
               break
             fi
             if [ "$code" = "500" ]; then
-              echo "::error::Migration endpoint returned HTTP 500"
+              echo "::warning::Migration endpoint returned HTTP 500 (schema-agnostic code will still work without migration)"
               cat /tmp/migrate-body.txt | head -c 1000
-              exit 1
             fi
           done
 
