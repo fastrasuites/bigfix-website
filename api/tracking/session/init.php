@@ -81,11 +81,18 @@ try {
         random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
     );
 
-    $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ??
-          explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')[0] ??
-          $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    $ip = trim($ip);
-    $ipBinary = inet_pton($ip) ?: false;
+    // Get client IP - check Cloudflare, then X-Forwarded-For, then REMOTE_ADDR
+    $realIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '';
+    if ($realIp === '') {
+        $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        if ($xff !== '') {
+            $realIp = trim(explode(',', $xff)[0]);
+        } else {
+            $realIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        }
+    }
+    $realIp = trim($realIp);
+    $ipBinary = inet_pton($realIp) ?: inet_pton('127.0.0.1');
 
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
 

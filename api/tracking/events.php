@@ -58,9 +58,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Rate limiting: simple in-file per-IP counter (for shared hosting)
-$realIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ??
-          explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')[0] ??
-          $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+$realIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '';
+if ($realIp === '') {
+    $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($xff !== '') {
+        $realIp = trim(explode(',', $xff)[0]);
+    } else {
+        $realIp = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    }
+}
 $realIp = trim($realIp);
 
 if (!checkRateLimit($realIp)) {
@@ -134,9 +140,15 @@ try {
     }
 
     // Get client IP for potential logging
-    $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ??
-                explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')[0] ??
-                $_SERVER['REMOTE_ADDR'] ?? '';
+    $clientIp = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '';
+    if ($clientIp === '') {
+        $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        if ($xff !== '') {
+            $clientIp = trim(explode(',', $xff)[0]);
+        } else {
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+        }
+    }
     $clientIp = trim($clientIp);
 
     // Start transaction for batch insert
