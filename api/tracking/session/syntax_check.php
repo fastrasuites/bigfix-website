@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 echo "1. Script started\n";
+echo "PHP version: " . PHP_VERSION . "\n";
 
 // Simulate POST handling
 $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -39,6 +40,20 @@ echo "6. Classes instantiated\n";
 // Test the enrich call with localhost
 $ipData = $ipEnricher->enrich('127.0.0.1');
 echo "7. IP enrich done\n";
+
+// Test UUID generation
+echo "7a. random_bytes exists: " . (function_exists('random_bytes') ? 'yes' : 'no') . "\n";
+echo "7b. random_int exists: " . (function_exists('random_int') ? 'yes' : 'no') . "\n";
+echo "7c. mt_rand exists: " . (function_exists('mt_rand') ? 'yes' : 'no') . "\n";
+if (function_exists('random_bytes')) {
+    $bytes = random_bytes(16);
+    $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+    $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+    $uuid = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
+    echo "7d. UUID generated: $uuid (len=" . strlen($uuid) . ")\n";
+} else {
+    echo "7d. random_bytes NOT available\n";
+}
 
 // Now test the actual POST body parsing (simulating browser request)
 $raw = json_encode(['landing_page' => 'https://bigfixtech.com/', 'user_agent' => 'Mozilla/5.0']);
