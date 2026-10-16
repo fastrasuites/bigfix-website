@@ -73,23 +73,22 @@ try {
     $referrer = is_array($body) ? ($body['referrer'] ?? '') : '';
 
     // Generate UUID v4 (PHP 5.x compatible fallback)
-    if (function_exists('random_int')) {
-        $sessionId = sprintf(
-            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            random_int(0, 0xffff), random_int(0, 0xffff),
-            random_int(0, 0x0fff) | 0x4000,
-            random_int(0, 0x3fff) | 0x8000,
-            random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff)
-        );
-    } else {
-        // Fallback for PHP < 7.0 or restricted environments
+    if (function_exists('random_bytes')) {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+        $sessionId = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
+    } elseif (function_exists('mt_rand')) {
         $sessionId = sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
             mt_rand(0, 0xffff), mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
+    } else {
+        $sessionId = uniqid('', true);
     }
 
     // Get client IP - check Cloudflare, then X-Forwarded-For, then REMOTE_ADDR
@@ -104,7 +103,7 @@ try {
     }
     $realIp = trim($realIp);
     if (function_exists('inet_pton')) {
-        $ipBinary = inet_pton($realIp) ?: inet_pton('127.0.0.1');
+        $ipBinary = @inet_pton($realIp) ?: @inet_pton('127.0.0.1') ?: $realIp;
     } else {
         $ipBinary = $realIp;
     }
