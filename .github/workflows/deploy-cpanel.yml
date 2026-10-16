@@ -44,9 +44,18 @@ jobs:
           cp api/lib/DeviceDetector.php dist/api/lib/DeviceDetector.php
           cp api/lib/TrackingService.php dist/api/lib/TrackingService.php
           cp api/migrations/003_absolute_tracking.sql dist/api/migrations/003_absolute_tracking.sql
+          cp api/migrations/004_sync_tracking_schema.sql dist/api/migrations/004_sync_tracking_schema.sql
           cp api/migrations/MigrationRunner.php dist/api/migrations/MigrationRunner.php
+          cp api/migrate.php dist/api/migrate.php
           touch dist/api/cache/.gitkeep dist/api/data/.gitkeep
           # Create submit-config.php from GitHub secret (base64-encoded)
+          if [ -n "${{ secrets.SUBMIT_CONFIG_B64 }}" ]; then
+            echo '${{ secrets.SUBMIT_CONFIG_B64 }}' | base64 -d > dist/submit-config.php
+          else
+            echo "::warning::SUBMIT_CONFIG_B64 secret not set - submit-config.php will be missing on production. Upload it manually via cPanel File Manager."
+          fi
+          # Copy migration endpoint and schema sync script
+          cp api/migrate.php dist/api/migrate.php
  
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
@@ -62,7 +71,27 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
- 
+            dist/submit-config.example.php
+
+      - name: Run database schema migration
+        run: |
+          for base in https://www.bigfixtech.com https://bigfixtech.com; do
+            code=$(curl -sSL -o /tmp/migrate-body.txt -w '%{http_code}' --max-time 30 -X POST \
+              -H 'Content-Type: application/json' \
+              "$base/api/migrate.php" || true)
+            echo "$base/api/migrate.php -> HTTP ${code}"
+            if [ "$code" = "200" ]; then
+              echo "OK: Schema migration completed."
+              cat /tmp/migrate-body.txt
+              break
+            fi
+            if [ "$code" = "500" ]; then
+              echo "::error::Migration endpoint returned HTTP 500"
+              cat /tmp/migrate-body.txt | head -c 1000
+              exit 1
+            fi
+          done
+
       - name: Verify production endpoint
         run: |
           ok=0
@@ -95,23 +124,26 @@ jobs:
 
       - name: Verify tracking endpoint
         run: |
+          ok=0
           for base in https://www.bigfixtech.com https://bigfixtech.com; do
             code=$(curl -sSL -o /tmp/tracking-body.txt -w '%{http_code}' --max-time 30 -X POST \
               -H 'Content-Type: application/json' \
-              -d '{"landing_page":"https://bigfixtech.com/"}' \
+              -H "Origin: $base" \
+              -d '{"landing_page":"https://bigfixtech.com/","referrer":"","user_agent":"Deploy-Verify"}' \
               "$base/api/tracking/session/init.php" || true)
             echo "$base/api/tracking/session/init.php -> HTTP ${code}"
             if [ "$code" = "200" ]; then
               echo "OK: Tracking session init endpoint is live."
               cat /tmp/tracking-body.txt
+              ok=1
               break
             fi
             if [ "$code" = "500" ]; then
               echo "::warning::Tracking endpoint returned HTTP 500 - check submit-config.php and database tables."
               cat /tmp/tracking-body.txt | head -c 500
             fi
-            if [ "$ok" = "0" ]; then
-              echo "::error::Tracking endpoint failed on all hostnames."
-              exit 1
-            fi
           done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::Tracking endpoint failed on all hostnames."
+            exit 1
+          fi

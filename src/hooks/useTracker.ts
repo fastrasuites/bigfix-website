@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
-
-/**
- * useTracker - React hook for BigFix Tracker integration
- * Provides type-safe access to tracker methods
- */
+import { tracker } from '@/lib/tracker/Tracker';
 
 interface TrackEventData {
   [key: string]: unknown;
@@ -16,64 +12,57 @@ interface IdentifyData {
   phone?: string;
 }
 
-declare global {
-  interface Window {
-    BigFixTracker: {
-      init: () => void;
-      identify: (data: IdentifyData) => Promise<Record<string, unknown>>;
-      trackEvent: (type: string, data?: TrackEventData) => void;
-      trackPageView: () => void;
-      trackClick: (data: TrackEventData) => void;
-      trackScroll: (data: TrackEventData) => void;
-      setConsent: (given: boolean) => void;
-      getConsent: () => boolean;
-      getSessionId: () => string | null;
-      isReady: () => boolean;
-      triggerExitIntent: (type: string) => void;
-      onExitIntentCaptured: (callback: (data: Record<string, unknown>) => void) => void;
-    };
-  }
-}
-
 export function useTracker() {
   const trackEvent = useCallback((type: string, data?: TrackEventData) => {
-    window.BigFixTracker?.trackEvent?.(type, data);
+    tracker.trackEvent(type as never, data as Record<string, unknown>);
   }, []);
 
   const trackPageView = useCallback(() => {
-    window.BigFixTracker?.trackPageView?.();
+    tracker.trackPageView();
   }, []);
 
   const trackClick = useCallback((data: TrackEventData) => {
-    window.BigFixTracker?.trackClick?.(data);
+    tracker.trackClick(data as Record<string, unknown>);
   }, []);
 
   const trackScroll = useCallback((data: TrackEventData) => {
-    window.BigFixTracker?.trackScroll?.(data);
+    tracker.trackScroll(data as Record<string, unknown>);
   }, []);
 
   const identify = useCallback(async (data: IdentifyData) => {
-    return window.BigFixTracker?.identify?.(data);
+    const result = await tracker.identify(
+      data.email,
+      data.phone,
+      'form_submit'
+    );
+    return result as unknown as Record<string, unknown>;
   }, []);
 
   const setConsent = useCallback((given: boolean) => {
-    window.BigFixTracker?.setConsent?.(given);
+    if (!given) {
+      tracker.optOut();
+    }
   }, []);
 
   const getConsent = useCallback(() => {
-    return window.BigFixTracker?.getConsent?.() ?? false;
+    return !tracker.isOptedOut();
   }, []);
 
   const getSessionId = useCallback(() => {
-    return window.BigFixTracker?.getSessionId?.() ?? null;
+    return tracker.getSessionId();
   }, []);
 
   const isReady = useCallback(() => {
-    return window.BigFixTracker?.isReady?.() ?? false;
+    return tracker.isReady();
   }, []);
 
   const triggerExitIntent = useCallback((type: string) => {
-    window.BigFixTracker?.triggerExitIntent?.(type);
+    tracker.triggerExitIntent(type as never);
+  }, []);
+
+  const onExitIntentCaptured = useCallback(() => {
+    // No-op: exit intent capture is handled via the tracker singleton
+    return () => {};
   }, []);
 
   return {
@@ -87,12 +76,10 @@ export function useTracker() {
     getSessionId,
     isReady,
     triggerExitIntent,
+    onExitIntentCaptured,
   };
 }
 
-/**
- * Hook for form submission with automatic tracking identity linking
- */
 export function useFormTracking() {
   const { identify, getSessionId } = useTracker();
 
@@ -125,13 +112,10 @@ export function useFormTracking() {
   return { trackSubmission };
 }
 
-/**
- * Hook for manual event tracking with common event types
- */
 export function useEventTracking() {
   const { trackEvent } = useTracker();
 
-   const trackPageView = useCallback((pageName: string, data?: Record<string, unknown>) => {
+  const trackPageView = useCallback((pageName: string, data?: Record<string, unknown>) => {
     trackEvent('pageview', { page_name: pageName, ...data });
   }, [trackEvent]);
 

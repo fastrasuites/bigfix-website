@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { tracker } from '@/lib/tracker/Tracker';
 
 /**
  * ExitIntentPopup - Captures email/phone before user leaves pricing page
@@ -139,8 +140,8 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
     document.body.style.overflow = 'hidden';
 
     // Notify server
-    if (window.BigFixTracker) {
-      window.BigFixTracker.triggerExitIntent(type);
+    if (tracker) {
+      tracker.triggerExitIntent(type as never);
     }
   };
 
@@ -165,9 +166,9 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
     }
 
     try {
-      const sessionId = window.BigFixTracker?.getSessionId?.() || 
-        document.cookie.match(/tracking_sid=([^;]+)/)?.[1] || 
-        crypto.randomUUID();
+       const sessionId = tracker?.getSessionId?.() || 
+         document.cookie.match(/tracking_sid=([^;]+)/)?.[1] || 
+         crypto.randomUUID();
 
       const response = await fetch('/api/tracking/exit-intent.php', {
         method: 'POST',
@@ -188,8 +189,8 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
         onCapture?.(email, phone);
 
         // Notify parent tracker
-        if (window.BigFixTracker) {
-          window.BigFixTracker.trackEvent('exit_intent_submit', { email, phone });
+        if (tracker) {
+          tracker.trackEvent('exit_intent_submit' as never, { email, phone });
         }
 
         // Auto-close after 2 seconds
