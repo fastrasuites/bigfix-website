@@ -12,6 +12,7 @@ export interface TextFieldProps {
   type?: "text" | "email";
   value?: string;
   onChange?: (value: string) => void;
+  error?: string;
 }
 
 export interface SelectFieldProps {
@@ -21,4 +22,5 @@ export interface SelectFieldProps {
   options: SelectOption[];
   value?: string;
   onChange?: (value: string) => void;
+  error?: string;
 }

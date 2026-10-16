@@ -32,7 +32,7 @@ const TIMELINE_OPTIONS: SelectOption[] = [
  * Right column of the review section: the request form card.
  */
 const RequestReviewForm = (): JSX.Element => {
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
@@ -44,16 +44,36 @@ const RequestReviewForm = (): JSX.Element => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { trackSubmission } = useFormTracking();
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Valid email is required";
+    if (!formData.company.trim()) newErrors.company = "Company name is required";
+    if (!formData.product) newErrors.product = "Please select a product";
+    if (!formData.industry) newErrors.industry = "Please select an industry";
+    if (!formData.operation.trim()) newErrors.operation = "Operation is required";
+    if (!formData.timeline) newErrors.timeline = "Please select a timeline";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus("idle");
+    setErrors({});
 
     const result = await submitForm("home_review", formData);
     setSubmitStatus(result.success ? "success" : "error");
@@ -94,6 +114,7 @@ const RequestReviewForm = (): JSX.Element => {
               placeholder="Sarah Alen"
               value={formData.name}
               onChange={(value) => handleChange("name", value)}
+              error={errors.name}
             />
             <TextField
               label="Corporate Email *"
@@ -101,14 +122,16 @@ const RequestReviewForm = (): JSX.Element => {
               placeholder="sarah@company.com"
               value={formData.email}
               onChange={(value) => handleChange("email", value)}
+              error={errors.email}
             />
           </div>
 
-          <TextField
+<TextField
             label="Company Name *"
             placeholder="Meridian Capital Holdings"
             value={formData.company}
             onChange={(value) => handleChange("company", value)}
+            error={errors.company}
           />
           <SelectField
             label="Primary Product of Interest *"
@@ -116,6 +139,7 @@ const RequestReviewForm = (): JSX.Element => {
             options={PRODUCT_OPTIONS}
             value={formData.product}
             onChange={(value) => handleChange("product", value)}
+            error={errors.product}
           />
           <SelectField
             label="Industry *"
@@ -123,12 +147,14 @@ const RequestReviewForm = (): JSX.Element => {
             options={INDUSTRY_OPTIONS}
             value={formData.industry}
             onChange={(value) => handleChange("industry", value)}
+            error={errors.industry}
           />
           <TextField
             label="Primary Operation *"
             placeholder="Tell us briefly what you need"
             value={formData.operation}
             onChange={(value) => handleChange("operation", value)}
+            error={errors.operation}
           />
           <SelectField
             label="Estimated Project Timeline *"
@@ -136,6 +162,7 @@ const RequestReviewForm = (): JSX.Element => {
             options={TIMELINE_OPTIONS}
             value={formData.timeline}
             onChange={(value) => handleChange("timeline", value)}
+            error={errors.timeline}
           />
 
           {submitStatus === "success" && (

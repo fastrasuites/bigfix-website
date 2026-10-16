@@ -287,6 +287,7 @@ if ($errors) {
 }
 
 // ---- Database -----------------------------------------------------------
+$pdo = null;
 try {
     $pdo = new PDO(
         "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
@@ -352,6 +353,8 @@ try {
 
     // Link tracking session to submission
     $sessionId = $input['session_id'] ?? $_COOKIE['tracking_sid'] ?? null;
+    $snapshot = ['session_id' => $sessionId];
+
     if ($sessionId !== null && $sessionId !== '') {
         // Validate UUID format
         if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sessionId)) {
@@ -411,6 +414,8 @@ try {
 // ---- Email notification -------------------------------------------------
 $emailMode = 'failed';
 $emailError = '';
+$allDebugs = [];
+$allErrors = [];
 
 $resolve = static function (array $c, string ...$keys): string {
     foreach ($keys as $key) {

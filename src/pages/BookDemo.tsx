@@ -90,19 +90,51 @@ const BookDemo = (): JSX.Element => {
     toggleMobileMenu,
   } = useNavigationState();
 
-  const [step, setStep] = useState(1);
+const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
   };
 
-  const handleNext = () => setStep((s) => Math.min(3, s + 1));
+  const handleNext = () => {
+    const newErrors: Record<string, string> = {};
+    if (step === 1) {
+      if (!formData.name.trim()) newErrors.name = "Name is required";
+      if (!formData.email.trim()) newErrors.email = "Email is required";
+      if (!formData.company.trim()) newErrors.company = "Company name is required";
+      if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+      if (!formData.product) newErrors.product = "Please select a product";
+    }
+    if (step === 2) {
+      if (!formData.industry) newErrors.industry = "Please select an industry";
+      if (!formData.users) newErrors.users = "Please select number of users";
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
+    setStep((s) => Math.min(3, s + 1));
+  };
   const handleBack = () => setStep((s) => Math.max(1, s - 1));
 
   const handleSubmit = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.date) newErrors.date = "Date is required";
+    if (!formData.hour) newErrors.hour = "Hour is required";
+    if (!formData.minute) newErrors.minute = "Minute is required";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     const compositeTime = [formData.hour, formData.minute, formData.ampm]
       .filter(Boolean)
       .join(" ");
@@ -222,9 +254,14 @@ const BookDemo = (): JSX.Element => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleChange("name", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors ${
+                      errors.name ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                     placeholder="Your name"
                   />
+                  {errors.name && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.name}</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
@@ -234,9 +271,14 @@ const BookDemo = (): JSX.Element => {
                     type="text"
                     value={formData.company}
                     onChange={(e) => handleChange("company", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors ${
+                      errors.company ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                     placeholder="Your company"
                   />
+                  {errors.company && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.company}</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
@@ -246,9 +288,14 @@ const BookDemo = (): JSX.Element => {
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors ${
+                      errors.email ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                     placeholder="email@example.com"
                   />
+                  {errors.email && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.email}</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
@@ -258,9 +305,14 @@ const BookDemo = (): JSX.Element => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors ${
+                      errors.phone ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                     placeholder="+234 ..."
                   />
+                  {errors.phone && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.phone}</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
@@ -269,7 +321,9 @@ const BookDemo = (): JSX.Element => {
                   <select
                     value={formData.product}
                     onChange={(e) => handleChange("product", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white ${
+                      errors.product ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                   >
                     {productOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -277,6 +331,9 @@ const BookDemo = (): JSX.Element => {
                       </option>
                     ))}
                   </select>
+                  {errors.product && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.product}</span>
+                  )}
                 </div>
                 <button
                   onClick={handleNext}
@@ -297,7 +354,9 @@ const BookDemo = (): JSX.Element => {
                   <select
                     value={formData.industry}
                     onChange={(e) => handleChange("industry", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white ${
+                      errors.industry ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                   >
                     {industryOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -305,6 +364,9 @@ const BookDemo = (): JSX.Element => {
                       </option>
                     ))}
                   </select>
+                  {errors.industry && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.industry}</span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-2">
@@ -315,7 +377,9 @@ const BookDemo = (): JSX.Element => {
                       <label
                         key={opt.value}
                         className={`flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm transition-colors ${
-                          formData.users === opt.value
+                          errors.users
+                            ? "border-red-500"
+                            : formData.users === opt.value
                             ? "border-[#00B4D8] bg-[#F0F8FF]"
                             : "border-[#A8A8A8] hover:border-[#00B4D8]"
                         }`}
@@ -334,6 +398,9 @@ const BookDemo = (): JSX.Element => {
                       </label>
                     ))}
                   </div>
+                  {errors.users && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.users}</span>
+                  )}
                 </div>
                 <div className="flex gap-4">
                   <button
@@ -363,8 +430,13 @@ const BookDemo = (): JSX.Element => {
                     type="date"
                     value={formData.date}
                     onChange={(e) => handleChange("date", e.target.value)}
-                    className="w-full border border-[#A8A8A8] rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors"
+                    className={`w-full border rounded-lg px-4 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors ${
+                      errors.date ? "border-red-500" : "border-[#A8A8A8]"
+                    }`}
                   />
+                  {errors.date && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.date}</span>
+                  )}
                 </div>
                  <div>
                    <label className="block text-[#0A2F5A] text-sm font-medium mb-1">
@@ -374,7 +446,9 @@ const BookDemo = (): JSX.Element => {
                      <select
                        value={formData.hour}
                        onChange={(e) => handleChange("hour", e.target.value)}
-                       className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                       className={`flex-1 border rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white ${
+                         errors.hour ? "border-red-500" : "border-[#A8A8A8]"
+                       }`}
                      >
                        <option value="">Hour</option>
                        {Array.from({ length: 12 }, (_, i) => (
@@ -386,7 +460,9 @@ const BookDemo = (): JSX.Element => {
                      <select
                        value={formData.minute}
                        onChange={(e) => handleChange("minute", e.target.value)}
-                       className="flex-1 border border-[#A8A8A8] rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white"
+                       className={`flex-1 border rounded-lg px-3 py-3 text-[#0A2F5A] text-sm focus:outline-none focus:border-[#00B4D8] transition-colors bg-white ${
+                         errors.minute ? "border-red-500" : "border-[#A8A8A8]"
+                       }`}
                      >
                        <option value="">Minute</option>
                        {Array.from({ length: 4 }, (_, i) => (
@@ -404,6 +480,12 @@ const BookDemo = (): JSX.Element => {
                        <option value="PM">PM</option>
                      </select>
                    </div>
+                   {errors.hour && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.hour}</span>
+                  )}
+                  {errors.minute && (
+                    <span className="text-[12px] text-red-500 mt-1 block">{errors.minute}</span>
+                  )}
                  </div>
                 <div>
                   <label className="block text-[#0A2F5A] text-sm font-medium mb-1">

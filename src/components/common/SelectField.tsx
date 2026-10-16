@@ -1,14 +1,12 @@
 import type { SelectFieldProps } from "../../types";
 
-/**
- * Labelled select with the custom chevron indicator.
- */
 const SelectField = ({
   label,
   placeholder,
   options,
   value = "",
   onChange,
+  error,
 }: SelectFieldProps): JSX.Element => {
   const id = `select-${label.replace(/\s+/g, "-")}`;
 
@@ -25,7 +23,11 @@ const SelectField = ({
           id={id}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-          className="w-full border border-[#A8A8A8] rounded-[8px] px-4 py-3 text-[14px] text-[#A8A8A8] focus:outline-none focus:border-[#00B4D8] transition-colors appearance-none bg-white"
+          className={`w-full border rounded-[8px] px-4 py-3 text-[14px] focus:outline-none focus:border-[#00B4D8] transition-colors appearance-none bg-white ${
+            error
+              ? "border-red-500 text-red-500"
+              : "border-[#A8A8A8] text-[#A8A8A8]"
+          }`}
         >
           <option value="" disabled>
             {placeholder}
@@ -52,6 +54,9 @@ const SelectField = ({
           </svg>
         </div>
       </div>
+      {error && (
+        <span className="text-[12px] text-red-500">{error}</span>
+      )}
     </div>
   );
 };

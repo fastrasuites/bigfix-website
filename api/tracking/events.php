@@ -90,27 +90,30 @@ if (!is_array($input)) {
     exit;
 }
 
-// Get session_id from body or cookie
-$sessionId = $input['session_id'] ?? $_COOKIE['tracking_sid'] ?? '';
-$events = $input['events'] ?? [];
+    // Initialize variables used in catch block
+    $pdo = null;
 
-if ($sessionId === '' || !is_array($events) || count($events) === 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'session_id and events required']);
-    exit;
-}
+    // Get session_id from body or cookie
+    $sessionId = $input['session_id'] ?? $_COOKIE['tracking_sid'] ?? '';
+    $events = $input['events'] ?? [];
 
-// Validate session_id format (UUID v4)
-if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sessionId)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid session_id format']);
-    exit;
-}
+    if ($sessionId === '' || !is_array($events) || count($events) === 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'session_id and events required']);
+        exit;
+    }
 
-// Limit batch size
-if (count($events) > 50) {
-    $events = array_slice($events, 0, 50);
-}
+    // Validate session_id format (UUID v4)
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sessionId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid session_id format']);
+        exit;
+    }
+
+    // Limit batch size
+    if (count($events) > 50) {
+        $events = array_slice($events, 0, 50);
+    }
 
     $validEventTypes = [
         'pageview', 'click', 'scroll', 'form_start', 'form_submit',
@@ -252,12 +255,18 @@ try {
     ]);
 
 } catch (Throwable $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+    if ($pdo !== null) {
+        try {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+        } catch (Throwable $e2) {
+            // ignore rollback errors
+        }
     }
     error_log("Tracking events error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to save events']);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 
 /**

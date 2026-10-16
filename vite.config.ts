@@ -13,11 +13,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/submit.php": {
-        target: "https://bigfixtech.com",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
       "/api/tracking": {
-        target: "https://bigfixtech.com",
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
     },

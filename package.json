@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "php -S localhost:8080 -t public",
     "build": "vite build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

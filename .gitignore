@@ -28,5 +28,8 @@ dist-ssr
 *.env
 
 # Tracking cache and data (runtime generated)
+cache/
 api/cache/
 api/data/*.mmdb
+api/data/*.json
+public/api/
