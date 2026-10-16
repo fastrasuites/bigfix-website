@@ -279,7 +279,7 @@ const ContactUs = (): JSX.Element => {
                 </div>
                 {submitStatus === "success" && (
                   <p className="text-[#00B4D8] text-sm font-medium mb-4">
-                    Your message has been sent successfully. We'll get back to you soon.
+                    Your message has been sent successfully. We&apos;ll get back to you soon.
                   </p>
                 )}
 

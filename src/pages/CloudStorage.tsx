@@ -196,7 +196,7 @@ const CloudStorage = (): JSX.Element => {
                 Establish an Intelligent Workflow
               </h2>
               <p className="text-[#A8A8A8] text-base leading-relaxed mb-8">
-                Having all of an organization's files in one repository can
+                Having all of an organization&apos;s files in one repository can
                 reduce operational downtimes and improve administrative
                 effectiveness. Seamlessly integrate your cloud files with
                 OptimaOne, FastraSuite, and EnterpriseOne.
@@ -235,7 +235,7 @@ const CloudStorage = (): JSX.Element => {
                 Share Files/Folders and Collaborate with Your Team
               </h2>
               <p className="text-[#A8A8A8] text-base leading-relaxed mb-8">
-                Store and organize your team's work files in a shared and secure
+                Store and organize your team&apos;s work files in a shared and secure
                 space. Create files and invite users to view or edit them. You
                 can also create a shared folder so that your team can
                 collectively have access to files within the folder.

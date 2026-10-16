@@ -142,11 +142,6 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
     if (window.BigFixTracker) {
       window.BigFixTracker.triggerExitIntent(type);
     }
-
-    // Track event
-    if (window.BigFixTracker) {
-      window.BigFixTracker.trackEvent('exit_intent', { exit_type: type });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,7 +157,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
       return;
     }
 
-    const phoneRegex = /^[\d\s\-\+\(\)]{7,}$/;
+    const phoneRegex = /^[\d\s+().-]{7,}$/;
     if (phone && !phoneRegex.test(phone)) {
       setError('Please enter a valid phone number');
       setSubmitting(false);
@@ -202,7 +197,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
       } else {
         setError(result.error || 'Something went wrong. Please try again.');
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Network error. Please try again.');
     } finally {
       setSubmitting(false);
@@ -261,8 +256,8 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">You're all set!</h3>
-            <p className="text-gray-600">We'll send the pricing guide to <strong>{email}</strong> shortly.</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">You&apos;re all set!</h3>
+            <p className="text-gray-600">We&apos;ll send the pricing guide to <strong>{email}</strong> shortly.</p>
             {phone && <p className="text-gray-600 mt-1">Our team will call <strong>{phone}</strong> within 24 hours.</p>}
           </div>
         ) : (

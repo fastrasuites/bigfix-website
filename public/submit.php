@@ -133,9 +133,6 @@ function respond(int $code, array $body): void
 
 // ---- Config -------------------------------------------------------------
 $configFile = __DIR__ . '/submit-config.php';
-if (!is_file($configFile)) {
-    respond(500, ['success' => false, 'message' => 'Server configuration error']);
-}
 
 // Define placeholder constants that config files often reference as barewords
 // (e.g. 'db_pass' => DB_PASS). On PHP 8.x these cause fatal errors if undefined.
@@ -146,8 +143,12 @@ foreach (['DB_PASS', 'DB_PASSWORD', 'ZOHO_APP_PASSWORD', 'ZOHO_PASSWORD', 'ZOHO_
 }
 
 try {
-    $config = require $configFile;
-} catch (\Error $e) {
+    if (is_file($configFile)) {
+        $config = require $configFile;
+    } else {
+        throw new ErrorException('submit-config.php not found');
+    }
+} catch (Throwable $e) {
     error_log('Config parse error in submit-config.php: ' . $e->getMessage());
     $config = [
         'db_host' => '127.0.0.1',

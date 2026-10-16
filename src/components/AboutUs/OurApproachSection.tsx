@@ -23,7 +23,7 @@ const OurApproachSection = ({
         <div className="flex flex-col gap-6 text-[16px] lg:text-[20px] text-[#1A1A1ACC] leading-[1.6] tracking-[0.2px] mt-2">
           <p>
             Businesses have different processes, requirements, and challenges.
-            We don't believe technology should be designed around a
+            We don&apos;t believe technology should be designed around a
             one-size-fits-all model.
           </p>
           <p>

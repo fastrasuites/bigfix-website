@@ -318,7 +318,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
         <svg className="inline-block w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
         </svg>
-        Thank you! We'll be in touch soon.
+         Thank you! We&apos;ll be in touch soon.
       </div>
     ) : null;
   }
@@ -331,7 +331,7 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
           <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
-          <span>Thank you! We'll reach out shortly.</span>
+          <span>Thank you! We&apos;ll reach out shortly.</span>
         </div>
       )}
 
@@ -367,10 +367,10 @@ export const ExitIntentPopup: React.FC<ExitIntentPopupProps> = ({
               </div>
 
               <h2 id="exit-intent-title" className="text-xl font-bold text-gray-800 mb-2">
-                Wait! Don't go yet
+                Wait! Don&apos;t go yet
               </h2>
               <p className="text-sm text-gray-600 mb-6">
-                Enter your email and we'll send you <strong className="text-blue-600">exclusive pricing</strong> and a <strong className="text-blue-600">free consultation</strong>.
+                 Enter your email and we&apos;ll send you <strong className="text-blue-600">exclusive pricing</strong> and a <strong className="text-blue-600">free consultation</strong>.
               </p>
 
               {error && (

@@ -106,11 +106,12 @@ if (count($events) > 50) {
     $events = array_slice($events, 0, 50);
 }
 
-$validEventTypes = [
-    'pageview', 'click', 'scroll', 'form_start', 'form_submit',
-    'view_pricing', 'view_demo', 'click_whatsapp',
-    'exit_intent_triggered', 'exit_intent_converted', 'gated_view',
-];
+    $validEventTypes = [
+        'pageview', 'click', 'scroll', 'form_start', 'form_submit',
+        'form_abandon', 'download', 'exit_intent', 'exit_intent_submit',
+        'view_pricing', 'view_demo', 'click_whatsapp',
+        'exit_intent_triggered', 'exit_intent_converted', 'gated_view',
+    ];
 
 try {
     $pdo = new PDO(

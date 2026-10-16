@@ -311,7 +311,7 @@ const SoftwareDevelopment = (): JSX.Element => {
             <div className="w-full lg:w-1/2 text-white">
               <h2 className="text-3xl font-bold mb-4">Tell us about your project</h2>
               <p className="text-white/70 text-lg mb-8">
-                Let's discuss about your project with us, we will help you provide a solution.
+                Let&apos;s discuss about your project with us, we will help you provide a solution.
               </p>
               <Link
                 to="/book-demo"

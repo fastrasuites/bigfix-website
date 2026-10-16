@@ -20,7 +20,7 @@ const HowWeWorkSection = ({ steps }: HowWeWorkSectionProps): JSX.Element => (
         </div>
         <div className="flex-1 max-w-[631px] flex items-center">
           <p className="text-[16px] lg:text-[18px] text-[#1A1A1ACC] leading-[1.7] tracking-[0.2px]">
-            Technology should solve problems, not create more of them. That's
+            Technology should solve problems, not create more of them. That&apos;s
             why we take a practical approach to every solution we build and
             deliver.
           </p>

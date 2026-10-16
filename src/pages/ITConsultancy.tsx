@@ -68,7 +68,7 @@ const ITConsultancy = (): JSX.Element => {
             IT Consultancy
           </h1>
           <p className="text-[#A8A8A8] text-lg mb-10 max-w-lg">
-            We will help evaluate your company's technology infrastructure to
+            We will help evaluate your company&apos;s technology infrastructure to
             achieve strategic goals that have been defined. Standalone,
             industry-grade software solutions designed to scale complex
             corporate operations.

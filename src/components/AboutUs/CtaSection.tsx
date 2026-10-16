@@ -14,7 +14,7 @@ const CtaSection = (): JSX.Element => (
 
     <div className="w-full max-w-[1440px] mx-auto flex flex-col items-center text-center relative z-10">
       <span className="text-[#E37016] font-semibold text-[16px] leading-[24px] tracking-[-0.2px] uppercase mb-4">
-        Let's Work Together
+        Let&apos;s Work Together
       </span>
       <h2 className="text-[36px] md:text-[48px] font-bold leading-[1.2] tracking-[0.2px] text-white mb-6">
         Have a Business or <br />

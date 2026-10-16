@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `tracking_events` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `session_id` CHAR(36) NOT NULL,
   `submission_id` INT UNSIGNED NULL,
-  `event_type` ENUM('pageview','click','scroll','form_start','form_submit','view_pricing','view_demo','click_whatsapp','exit_intent_triggered','exit_intent_converted','gated_view') NOT NULL,
+  `event_type` ENUM('pageview','click','scroll','form_start','form_submit','form_abandon','download','exit_intent','exit_intent_submit','exit_intent_triggered','exit_intent_converted','view_pricing','view_demo','click_whatsapp','gated_view') NOT NULL,
   `page_url` VARCHAR(1000) NOT NULL,
   `page_title` VARCHAR(300) NULL,
   `element_selector` VARCHAR(300) NULL,
@@ -78,3 +78,12 @@ CREATE TABLE IF NOT EXISTS `tracking_events` (
 -- Update submissions table to link with tracking
 -- ============================================================
 ALTER TABLE `submissions` ADD COLUMN `visitor_id` CHAR(36) NULL, ADD COLUMN `session_id` CHAR(36) NULL, ADD COLUMN `tracking_snapshot` JSON NULL, ADD INDEX `idx_session` (session_id);
+
+-- ============================================================
+-- Update tracking_events ENUM to include all event types used by frontend
+-- ============================================================
+ALTER TABLE `tracking_events` MODIFY COLUMN `event_type` ENUM(
+    'pageview','click','scroll','form_start','form_submit','form_abandon','download',
+    'exit_intent','exit_intent_submit','exit_intent_triggered','exit_intent_converted',
+    'view_pricing','view_demo','click_whatsapp','gated_view'
+) NOT NULL;

@@ -13,12 +13,12 @@ const RequestReviewInfo = ({
       Why Modular Works
     </span>
     <h2 className="text-[32px] lg:text-[40px] font-bold leading-[1.2] lg:leading-[100%] tracking-[0.2px]">
-      <span className="text-[#0A2F5A]">Let's Find the Right</span>
+      <span className="text-[#0A2F5A]">       Let&apos;s Find the Right</span>
       <br className="hidden md:block" />
       <span className="text-[#00B4D8]">Solution for Your Business</span>
     </h2>
     <p className="text-[16px] lg:text-[18px] text-[#1A1A1ACC] leading-[1.7] lg:leading-[30px] tracking-[0.2px]">
-      Tell us what you're looking for and our team will help you identify the
+      Tell us what you&apos;re looking for and our team will help you identify the
       right BigFix solution.
     </p>
 

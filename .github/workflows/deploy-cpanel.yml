@@ -34,6 +34,8 @@ jobs:
           cp api/tracking/events.php dist/api/tracking/events.php
           cp api/tracking/identify.php dist/api/tracking/identify.php
           cp api/tracking/cleanup.php dist/api/tracking/cleanup.php
+          cp api/tracking/exit-intent.php dist/api/tracking/exit-intent.php
+          cp api/tracking/enrich.php dist/api/tracking/enrich.php
           cp api/tracking/session/init.php dist/api/tracking/session/init.php
           cp api/tracking/session/hello.php dist/api/tracking/session/hello.php
           cp api/tracking/session/minimal_test.php dist/api/tracking/session/minimal_test.php
@@ -45,15 +47,6 @@ jobs:
           cp api/migrations/MigrationRunner.php dist/api/migrations/MigrationRunner.php
           touch dist/api/cache/.gitkeep dist/api/data/.gitkeep
           # Create submit-config.php from GitHub secret (base64-encoded)
-          if [ -n "${{ secrets.SUBMIT_CONFIG_B64 }}" ]; then
-            echo '${{ secrets.SUBMIT_CONFIG_B64 }}' | base64 -d > dist/submit-config.php
-          else
-            echo "::warning::SUBMIT_CONFIG_B64 secret not set - submit-config.php will be missing on production. Upload manually via cPanel File Manager."
-          fi
-          # Copy existing tracking endpoints from public/api/tracking if they exist
-          if [ -d public/api/tracking ]; then
-            cp -r public/api/tracking/* dist/api/tracking/
-          fi
  
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0

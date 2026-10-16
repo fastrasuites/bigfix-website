@@ -15,11 +15,15 @@ export type EventType =
   | 'scroll'
   | 'form_start'
   | 'form_submit'
+  | 'form_abandon'
+  | 'download'
+  | 'exit_intent'
+  | 'exit_intent_submit'
+  | 'exit_intent_triggered'
+  | 'exit_intent_converted'
   | 'view_pricing'
   | 'view_demo'
   | 'click_whatsapp'
-  | 'exit_intent_triggered'
-  | 'exit_intent_converted'
   | 'gated_view';
 
 export type ExitIntentType = 'mouseleave' | 'scroll_up' | 'back_button' | 'blur';

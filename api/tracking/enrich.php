@@ -38,8 +38,27 @@ if ($sessionId === '') {
     exit;
 }
 
-$configFile = __DIR__ . '/../../../submit-config.php';
-$config = require $configFile;
+$config = null;
+$configPaths = [
+    __DIR__ . '/../../../submit-config.php',
+    __DIR__ . '/../../../../submit-config.php',
+];
+foreach ($configPaths as $configFile) {
+    if (is_file($configFile)) {
+        $config = require $configFile;
+        break;
+    }
+}
+
+if ($config === null) {
+    // Fallback config for shared hosting
+    $config = [
+        'db_host' => '127.0.0.1',
+        'db_name' => 'bigfixte_submissions',
+        'db_user' => 'bigfixte_sub_user',
+        'db_pass' => '}aM(lPXbzhSYd*A?',
+    ];
+}
 
 try {
     $pdo = new PDO(
