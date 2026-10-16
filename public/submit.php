@@ -361,54 +361,94 @@ try {
             // Capture tracking snapshot: session data + last 5 events
             $snapshot = ['session_id' => $sessionId];
 
-            // Get session data
-            $sessionStmt = $pdo->prepare('
-                SELECT id, country_code, region, city, isp, org, company_name, is_b2b, b2b_confidence,
-                       landing_page, referrer, utm_source, utm_medium, utm_campaign,
-                       first_seen, last_seen, page_count, total_time
-                FROM tracking_sessions WHERE id = ?
-            ');
-            $sessionStmt->execute([$sessionId]);
-            $sessionData = $sessionStmt->fetch(PDO::FETCH_ASSOC);
+            try {
+                // Check which columns exist to avoid schema mismatch
+                $colStmt = $pdo->query("SHOW COLUMNS FROM tracking_sessions");
+                $sessionCols = array_column($colStmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
 
-            if ($sessionData) {
-                $snapshot['session'] = $sessionData;
+                $selectCols = ['id'];
+                foreach (['country_code', 'region', 'city', 'isp', 'org', 'company_name', 'is_b2b', 'b2b_confidence', 'landing_page', 'referrer', 'utm_source', 'utm_medium', 'utm_campaign', 'first_seen', 'last_seen', 'page_count', 'total_time'] as $col) {
+                    if (in_array($col, $sessionCols, true)) {
+                        $selectCols[] = $col;
+                    }
+                }
 
-                // Get last 5 events
-                $eventsStmt = $pdo->prepare('
-                    SELECT event_type, page_url, page_title, scroll_depth, time_on_page,
-                           element_selector, element_text, event_data, created_at
-                    FROM tracking_events
-                    WHERE session_id = ?
-                    ORDER BY created_at DESC
-                    LIMIT 5
+                $sessionStmt = $pdo->prepare('
+                    SELECT ' . implode(', ', $selectCols) . '
+                    FROM tracking_sessions WHERE id = ?
                 ');
-                $eventsStmt->execute([$sessionId]);
-                $snapshot['recent_events'] = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
+                $sessionStmt->execute([$sessionId]);
+                $sessionData = $sessionStmt->fetch(PDO::FETCH_ASSOC);
 
-                // Update tracking_sessions with submission_id
-                $pdo->prepare('
-                    UPDATE tracking_sessions
-                    SET submission_id = ?, identified_email = ?, is_converted = TRUE,
-                        converted_at = NOW()
-                    WHERE id = ?
-                ')->execute([$submissionId, $data['email'], $sessionId]);
-            }
+                if ($sessionData) {
+                    $snapshot['session'] = $sessionData;
 
-            // Update submissions table with session info (if columns exist)
-            $stmt = $pdo->query("SHOW COLUMNS FROM submissions LIKE 'session_id'");
-            if ($stmt->fetch()) {
-                $updateStmt = $pdo->prepare('
-                    UPDATE submissions SET session_id = ?, visitor_id = ?, tracking_snapshot = ?
-                    WHERE id = ?
-                ');
-                $updateStmt->execute([$sessionId, $sessionId, json_encode($snapshot, JSON_UNESCAPED_SLASHES), $submissionId]);
+                    // Check events table columns
+                    $evtColStmt = $pdo->query("SHOW COLUMNS FROM tracking_events");
+                    $eventCols = array_column($evtColStmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
+
+                    $evtSelect = ['event_type', 'page_url'];
+                    foreach (['page_title', 'scroll_depth', 'time_on_page', 'element_selector', 'element_text', 'event_data', 'created_at'] as $col) {
+                        if (in_array($col, $eventCols, true)) {
+                            $evtSelect[] = $col;
+                        }
+                    }
+
+                    $eventsStmt = $pdo->prepare('
+                        SELECT ' . implode(', ', $evtSelect) . '
+                        FROM tracking_events
+                        WHERE session_id = ?
+                        ORDER BY created_at DESC
+                        LIMIT 5
+                    ');
+                    $eventsStmt->execute([$sessionId]);
+                    $snapshot['recent_events'] = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    // Update tracking_sessions with submission_id (only if columns exist)
+                    $updateCols = [];
+                    $updateParams = [$submissionId, $data['email'], $sessionId];
+                    $colCheck = array_column($pdo->query("SHOW COLUMNS FROM tracking_sessions")->fetchAll(PDO::FETCH_ASSOC), 'Field');
+                    foreach (['submission_id' => $submissionId, 'identified_email' => $data['email'], 'is_converted' => 1, 'converted_at' => null] as $col => $val) {
+                        if (in_array($col, $colCheck, true)) {
+                            $updateCols[] = "`$col` = ?";
+                        }
+                    }
+                    if ($updateCols) {
+                        $updateStmt = $pdo->prepare('
+                            UPDATE tracking_sessions
+                            SET ' . implode(', ', $updateCols) . '
+                            WHERE id = ?
+                        ');
+                        $params = array_merge(
+                            array_values(array_filter([
+                                'submission_id' => in_array('submission_id', $colCheck, true) ? $submissionId : null,
+                                'identified_email' => in_array('identified_email', $colCheck, true) ? $data['email'] : null,
+                                'is_converted' => in_array('is_converted', $colCheck, true) ? 1 : null,
+                                'converted_at' => in_array('converted_at', $colCheck, true) ? date('Y-m-d H:i:s') : null,
+                            ], fn($k, $v) => $v !== null, ARRAY_FILTER_USE_BOTH)),
+                            [$sessionId]
+                        );
+                        $updateStmt->execute($params);
+                    }
+                }
+
+                // Update submissions table with session info (if columns exist)
+                $stmt = $pdo->query("SHOW COLUMNS FROM submissions LIKE 'session_id'");
+                if ($stmt->fetch()) {
+                    $updateStmt = $pdo->prepare('
+                        UPDATE submissions SET session_id = ?, visitor_id = ?, tracking_snapshot = ?
+                        WHERE id = ?
+                    ');
+                    $updateStmt->execute([$sessionId, $sessionId, json_encode($snapshot, JSON_UNESCAPED_SLASHES), $submissionId]);
+                }
+            } catch (Throwable $e) {
+                error_log('Tracking session link error (non-fatal): ' . $e->getMessage());
             }
         }
     }
 } catch (PDOException $e) {
     error_log('Submission DB error: ' . $e->getMessage());
-    respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.']);
+    respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.', 'debug' => ($config['debug'] ?? false) ? $e->getMessage() : null]);
 }
 
 // ---- Email notification -------------------------------------------------
