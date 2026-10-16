@@ -159,13 +159,12 @@ try {
     $totalTimeOnPage = 0;
     $pageviewCount = 0;
 
-    $insertStmt = $pdo->prepare('
-        INSERT INTO tracking_events (
-            session_id, event_type, page_url, page_title,
-            element_selector, element_text, scroll_depth, time_on_page,
-            event_data, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    ');
+    // Detect available columns for schema compatibility
+    $hasElementColumns = false;
+    $colCheck = $pdo->query("SHOW COLUMNS FROM `tracking_events` LIKE 'element_selector'");
+    if ($colCheck->fetch()) {
+        $hasElementColumns = true;
+    }
 
     foreach ($events as $event) {
         $eventType = $event['event_type'] ?? $event['type'] ?? '';
@@ -192,17 +191,36 @@ try {
         }
 
         try {
-            $insertStmt->execute([
-                $sessionId,
-                $eventType,
-                $pageUrl,
-                $pageTitle,
-                $elementSelector,
-                $elementText,
-                $scrollDepth,
-                $timeOnPage,
-                $eventData !== null ? json_encode($eventData) : null,
-            ]);
+            if ($hasElementColumns) {
+                $insertStmt = $pdo->prepare('
+                    INSERT INTO tracking_events (
+                        session_id, event_type, page_url, page_title,
+                        element_selector, element_text, scroll_depth, time_on_page,
+                        event_data, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ');
+                $insertStmt->execute([
+                    $sessionId, $eventType, $pageUrl, $pageTitle,
+                    $elementSelector, $elementText, $scrollDepth, $timeOnPage,
+                    $eventData !== null ? json_encode($eventData) : null,
+                ]);
+            } else {
+                // Fallback for older schemas without element_selector/element_text
+                $mergedData = $eventData !== null ? $eventData : [];
+                if ($elementSelector !== null) $mergedData['selector'] = $elementSelector;
+                if ($elementText !== null) $mergedData['text'] = $elementText;
+                $insertStmt = $pdo->prepare('
+                    INSERT INTO tracking_events (
+                        session_id, event_type, page_url, page_title,
+                        scroll_depth, time_on_page, event_data, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                ');
+                $insertStmt->execute([
+                    $sessionId, $eventType, $pageUrl, $pageTitle,
+                    $scrollDepth, $timeOnPage,
+                    !empty($mergedData) ? json_encode($mergedData) : null,
+                ]);
+            }
             $accepted++;
         } catch (Throwable $e) {
             $dropped++;

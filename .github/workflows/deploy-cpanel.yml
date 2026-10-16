@@ -54,8 +54,6 @@ jobs:
           else
             echo "::warning::SUBMIT_CONFIG_B64 secret not set - submit-config.php will be missing on production. Upload it manually via cPanel File Manager."
           fi
-          # Copy migration endpoint and schema sync script
-          cp api/migrate.php dist/api/migrate.php
  
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0

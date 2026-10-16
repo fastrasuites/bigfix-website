@@ -99,15 +99,21 @@ try {
     $stmt = $pdo->prepare('
         INSERT INTO `tracking_sessions` (
             `id`, `ip_address`, `user_agent`, `referrer`,
-            `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`,
-            `landing_page`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         $sessionId, $ipBinary, $userAgent, $referrer,
         $utmSource, $utmMedium, $utmCampaign, $utmContent, $utmTerm,
-        $landingPage,
     ]);
+
+    // Optionally set landing_page (column may not exist in older schemas)
+    try {
+        $pdo->prepare('UPDATE `tracking_sessions` SET `landing_page` = ? WHERE `id` = ?')
+            ->execute([$landingPage ?: null, $sessionId]);
+    } catch (Throwable $e) {
+        // Column doesn't exist in older schema, skip silently
+    }
 
     $expires = time() + 31536000;
     setcookie('tracking_sid', $sessionId, [
