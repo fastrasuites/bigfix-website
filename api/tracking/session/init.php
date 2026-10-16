@@ -141,6 +141,6 @@ try {
         'session_id' => '',
         'company_name' => '',
         'is_b2b' => false,
-        'error' => 'Failed to initialize session',
+        'error' => $e->getMessage(),
     ]);
 }

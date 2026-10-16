@@ -188,7 +188,7 @@ try {
     $colInfo = $colCheck->fetch(PDO::FETCH_ASSOC);
     $currentType = $colInfo['Type'] ?? '';
 
-    if (!str_contains($currentType, 'exit_intent_triggered')) {
+    if (strpos($currentType, 'exit_intent_triggered') === false) {
         $pdo->exec("ALTER TABLE `tracking_events` MODIFY COLUMN `event_type` ENUM(
             'pageview','click','scroll','form_start','form_submit','form_abandon','download',
             'exit_intent','exit_intent_submit','exit_intent_triggered','exit_intent_converted',
