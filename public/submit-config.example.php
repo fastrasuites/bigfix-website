@@ -20,6 +20,10 @@ return [
     'smtp_user'   => 'info@bigfixtech.com',
     'smtp_pass'   => 'YOUR_ZOHO_EMAIL_PASSWORD',
 
+    'email_api_type' => 'resend',
+    'email_api_url'  => 'https://api.resend.com/emails',
+    'email_api_key'  => 're_YYYYYYYYYYYY',
+
     'from_email'  => 'info@bigfixtech.com',
     'from_name'   => 'BigFix Website',
     'to_email'    => 'info@bigfixtech.com',
@@ -28,4 +32,9 @@ return [
         'https://bigfixtech.com',
         'https://www.bigfixtech.com',
     ],
+
+    // --- Dashboard (admin panel) credentials ---
+    // Generate hash: php -r "echo password_hash('YOUR_PASSWORD', PASSWORD_DEFAULT);"
+    'dash_user'      => 'admin',
+    'dash_pass_hash' => 'YOUR_BCRYPT_HASH',
 ];

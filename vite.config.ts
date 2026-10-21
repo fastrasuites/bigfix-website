@@ -31,6 +31,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // Proxy all .php files to the PHP dev server (prevents Vite from serving raw PHP source)
+      "/dashboard.php": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
       "/submit.php": {
         target: "http://localhost:8080",
         changeOrigin: true,

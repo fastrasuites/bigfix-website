@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ob_start();
 
 /**
  * BigFix submissions dashboard (read-only).
@@ -8,6 +9,10 @@ declare(strict_types=1);
  */
 
 $config = require __DIR__ . '/submit-config.php';
+
+// Ensure required config keys exist (prevent undefined key warnings)
+$config['dash_user'] = $config['dash_user'] ?? '';
+$config['dash_pass_hash'] = $config['dash_pass_hash'] ?? '';
 
 // ---- Security headers ---------------------------------------------------
 $nonce = base64_encode(random_bytes(16));
