@@ -13,6 +13,7 @@
  * - Updates tracking_sessions total_time and last_seen
  */
 declare(strict_types=1);
+ob_start();
 
 // Load config
 $configFile = __DIR__ . '/../../submit-config.php';
@@ -53,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit;
 }
@@ -71,6 +73,7 @@ $realIp = trim($realIp);
 
 if (!checkRateLimit($realIp)) {
     http_response_code(429);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Rate limit exceeded', 'retry_after' => 60]);
     exit;
 }
@@ -79,6 +82,7 @@ if (!checkRateLimit($realIp)) {
 $raw = file_get_contents('php://input');
 if (strlen($raw) > 100000) { // 100KB max
     http_response_code(413);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Payload too large']);
     exit;
 }
@@ -86,6 +90,7 @@ if (strlen($raw) > 100000) { // 100KB max
 $input = json_decode($raw, true);
 if (!is_array($input)) {
     http_response_code(400);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Invalid JSON']);
     exit;
 }
@@ -99,6 +104,7 @@ if (!is_array($input)) {
 
     if ($sessionId === '' || !is_array($events) || count($events) === 0) {
         http_response_code(400);
+        ob_clean();
         echo json_encode(['success' => false, 'error' => 'session_id and events required']);
         exit;
     }
@@ -106,6 +112,7 @@ if (!is_array($input)) {
     // Validate session_id format (UUID v4)
     if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $sessionId)) {
         http_response_code(400);
+        ob_clean();
         echo json_encode(['success' => false, 'error' => 'Invalid session_id format']);
         exit;
     }
@@ -138,6 +145,7 @@ try {
     $stmt->execute([$sessionId]);
     if (!$stmt->fetch()) {
         http_response_code(404);
+        ob_clean();
         echo json_encode(['success' => false, 'error' => 'Session not found']);
         exit;
     }
@@ -248,6 +256,7 @@ try {
 
     $pdo->commit();
 
+    ob_clean();
     echo json_encode([
         'success' => true,
         'accepted' => $accepted,
@@ -266,6 +275,7 @@ try {
     }
     error_log("Tracking events error: " . $e->getMessage());
     http_response_code(500);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 

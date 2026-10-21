@@ -6,6 +6,7 @@
  * Run async after session creation or via cron
  */
 declare(strict_types=1);
+ob_start();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

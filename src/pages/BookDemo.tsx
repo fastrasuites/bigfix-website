@@ -95,6 +95,7 @@ const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverMessage, setServerMessage] = useState("");
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -145,7 +146,12 @@ const [step, setStep] = useState(1);
 
     const result = await submitForm("book_demo", payload);
     setSubmitStatus(result.success ? "success" : "error");
+    setServerMessage(result.message || "");
     setIsSubmitting(false);
+
+    if (result.success && result.db_error) {
+      setServerMessage("Submission received (note: " + result.db_error + ")");
+    }
 
     if (result.success) {
       setTimeout(() => navigate("/"), 1500);
@@ -514,16 +520,16 @@ const [step, setStep] = useState(1);
                     {isSubmitting ? "Submitting..." : "Send Request"}
                   </button>
                 </div>
-                {submitStatus === "success" && (
-                  <p className="text-[#00B4D8] text-center text-sm font-medium mt-2">
-                    Demo request submitted! Redirecting...
-                  </p>
-                )}
-                {submitStatus === "error" && (
-                  <p className="text-red-500 text-center text-sm font-medium mt-2">
-                    Something went wrong. Please try again.
-                  </p>
-                )}
+                 {submitStatus === "success" && (
+                   <p className="text-[#00B4D8] text-center text-sm font-medium mt-2">
+                     Demo request submitted! Redirecting...
+                   </p>
+                 )}
+                 {submitStatus === "error" && (
+                   <p className="text-red-500 text-center text-sm font-medium mt-2">
+                     {serverMessage || "Something went wrong. Please try again."}
+                   </p>
+                 )}
               </div>
             )}
           </div>

@@ -8,9 +8,9 @@ export type FormSource = "book_demo" | "contact" | "home_review";
 export interface SubmitResult {
   success: boolean;
   message: string;
-  /** Field-level validation messages returned by the server (HTTP 400). */
   errors?: string[];
   id?: number;
+  db_error?: string | null;
 }
 
 interface ServerResponse {
@@ -18,6 +18,7 @@ interface ServerResponse {
   message?: string;
   errors?: string[];
   id?: number;
+  db_error?: string | null;
 }
 
 /** Empty in production (same origin). In dev: VITE_API_URL=http://bigfix.test */
@@ -60,6 +61,7 @@ export const submitForm = async (
       success: true,
       message: result.message || "Submitted successfully!",
       id: result.id,
+      db_error: result.db_error ?? null,
     };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {

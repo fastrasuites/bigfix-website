@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ob_start();
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -126,6 +127,7 @@ header('X-Content-Type-Options: nosniff');
 
 function respond(int $code, array $body): void
 {
+    ob_clean();
     http_response_code($code);
     echo json_encode($body);
     exit;
@@ -287,7 +289,9 @@ if ($errors) {
 }
 
 // ---- Database -----------------------------------------------------------
+$dbError = '';
 $pdo = null;
+$submissionId = 0;
 try {
     $pdo = new PDO(
         "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
@@ -448,7 +452,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log('Submission DB error: ' . $e->getMessage());
-    respond(500, ['success' => false, 'message' => 'Could not save your submission. Please try again.', 'debug' => ($config['debug'] ?? false) ? $e->getMessage() : null]);
+    $dbError = $e->getMessage();
 }
 
 // ---- Email notification -------------------------------------------------
@@ -676,7 +680,7 @@ if ($fromAddr === '' || $toAddr === '') {
         // ============================================================
         // METHOD 4: SMTP Exim relay (localhost:25) — with envelope sender fix FIRST
         // ============================================================
-        $allDebugs[] = "DEBUG: METHOD 4 start - isLocalhost25=" . ($isLocalhost25 ? 'true' : 'false');
+        $allDebugs[] = "DEBUG: METHOD 4 start - isLocalhost25=false";
         if ($emailMode === 'failed') {
             $smtpHost = $resolve($config, 'smtp_host') ?: 'localhost';
             $smtpUser = $resolve($config, 'smtp_user', 'smtp_username');
@@ -825,15 +829,17 @@ if ($fromAddr === '' || $toAddr === '') {
 }
 
 // Record the outcome
-try {
-    $upd = $pdo->prepare('UPDATE submissions SET email_status = :s, email_error = :e WHERE id = :id');
-    $upd->execute([
-        ':s'  => $emailMode,
-        ':e'  => $emailMode === 'failed' && $emailError !== '' ? $emailError : null,
-        ':id' => $submissionId,
-    ]);
-} catch (Throwable $e) {
-    error_log('Could not store email status (submission ' . $submissionId . '): ' . $e->getMessage());
+if ($pdo !== null) {
+    try {
+        $upd = $pdo->prepare('UPDATE submissions SET email_status = :s, email_error = :e WHERE id = :id');
+        $upd->execute([
+            ':s'  => $emailMode,
+            ':e'  => $emailMode === 'failed' && $emailError !== '' ? $emailError : null,
+            ':id' => $submissionId,
+        ]);
+    } catch (Throwable $e) {
+        error_log('Could not store email status (submission ' . $submissionId . '): ' . $e->getMessage());
+    }
 }
 
 respond(200, [
@@ -841,5 +847,6 @@ respond(200, [
     'message' => 'Submission received successfully',
     'id'      => $submissionId,
     'email'   => $emailMode,
+    'db_error' => $dbError ?: null,
     'debug'   => !empty($allDebugs) ? substr(implode("\n---\n", $allDebugs), 0, 2000) : null,
 ]);

@@ -5,6 +5,7 @@
  * Returns: {success, session_id, company_name, is_b2b, expires_in}
  */
 declare(strict_types=1);
+ob_start();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -18,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit;
 }
@@ -139,6 +141,7 @@ try {
         'samesite' => 'Lax',
     ]);
 
+    ob_clean();
     echo json_encode([
         'success' => true,
         'session_id' => $sessionId,
@@ -150,6 +153,7 @@ try {
 } catch (Throwable $e) {
     error_log('Tracking session init error: ' . $e->getMessage());
     http_response_code(500);
+    ob_clean();
     echo json_encode([
         'success' => false,
         'session_id' => '',

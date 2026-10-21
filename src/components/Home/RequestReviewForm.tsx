@@ -45,6 +45,7 @@ const [formData, setFormData] = useState({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverMessage, setServerMessage] = useState("");
   const { trackSubmission } = useFormTracking();
 
   const handleChange = (field: string, value: string) => {
@@ -77,6 +78,7 @@ const [formData, setFormData] = useState({
 
     const result = await submitForm("home_review", formData);
     setSubmitStatus(result.success ? "success" : "error");
+    setServerMessage(result.message || "");
     setIsSubmitting(false);
 
     if (result.success) {
@@ -172,11 +174,11 @@ const [formData, setFormData] = useState({
             </p>
           )}
 
-          {submitStatus === "error" && (
-            <p className="text-red-500 text-sm font-medium">
-              Something went wrong. Please try again.
-            </p>
-          )}
+           {submitStatus === "error" && (
+             <p className="text-red-500 text-sm font-medium">
+               {serverMessage || "Something went wrong. Please try again."}
+             </p>
+           )}
 
           <button
             type="submit"

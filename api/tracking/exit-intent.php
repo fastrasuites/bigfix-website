@@ -5,6 +5,7 @@
  * Body: {session_id, email, phone, exit_type}
  */
 declare(strict_types=1);
+ob_start();
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
@@ -115,6 +116,7 @@ try {
         WHERE `id` = ?
     ')->execute([$email ?: null, $phone ?: null, $sessionId]);
 
+    ob_clean();
     echo json_encode([
         'success' => true,
         'rows_updated' => $result['rows_updated'] ?? 0,
@@ -123,5 +125,6 @@ try {
 } catch (Throwable $e) {
     error_log('Tracking exit intent error: ' . $e->getMessage());
     http_response_code(500);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Failed to capture exit intent']);
 }

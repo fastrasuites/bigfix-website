@@ -11,6 +11,7 @@
  * - Links session to submissions if email matches
  */
 declare(strict_types=1);
+ob_start();
 
 ignore_user_abort(true);
 
@@ -152,6 +153,7 @@ try {
     $pdo->commit();
 
     // Return success with session info for frontend
+    ob_clean();
     echo json_encode([
         'success' => true,
         'session_id' => $sessionId,
@@ -164,5 +166,6 @@ try {
     }
     error_log("Tracking identify error: " . $e->getMessage());
     http_response_code(500);
+    ob_clean();
     echo json_encode(['success' => false, 'error' => 'Failed to identify session']);
 }
