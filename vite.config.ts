@@ -36,6 +36,10 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/analytics.php": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
       "/submit.php": {
         target: "http://localhost:8080",
         changeOrigin: true,
