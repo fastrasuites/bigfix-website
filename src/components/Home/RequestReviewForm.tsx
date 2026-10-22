@@ -82,6 +82,16 @@ const [formData, setFormData] = useState({
     setIsSubmitting(false);
 
     if (result.success) {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'conversion', {
+          send_to: 'G-CT5KWJJVBP',
+          event_name: 'form_submit',
+          event_category: 'engagement',
+          event_label: 'home_review',
+          value: 1,
+        });
+      }
+
       // Track submission for identity linking
       trackSubmission({
         submission_id: result.id || 0,

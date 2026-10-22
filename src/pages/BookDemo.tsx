@@ -154,6 +154,15 @@ const [step, setStep] = useState(1);
     }
 
     if (result.success) {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'conversion', {
+          send_to: 'G-CT5KWJJVBP',
+          event_name: 'form_submit',
+          event_category: 'engagement',
+          event_label: 'book_demo',
+          value: 1,
+        });
+      }
       setTimeout(() => navigate("/"), 1500);
     }
   };

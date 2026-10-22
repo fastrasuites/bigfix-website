@@ -656,6 +656,14 @@ export class Tracker {
     }
 
     this.state.pageStartTime = Date.now();
+
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'page_view', {
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    }
+
     this.trackEvent('pageview', {
       path: currentPath,
       screen_width: typeof screen !== 'undefined' ? screen.width : 0,
