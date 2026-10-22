@@ -40,6 +40,10 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/reset-launch.php": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
       "/submit.php": {
         target: "http://localhost:8080",
         changeOrigin: true,
