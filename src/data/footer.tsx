@@ -1,7 +1,7 @@
 import {
   ABOUT_US_PATH,
   REQUEST_REVIEW_SECTION_ID,
-  OPTIMA_ONE_SECTION_ID,
+  VERITAS_WEALTH_SECTION_ID,
   ABOUT_US_TOP_SECTION_ID,
 } from "../constants/links";
 import {
@@ -110,10 +110,10 @@ export const footerApplications: FooterProductItem[] = [
     description: "Corporate ERP Suite",
   },
   {
-    name: "OptimaOne",
-    href: `/#${OPTIMA_ONE_SECTION_ID}`,
+    name: "VeritasWealth",
+    href: `/#${VERITAS_WEALTH_SECTION_ID}`,
     description: "Core Banking & Asset Management",
-    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
+    onClick: createCrossPageScrollHandler(VERITAS_WEALTH_SECTION_ID),
   },
 ];
 

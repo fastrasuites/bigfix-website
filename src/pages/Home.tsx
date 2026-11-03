@@ -101,11 +101,11 @@ const Home = (): JSX.Element => {
       />
 
       <ModuleDeepDive
-        titleLine1="OptimaOne: Asset & Investment"
+        titleLine1="VeritasWealth: Asset & Investment"
         titleLine2="Management Module"
         description="Manage investments, assets, and profit-sharing with greater transparency and control."
         features={moduleFeatures}
-        id="optimaone-section"
+        id="veritaswealth-section"
       />
 
       <RequestReviewSection benefits={requestReviewBenefits} />
