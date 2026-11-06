@@ -8,7 +8,7 @@ import type { SelectOption } from "../../types";
 const PRODUCT_OPTIONS: SelectOption[] = [
   { value: "fastra", label: "FastraSuite" },
   { value: "enterprise", label: "EnterpriseOne" },
-  { value: "veritaswealth", label: "VeritasWealth" },
+  { value: "adlwealth", label: "ADL Wealth" },
 ];
 
 const INDUSTRY_OPTIONS: SelectOption[] = [

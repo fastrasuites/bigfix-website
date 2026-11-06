@@ -32,7 +32,7 @@ export const workSteps: WorkStep[] = [
 export const approachCards: ApproachCard[] = [
   {
     title: "Business Applications",
-    subtitle: "VeritasWealth · FastraSuite · EnterpriseOne",
+    subtitle: "ADL Wealth · FastraSuite · EnterpriseOne",
     color: "#00B4D8",
     icon: <OutlineIcon path={BOLT_ICON_PATH} />,
   },

@@ -17,7 +17,7 @@ import { useNavigationState } from "../hooks/useNavigationState";
 import { submitForm } from "../utils/api";
 
 const clientLogos = [
-  "VeritasWealth",
+  "ADL Wealth",
   "FastraSuite",
   "CloudOne",
   "TechPartner",

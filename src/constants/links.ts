@@ -15,5 +15,5 @@ export const CLOUDONE_URL = "https://cloudone.com.ng";
 export const CONTACT_SECTION_ID = "contact";
 export const REQUEST_REVIEW_SECTION_ID = "request-review";
 export const OUR_COMPANY_SECTION_ID = "our-company";
-export const VERITAS_WEALTH_SECTION_ID = "veritaswealth-section";
+export const ADL_WEALTH_SECTION_ID = "adlwealth-section";
 export const ABOUT_US_TOP_SECTION_ID = "about-us-top";

@@ -101,11 +101,11 @@ const Home = (): JSX.Element => {
       />
 
       <ModuleDeepDive
-        titleLine1="VeritasWealth: Asset & Investment"
+        titleLine1="ADL Wealth: Asset & Investment"
         titleLine2="Management Module"
         description="Manage investments, assets, and profit-sharing with greater transparency and control."
         features={moduleFeatures}
-        id="veritaswealth-section"
+        id="adlwealth-section"
       />
 
       <RequestReviewSection benefits={requestReviewBenefits} />

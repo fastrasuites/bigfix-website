@@ -3,7 +3,7 @@ import type { SolutionsAccordionProps } from "../../types";
 import SolutionPanel from "./SolutionPanel";
 
 /** Solution expanded on first render. */
-const DEFAULT_OPEN_SOLUTION = "veritaswealth";
+const DEFAULT_OPEN_SOLUTION = "adlwealth";
 
 /**
  * "Custom Enterprise Solutions" accordion. Owns the open/closed state and
