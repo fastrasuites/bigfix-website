@@ -15,7 +15,7 @@ import {
 import { useNavigationState } from "../hooks/useNavigationState";
 
 const clientLogos = [
-  "ADL Wealth",
+  "OptimaOne",
   "FastraSuite",
   "CloudOne",
   "TechPartner",
@@ -27,7 +27,7 @@ const bulletPoints = [
   "Information security services.",
   "Cloud services and infrastructure management.",
   "Workflow and business process automation.",
-  "Seamless integration with ADL Wealth, FastraSuite, and EnterpriseOne.",
+  "Seamless integration with OptimaOne, FastraSuite, and EnterpriseOne.",
 ];
 
 const statData = {

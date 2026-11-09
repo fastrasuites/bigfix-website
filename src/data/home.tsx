@@ -3,7 +3,7 @@ import {
   GLOBE_ICON_PATH,
   SHIELD_CHECK_ICON_PATH,
 } from "../constants/icons";
-import { ADL_WEALTH_SECTION_ID } from "../constants/links";
+import { OPTIMA_ONE_SECTION_ID } from "../constants/links";
 import { createScrollHandler } from "../utils/scroll";
 import type {
   CloudFeature,
@@ -87,8 +87,8 @@ export const solutionsData: SolutionData[] = [
     link: "https://www.enterpriseone.com.ng/",
   },
   {
-    id: "adlwealth",
-    title: "ADL Wealth",
+    id: "optimaone",
+    title: "OptimaOne",
     subtitle: "Core Banking, Asset & Investment Management",
     color: "#00B4D8",
     bgColor: "bg-[#00B4D8]/10",
@@ -107,7 +107,7 @@ export const solutionsData: SolutionData[] = [
     content: [
       {
         title: "WHAT IT DOES",
-        text: "ADL Wealth helps financial organizations manage accounts, investments, asset-backed transactions, profit-sharing, and joint-venture funds in one system.",
+        text: "OptimaOne helps financial organizations manage accounts, investments, asset-backed transactions, profit-sharing, and joint-venture funds in one system.",
       },
       {
         title: "KEY VALUE",
@@ -115,12 +115,12 @@ export const solutionsData: SolutionData[] = [
       },
       {
         title: "INTEGRATION",
-        text: "Connect ADL Wealth to payment networks, wealth-management platforms, and other financial systems through APIs.",
+        text: "Connect OptimaOne to payment networks, wealth-management platforms, and other financial systems through APIs.",
       },
     ],
-    exploreLink: "Explore ADL Wealth →",
-    link: "https://www.adlwealth.com.ng/",
-    onClick: createScrollHandler(ADL_WEALTH_SECTION_ID),
+    exploreLink: "Explore OptimaOne →",
+    link: "https://www.optimaone.com.ng/",
+    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
 ];
 /**
@@ -161,10 +161,10 @@ export const modularCards: ModularCard[] = [
     ),
   },
   {
-    title: "ADL Wealth",
+    title: "OptimaOne",
     subtitle: "Core Banking & Asset Management",
-    link: "https://www.adlwealth.com.ng/",
-    onClick: createScrollHandler(ADL_WEALTH_SECTION_ID),
+    link: "https://www.optimaone.com.ng/",
+    onClick: createScrollHandler(OPTIMA_ONE_SECTION_ID),
     icon: (
       <svg
         className="w-5 h-5"
@@ -227,11 +227,11 @@ export const moduleFeatures: ModuleFeature[] = [
     items: [
       {
         subtitle: "Seamless Fintech Integration",
-        desc: "Connect ADL Wealth to investment platforms, financial applications, and external systems through APIs.",
+        desc: "Connect OptimaOne to investment platforms, financial applications, and external systems through APIs.",
       },
       {
         subtitle: "Works With Other BigFix Applications",
-        desc: "ADL Wealth can send relevant transaction data to FastraSuite for project costing and to EnterpriseOne for corporate reporting and reconciliation.",
+        desc: "OptimaOne can send relevant transaction data to FastraSuite for project costing and to EnterpriseOne for corporate reporting and reconciliation.",
       },
     ],
   },

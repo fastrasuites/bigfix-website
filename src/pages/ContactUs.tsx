@@ -17,7 +17,7 @@ import { useNavigationState } from "../hooks/useNavigationState";
 import { submitForm } from "../utils/api";
 
 const clientLogos = [
-  "ADL Wealth",
+  "OptimaOne",
   "FastraSuite",
   "CloudOne",
   "TechPartner",

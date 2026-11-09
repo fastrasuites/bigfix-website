@@ -18,7 +18,7 @@ const clientLogos = [
   "TechCorp",
   "FinServe",
   "GlobalBank",
-  "ADL Wealth",
+  "OptimaOne",
   "CloudOne",
 ];
 
@@ -77,7 +77,7 @@ const CloudStorage = (): JSX.Element => {
           </h1>
           <p className="text-white/70 text-lg mb-10 max-w-lg">
             Work with your files from anywhere, anytime. Seamlessly integrate
-            your cloud files with ADL Wealth, FastraSuite, and EnterpriseOne.
+            your cloud files with OptimaOne, FastraSuite, and EnterpriseOne.
           </p>
           <Link
             to="/book-demo"
@@ -199,7 +199,7 @@ const CloudStorage = (): JSX.Element => {
                 Having all of an organization&apos;s files in one repository can
                 reduce operational downtimes and improve administrative
                 effectiveness. Seamlessly integrate your cloud files with
-                ADL Wealth, FastraSuite, and EnterpriseOne.
+                OptimaOne, FastraSuite, and EnterpriseOne.
               </p>
               <Link
                 to="/book-demo"

@@ -1,7 +1,7 @@
 import {
   ABOUT_US_PATH,
   REQUEST_REVIEW_SECTION_ID,
-  ADL_WEALTH_SECTION_ID,
+  OPTIMA_ONE_SECTION_ID,
   ABOUT_US_TOP_SECTION_ID,
 } from "../constants/links";
 import {
@@ -110,10 +110,10 @@ export const footerApplications: FooterProductItem[] = [
     description: "Corporate ERP Suite",
   },
   {
-    name: "ADL Wealth",
-    href: `/#${ADL_WEALTH_SECTION_ID}`,
+    name: "OptimaOne",
+    href: `/#${OPTIMA_ONE_SECTION_ID}`,
     description: "Core Banking & Asset Management",
-    onClick: createCrossPageScrollHandler(ADL_WEALTH_SECTION_ID),
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
 ];
 

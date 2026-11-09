@@ -1,5 +1,5 @@
 import type { NavApplication, NavLink } from "../types";
-import { ADL_WEALTH_SECTION_ID } from "../constants/links";
+import { OPTIMA_ONE_SECTION_ID } from "../constants/links";
 import { createCrossPageScrollHandler } from "../utils/scroll";
 
 /**
@@ -45,11 +45,11 @@ export const navApplications: NavApplication[] = [
     ),
   },
   {
-    title: "ADL Wealth",
+    title: "OptimaOne",
     subtitle: "Core Banking, Asset & Investment Management",
     description:
       "Equity-backed deposit accounts, profit-share calculation, and fund ledgering",
-    link: `/#${ADL_WEALTH_SECTION_ID}`,
+    link: `/#${OPTIMA_ONE_SECTION_ID}`,
     icon: (
       <svg
         className="w-5 h-3 text-[#00B4D8] mt-1"
@@ -62,7 +62,7 @@ export const navApplications: NavApplication[] = [
         <path d="M1 6h22" />
       </svg>
     ),
-    onClick: createCrossPageScrollHandler(ADL_WEALTH_SECTION_ID),
+    onClick: createCrossPageScrollHandler(OPTIMA_ONE_SECTION_ID),
   },
 ];
 

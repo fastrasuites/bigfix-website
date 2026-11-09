@@ -50,7 +50,7 @@ const initialFormData: FormData = {
 
 const productOptions = [
   { value: "", label: "--- Select a Product ---" },
-  { value: "adlwealth", label: "ADL Wealth (Core Banking & Asset Management)" },
+  { value: "optimaone", label: "OptimaOne (Core Banking & Asset Management)" },
   { value: "fastra", label: "FastraSuite (Project Costing & Shadow Ledger)" },
   { value: "enterprise", label: "EnterpriseOne (Corporate ERP Suite)" },
   { value: "cloudone", label: "CloudOne (Virtual Private Servers)" },
